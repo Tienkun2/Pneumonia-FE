@@ -36,6 +36,10 @@ export interface KnowledgeArticle {
 
 
 export interface PneumoniaPredictionResponse {
+  message: string;
+  confidence_score: number;
+  probability_pneumonia: number;
+  prediction: string;
   filename: string;
   imaging_assessment: string;
   probability_score: number;

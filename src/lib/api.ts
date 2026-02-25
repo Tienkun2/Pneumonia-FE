@@ -1,4 +1,4 @@
-import axios, { type AxiosRequestConfig, type AxiosResponse, type AxiosError } from "axios";
+import axios, { type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const api = axios.create({
   baseURL: typeof window !== "undefined"
@@ -11,7 +11,7 @@ const api = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig) => {
     // Add auth token if available
     if (typeof window !== "undefined" && config.headers) {
       const token = localStorage.getItem("token");

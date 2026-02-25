@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar, FileText, ArrowRight } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 interface TimelineEvent {
   id: string;
@@ -35,7 +34,7 @@ export function MedicalTimeline({ events, patientName }: MedicalTimelineProps) {
       case "Thấp":
         return "default";
       default:
-        return "outline";
+        return "default";
     }
   };
 

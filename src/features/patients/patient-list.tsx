@@ -97,7 +97,7 @@ export function PatientList() {
     }, 1000);
   };
 
-  const handleAddSuccess = (patient: any) => {
+  const handleAddSuccess = (patient: { name: string }) => {
     toast.success(`Đã thêm bệnh nhi: ${patient.name}`);
     // In real app, refresh patient list
   };

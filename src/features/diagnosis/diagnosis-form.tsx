@@ -383,12 +383,12 @@ export function DiagnosisForm() {
                       <FormField
                         key={item.name}
                         control={form.control}
-                        name={item.name as any}
+                        name={item.name as keyof typeof clinicalSchema.shape}
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-white transition-colors">
                             <FormControl>
                               <Checkbox
-                                checked={field.value}
+                                checked={Boolean(field.value)}
                                 onCheckedChange={field.onChange}
                                 className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                               />

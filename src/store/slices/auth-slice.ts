@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { AuthService, User } from '@/services/auth-service';
 
 interface AuthState {
@@ -26,8 +26,9 @@ export const login = createAsyncThunk(
             localStorage.setItem('token', response.token);
             // In a real app, we might save user info too, or fetch it with the token
             return response;
-        } catch (error: any) {
-            return rejectWithValue(error.message || 'Đăng nhập thất bại');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Đăng nhập thất bại';
+            return rejectWithValue(errorMessage);
         }
     }
 );

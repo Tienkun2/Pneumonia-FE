@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCw, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface ImageViewerProps {
   src?: string;

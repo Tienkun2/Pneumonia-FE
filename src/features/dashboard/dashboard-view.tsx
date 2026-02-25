@@ -11,8 +11,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
-import { Users, AlertTriangle, Clock, Activity, TrendingUp, UserPlus, FileHeart } from "lucide-react";
+import { Users, AlertTriangle, Clock, Activity, UserPlus, FileHeart } from "lucide-react";
 import { DiagnosisCard } from "@/components/medical/diagnosis-card";
 
 const statsData = [
@@ -162,7 +163,7 @@ export function DashboardView() {
                 />
                 <Bar dataKey="count" radius={[8, 8, 0, 0]}>
                   {riskDistribution.map((entry, index) => (
-                    <cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>

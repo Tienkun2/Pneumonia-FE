@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RiskGauge } from "@/components/medical/risk-gauge"
 import { useState } from "react";
 import { useAppSelector } from "@/store/hooks";
-import { ArrowLeft, Download, ZoomIn } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import Link from "next/link";
 import { ImageViewer } from "@/components/medical/image-viewer";
 

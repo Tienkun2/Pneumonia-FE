@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MedicalTimeline } from "@/components/medical/medical-timeline";
 import { ArrowLeft } from "lucide-react";
@@ -106,7 +105,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
               date: d.date,
               title: `Chẩn đoán ${d.id.slice(-6)}`,
               description: d.findings,
-              riskLevel: d.riskLevel,
+              riskLevel: d.riskLevel as "Thấp" | "Trung bình" | "Cao",
               riskScore: d.riskScore,
               type: "diagnosis",
             }))}

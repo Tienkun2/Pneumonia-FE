@@ -111,7 +111,7 @@ export function QuickAddPatientDialog({
               <Select
                 value={form.watch("gender")}
                 onValueChange={(value) =>
-                  form.setValue("gender", value as any)
+                  form.setValue("gender", value as "male" | "female" | "other")
                 }
               >
                 <SelectTrigger>

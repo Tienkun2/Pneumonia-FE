@@ -8,11 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Filter, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface PatientFiltersProps {
   riskLevel?: string;
