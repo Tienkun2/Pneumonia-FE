@@ -126,11 +126,11 @@ export function PatientList() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="h-4 w-4" />
             Xuất dữ liệu
           </Button>
           <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Thêm bệnh nhi
           </Button>
         </div>

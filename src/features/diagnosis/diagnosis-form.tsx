@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -49,7 +49,6 @@ const clinicalSchema = z.object({
 });
 
 export function DiagnosisForm() {
-  const router = useRouter();
   const dispatch = useAppDispatch();
   const diagnosisData = useAppSelector((state) => state.diagnosis);
   const [isSubmittingImage, setIsSubmittingImage] = useState(false);
@@ -188,10 +187,12 @@ export function DiagnosisForm() {
                 {diagnosisData.imagePreview ? (
                   <div className="space-y-4 w-full h-full flex flex-col items-center justify-center">
                     <div className="relative group overflow-hidden rounded-lg border border-slate-200 shadow-sm w-full h-48">
-                      <img
+                      <Image
                         src={diagnosisData.imagePreview}
                         alt="Preview"
-                        className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                        fill
+                        className="object-contain transition-transform duration-300 group-hover:scale-105"
+                        unoptimized
                       />
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                         <p className="text-white text-sm font-medium truncate">{selectedFile?.name || "Uploaded Image"}</p>

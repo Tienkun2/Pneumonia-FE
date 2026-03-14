@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCw, X } from "lucide-react";
@@ -35,15 +36,21 @@ export function ImageViewer({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-7xl w-full h-[90vh] p-0">
         <div className="relative flex h-full items-center justify-center bg-black/90">
-          <img
-            src={src}
-            alt={alt}
-            className="max-h-full max-w-full object-contain"
+          <div
+            className="relative h-full w-full"
             style={{
               transform: `scale(${zoom}) rotate(${rotation}deg)`,
               transition: "transform 0.2s",
             }}
-          />
+          >
+            <Image
+              src={src}
+              alt={alt}
+              fill
+              className="object-contain"
+              unoptimized
+            />
+          </div>
         </div>
 
         {/* Controls */}

@@ -7,7 +7,7 @@ export const store = configureStore({
   reducer: {
     diagnosis: diagnosisReducer,
     patient: patientReducer,
-    auth: authReducer,
+    auth: authReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

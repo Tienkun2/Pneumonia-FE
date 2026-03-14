@@ -13,15 +13,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "@/store/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
 import { logout } from "@/store/slices/auth-slice";
 import { useRouter } from "next/navigation";
 
 export function Header() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const displayName = "Bác sĩ";
+  const displayEmail = "bacsi@phoinhidong.com";
 
   const [currentDate, setCurrentDate] = useState("");
 
@@ -73,7 +74,7 @@ export function Header() {
               <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-gray-200 shadow-sm">
                 <Avatar>
                   <AvatarFallback className="bg-primary/10 text-primary">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : <User className="h-5 w-5" />}
+                    {displayName ? displayName.charAt(0).toUpperCase() : <User className="h-5 w-5" />}
                   </AvatarFallback>
                 </Avatar>
               </Button>
@@ -81,8 +82,8 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.name || "Bác sĩ"}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user?.email || "bacsi@phoinhidong.com"}</p>
+                  <p className="text-sm font-medium leading-none">{displayName}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{displayEmail}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

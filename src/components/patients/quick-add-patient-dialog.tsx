@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormError } from "@/components/ui/form-error";
 import {
   Select,
   SelectContent,
@@ -83,11 +84,7 @@ export function QuickAddPatientDialog({
               {...form.register("name")}
               placeholder="Nguyễn Văn A"
             />
-            {form.formState.errors.name && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.name.message}
-              </p>
-            )}
+            <FormError message={form.formState.errors.name?.message} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -99,11 +96,7 @@ export function QuickAddPatientDialog({
                 {...form.register("age", { valueAsNumber: true })}
                 placeholder="3"
               />
-              {form.formState.errors.age && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.age.message}
-                </p>
-              )}
+              <FormError message={form.formState.errors.age?.message} />
             </div>
 
             <div className="space-y-2">

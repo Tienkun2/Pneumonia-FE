@@ -24,8 +24,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-    email: z.string().email({
-        message: "Email không hợp lệ.",
+    username: z.string().min(1, {
+        message: "Vui lòng nhập username.",
     }),
     password: z.string().min(1, {
         message: "Vui lòng nhập mật khẩu.",
@@ -36,13 +36,14 @@ const formSchema = z.object({
 export function LoginForm() {
     const router = useRouter();
     const dispatch = useDispatch<AppDispatch>();
-    const { isLoading, error } = useSelector((state: RootState) => state.auth);
+    const { isLoading } = useSelector((state: RootState) => state.auth);
+
     const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            email: "",
+            username: "",
             password: "",
             remember: false,
         },
@@ -50,24 +51,31 @@ export function LoginForm() {
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            const resultAction = await dispatch(login({ email: values.email, password: values.password }));
+            const resultAction = await dispatch(
+                login({
+                    username: values.username,
+                    password: values.password,
+                })
+            );
 
             if (login.fulfilled.match(resultAction)) {
-                // Set cookie for middleware manually to ensure it exists before redirect
                 const token = resultAction.payload.token;
+
+                // set cookie để middleware NextJS nhận diện
                 document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
 
                 toast.success("Đăng nhập thành công!");
 
-                // Small delay to ensure cookie is set
                 setTimeout(() => {
                     router.push("/dashboard");
-                    router.refresh(); // Force refresh to ensure middleware sees the new state
+                    router.refresh();
                 }, 100);
             } else {
-                toast.error((resultAction.payload as string) || "Đăng nhập thất bại");
+                toast.error(
+                    (resultAction.payload as string) || "Đăng nhập thất bại"
+                );
             }
-        } catch (error) {
+        } catch (err) {
             toast.error("Đã có lỗi xảy ra");
         }
     }
@@ -79,26 +87,33 @@ export function LoginForm() {
                     Chào mừng trở lại
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                    Đăng nhập để truy cập hệ thống <span className="font-semibold text-primary">Phổi Nhi Đồng</span>
+                    Đăng nhập để truy cập hệ thống{" "}
+                    <span className="font-semibold text-primary">
+                        Phổi Nhi Đồng
+                    </span>
                 </p>
             </div>
 
             <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-6"
+                    >
+                        {/* Username */}
                         <FormField
                             control={form.control}
-                            name="email"
+                            name="username"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Email</FormLabel>
+                                    <FormLabel>Username</FormLabel>
                                     <FormControl>
                                         <div className="relative group">
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <Mail className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                             </div>
                                             <Input
-                                                placeholder="bacsi@phoinhidong.com"
+                                                placeholder="admin"
                                                 className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
                                                 {...field}
                                             />
@@ -109,6 +124,7 @@ export function LoginForm() {
                             )}
                         />
 
+                        {/* Password */}
                         <FormField
                             control={form.control}
                             name="password"
@@ -120,18 +136,28 @@ export function LoginForm() {
                                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                 <Lock className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                                             </div>
+
                                             <Input
-                                                type={showPassword ? "text" : "password"}
+                                                type={
+                                                    showPassword
+                                                        ? "text"
+                                                        : "password"
+                                                }
                                                 placeholder="••••••••"
                                                 className="pl-10 pr-10 h-11 bg-gray-50/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
                                                 {...field}
                                             />
+
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
                                                 className="absolute right-0 top-0 h-11 w-11 px-0 hover:bg-transparent text-muted-foreground hover:text-primary"
-                                                onClick={() => setShowPassword(!showPassword)}
+                                                onClick={() =>
+                                                    setShowPassword(
+                                                        !showPassword
+                                                    )
+                                                }
                                             >
                                                 {showPassword ? (
                                                     <EyeOff className="h-4 w-4" />
@@ -146,6 +172,7 @@ export function LoginForm() {
                             )}
                         />
 
+                        {/* Remember */}
                         <div className="flex items-center justify-between">
                             <FormField
                                 control={form.control}
@@ -155,7 +182,9 @@ export function LoginForm() {
                                         <FormControl>
                                             <Checkbox
                                                 checked={field.value}
-                                                onCheckedChange={field.onChange}
+                                                onCheckedChange={
+                                                    field.onChange
+                                                }
                                             />
                                         </FormControl>
                                         <FormLabel className="font-normal text-sm cursor-pointer">
@@ -164,12 +193,22 @@ export function LoginForm() {
                                     </FormItem>
                                 )}
                             />
-                            <Button variant="link" size="sm" className="px-0 font-normal h-auto text-primary">
+
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="px-0 font-normal h-auto text-primary"
+                            >
                                 Quên mật khẩu?
                             </Button>
                         </div>
 
-                        <Button type="submit" className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-[hsl(199,89%,48%)] to-[hsl(222.2,47.4%,35%)] hover:opacity-90 border-0" disabled={isLoading}>
+                        {/* Submit */}
+                        <Button
+                            type="submit"
+                            className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-[hsl(199,89%,48%)] to-[hsl(222.2,47.4%,35%)] hover:opacity-90 border-0"
+                            disabled={isLoading}
+                        >
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -180,8 +219,12 @@ export function LoginForm() {
                             )}
                         </Button>
 
+                        {/* Demo */}
                         <div className="text-center">
-                            <p className="text-xs text-muted-foreground mb-2">Tài khoản demo:</p>
+                            <p className="text-xs text-muted-foreground mb-2">
+                                Tài khoản demo:
+                            </p>
+
                             <div className="flex justify-center gap-2">
                                 <Button
                                     type="button"
@@ -189,7 +232,7 @@ export function LoginForm() {
                                     size="sm"
                                     className="text-xs h-8 bg-white/50 hover:bg-white"
                                     onClick={() => {
-                                        form.setValue("email", "admin@cdss.com");
+                                        form.setValue("username", "admin");
                                         form.setValue("password", "admin");
                                     }}
                                 >

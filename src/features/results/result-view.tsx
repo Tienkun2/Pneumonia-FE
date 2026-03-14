@@ -50,7 +50,7 @@ export function ResultView({ resultId }: { resultId: string }) {
   const getResult = () => {
     if (predictionResult && predictionResult.filename === resultId) {
       // Map AI result to view model
-      const isPneumonia = predictionResult.prediction === "PNEUMONIA";
+      const _isPneumonia = predictionResult.prediction === "PNEUMONIA";
       const riskScore = predictionResult.probability_pneumonia * 100;
 
       return {
@@ -71,12 +71,6 @@ export function ResultView({ resultId }: { resultId: string }) {
 
   const result = getResult();
   const [showImageViewer, setShowImageViewer] = useState(false);
-
-  const getRiskColor = (risk: number) => {
-    if (risk >= 70) return "text-destructive";
-    if (risk >= 40) return "text-orange-500";
-    return "text-green-500";
-  };
 
   const getRiskLabel = (risk: number) => {
     if (risk >= 70) return "Cao";

@@ -1,45 +1,31 @@
-export interface User {
-    id: string;
-    email: string;
-    name: string;
-    role: 'admin' | 'doctor';
-    avatar?: string;
-}
-
-const MOCK_USER: User = {
-    id: '1',
-    email: 'admin@cdss.com',
-    name: 'Bác sĩ Admin',
-    role: 'admin',
-    avatar: '',
-};
+import { apiClient } from "./api-client"
+import { ApiResponse } from "@/types/api"
+import { LoginResponse } from "@/types/auth"
 
 export const AuthService = {
-    async login(email: string, password: string): Promise<{ user: User; token: string }> {
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Mock validation (accept any non-empty credentials for now, or specific ones)
-        if (email && password) {
-            return {
-                user: { ...MOCK_USER, email },
-                token: 'mock-jwt-token-123456',
-            };
-        }
+  async login(username: string, password: string) {
 
-        throw new Error('Email hoặc mật khẩu không chính xác');
-    },
+    const res = await apiClient("/auth/login", {
+      method: "POST",
+      withAuth: false,
+      body: JSON.stringify({
+        username,
+        password
+      })
+    })
 
-    async logout(): Promise<void> {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        localStorage.removeItem('token');
-    },
+    const data: ApiResponse<LoginResponse> = await res.json()
 
-    // Helper to get token
-    getToken(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('token');
-        }
-        return null;
-    },
-};
+    if (!res.ok || data.code !== 0) {
+      throw new Error(data.message || "Login failed")
+    }
+
+    return data.result
+  },
+
+  logout() {
+    // Placeholder for future API logout if needed
+  }
+
+}

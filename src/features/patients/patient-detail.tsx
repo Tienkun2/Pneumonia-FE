@@ -38,19 +38,6 @@ export function PatientDetail({ patientId }: { patientId: string }) {
   const patient = mockPatient;
   const diagnoses = mockDiagnoses;
 
-  const getRiskBadgeVariant = (risk: string) => {
-    switch (risk) {
-      case "Cao":
-        return "destructive";
-      case "Trung bình":
-        return "secondary";
-      case "Thấp":
-        return "default";
-      default:
-        return "outline";
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
