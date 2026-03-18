@@ -8,241 +8,162 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { login } from "@/store/slices/auth-slice";
 
 import { Button } from "@/components/ui/button";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { login } from "@/store/slices/auth-slice";
 
 const formSchema = z.object({
-    username: z.string().min(1, {
-        message: "Vui lòng nhập username.",
-    }),
-    password: z.string().min(1, {
-        message: "Vui lòng nhập mật khẩu.",
-    }),
-    remember: z.boolean().default(false),
+  username: z.string().min(1, "Vui lòng nhập tài khoản"),
+  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+  remember: z.boolean().default(false),
 });
 
 export function LoginForm() {
-    const router = useRouter();
-    const dispatch = useDispatch<AppDispatch>();
-    const { isLoading } = useSelector((state: RootState) => state.auth);
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>()
+  const { isLoading } = useSelector((state: RootState) => state.auth);
+  const [showPassword, setShowPassword] = useState(false);
 
-    const [showPassword, setShowPassword] = useState(false);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      remember: false,
+    },
+  });
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            username: "",
-            password: "",
-            remember: false,
-        },
-    });
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+        await dispatch(
+        login({
+            username: values.username,
+            password: values.password
+        })
+        ).unwrap()
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            const resultAction = await dispatch(
-                login({
-                    username: values.username,
-                    password: values.password,
-                })
-            );
+        toast.success("Đăng nhập thành công!")
+        router.push("/dashboard")
+        router.refresh()
 
-            if (login.fulfilled.match(resultAction)) {
-                const token = resultAction.payload.token;
-
-                // set cookie để middleware NextJS nhận diện
-                document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
-
-                toast.success("Đăng nhập thành công!");
-
-                setTimeout(() => {
-                    router.push("/dashboard");
-                    router.refresh();
-                }, 100);
-            } else {
-                toast.error(
-                    (resultAction.payload as string) || "Đăng nhập thất bại"
-                );
-            }
-        } catch (err) {
-            toast.error("Đã có lỗi xảy ra");
-        }
+    } catch (err) {
+        toast.error(err as string)
     }
+}
 
-    return (
-        <div className="w-full max-w-md space-y-8">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-[hsl(199,89%,48%)]">
-                    Chào mừng trở lại
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground">
-                    Đăng nhập để truy cập hệ thống{" "}
-                    <span className="font-semibold text-primary">
-                        Phổi Nhi Đồng
-                    </span>
-                </p>
-            </div>
+  return (
+    <div className="w-full max-w-md space-y-8">
+      {/* Header */}
+      <div className="text-center">
+        <h2 className="text-3xl font-bold text-primary">
+          Chào mừng trở lại
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Đăng nhập để truy cập hệ thống{" "}
+          <span className="font-semibold text-primary">
+            Phổi Nhi Đồng
+          </span>
+        </p>
+      </div>
 
-            <div className="bg-white/50 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20">
-                <Form {...form}>
-                    <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
-                    >
-                        {/* Username */}
-                        <FormField
-                            control={form.control}
-                            name="username"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl>
-                                        <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <Mail className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                            </div>
-                                            <Input
-                                                placeholder="admin"
-                                                className="pl-10 h-11 bg-gray-50/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
-                                                {...field}
-                                            />
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+      {/* Form */}
+      <div className="bg-white p-8 rounded-2xl shadow-lg border">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
+            {/* Username */}
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tài khoản</FormLabel>
+                  <FormControl>
+                    <div className="relative group">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-blue-600" />
 
-                        {/* Password */}
-                        <FormField
-                            control={form.control}
-                            name="password"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Mật khẩu</FormLabel>
-                                    <FormControl>
-                                        <div className="relative group">
-                                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <Lock className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                                            </div>
+                      <Input
+                        placeholder="admin"
+                        className="pl-10 h-11 bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                                            <Input
-                                                type={
-                                                    showPassword
-                                                        ? "text"
-                                                        : "password"
-                                                }
-                                                placeholder="••••••••"
-                                                className="pl-10 pr-10 h-11 bg-gray-50/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
-                                                {...field}
-                                            />
+            {/* Password */}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mật khẩu</FormLabel>
+                  <FormControl>
+                    <div className="relative group">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-blue-600" />
 
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute right-0 top-0 h-11 w-11 px-0 hover:bg-transparent text-muted-foreground hover:text-primary"
-                                                onClick={() =>
-                                                    setShowPassword(
-                                                        !showPassword
-                                                    )
-                                                }
-                                            >
-                                                {showPassword ? (
-                                                    <EyeOff className="h-4 w-4" />
-                                                ) : (
-                                                    <Eye className="h-4 w-4" />
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10 h-11 bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg"
+                        {...field}
+                      />
 
-                        {/* Remember */}
-                        <div className="flex items-center justify-between">
-                            <FormField
-                                control={form.control}
-                                name="remember"
-                                render={({ field }) => (
-                                    <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value}
-                                                onCheckedChange={
-                                                    field.onChange
-                                                }
-                                            />
-                                        </FormControl>
-                                        <FormLabel className="font-normal text-sm cursor-pointer">
-                                            Ghi nhớ tôi
-                                        </FormLabel>
-                                    </FormItem>
-                                )}
-                            />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-11 w-11 px-0"
+                        onClick={() =>
+                          setShowPassword(!showPassword)
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                            <Button
-                                variant="link"
-                                size="sm"
-                                className="px-0 font-normal h-auto text-primary"
-                            >
-                                Quên mật khẩu?
-                            </Button>
-                        </div>
-
-                        {/* Submit */}
-                        <Button
-                            type="submit"
-                            className="w-full h-11 text-base font-semibold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-[hsl(199,89%,48%)] to-[hsl(222.2,47.4%,35%)] hover:opacity-90 border-0"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Đang xử lý...
-                                </>
-                            ) : (
-                                "Đăng nhập"
-                            )}
-                        </Button>
-
-                        {/* Demo */}
-                        <div className="text-center">
-                            <p className="text-xs text-muted-foreground mb-2">
-                                Tài khoản demo:
-                            </p>
-
-                            <div className="flex justify-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-xs h-8 bg-white/50 hover:bg-white"
-                                    onClick={() => {
-                                        form.setValue("username", "admin");
-                                        form.setValue("password", "admin");
-                                    }}
-                                >
-                                    Admin
-                                </Button>
-                            </div>
-                        </div>
-                    </form>
-                </Form>
-            </div>
-        </div>
-    );
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full h-11 text-base font-semibold"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Đang xử lý...
+                </>
+              ) : (
+                "Đăng nhập"
+              )}
+            </Button>
+          </form>
+        </Form>
+      </div>
+    </div>
+  );
 }

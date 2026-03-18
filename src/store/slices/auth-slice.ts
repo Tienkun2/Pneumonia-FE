@@ -18,17 +18,42 @@ export const login = createAsyncThunk<
     const result = await AuthService.login(username, password)
     return result
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Đăng nhập thất bại"
+    const message =
+      error instanceof Error ? error.message : "Đăng nhập thất bại"
     return rejectWithValue(message)
   }
 })
 
-export const restoreSession = createAsyncThunk<string | null, void>(
+export const activateAccount = createAsyncThunk<
+  void,
+  { token: string; password: string },
+  { rejectValue: string }
+>(
+  "auth/activate",
+  async ({ token, password }, { rejectWithValue }) => {
+    try {
+      await AuthService.activate(token, password)
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Kích hoạt thất bại"
+      return rejectWithValue(message)
+    }
+  }
+)
+
+export const restoreSession = createAsyncThunk<string | null>(
   "auth/restoreSession",
   async () => {
     if (typeof window === "undefined") return null
-    const token = localStorage.getItem("token")
-    return token
+    return localStorage.getItem("token")
+  }
+)
+
+export const logoutThunk = createAsyncThunk(
+  "auth/logoutAction",
+  async (_, { dispatch }) => {
+    await AuthService.logout()
+    dispatch(logout())
   }
 )
 
@@ -42,6 +67,7 @@ const authSlice = createSlice({
 
       if (typeof window !== "undefined") {
         localStorage.setItem("token", action.payload)
+        document.cookie = `token=${action.payload}; path=/; max-age=86400; SameSite=Lax`
       }
     },
 
@@ -51,9 +77,11 @@ const authSlice = createSlice({
 
       if (typeof window !== "undefined") {
         localStorage.removeItem("token")
+        document.cookie = "token=; Max-Age=0; path=/"
       }
     }
   },
+
   extraReducers: (builder) => {
     builder
       .addCase(login.pending, (state) => {
@@ -64,23 +92,35 @@ const authSlice = createSlice({
         state.isLoading = false
         state.token = action.payload.token
         state.isAuthenticated = true
-        state.error = null
-
         if (typeof window !== "undefined") {
           localStorage.setItem("token", action.payload.token)
+          document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`
         }
       })
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false
-        state.error = action.payload || action.error.message || "Đăng nhập thất bại"
+        state.error =
+          action.payload || action.error.message || "Đăng nhập thất bại"
       })
       .addCase(restoreSession.fulfilled, (state, action) => {
-        const token = action.payload
-
-        if (token) {
-          state.token = token
+        if (action.payload) {
+          state.token = action.payload
           state.isAuthenticated = true
         }
+      })
+      .addCase(activateAccount.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(activateAccount.fulfilled, (state) => {
+        state.isLoading = false
+      })
+      .addCase(activateAccount.rejected, (state, action) => {
+        state.isLoading = false
+        state.error =
+          action.payload || action.error.message || "Kích hoạt thất bại"
+      })
+      .addCase(logoutThunk.fulfilled, (state) => {
       })
   }
 })

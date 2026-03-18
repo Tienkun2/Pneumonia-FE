@@ -2,12 +2,16 @@ import { configureStore } from "@reduxjs/toolkit";
 import diagnosisReducer from "./slices/diagnosisSlice";
 import patientReducer from "./slices/patientSlice";
 import authReducer from "./slices/auth-slice";
+import userReducer from "./slices/userSlice";
+import roleReducer from "./slices/roleSlice";
 
 export const store = configureStore({
   reducer: {
     diagnosis: diagnosisReducer,
     patient: patientReducer,
-    auth: authReducer
+    auth: authReducer,
+    user: userReducer,
+    role: roleReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

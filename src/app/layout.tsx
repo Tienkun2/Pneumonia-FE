@@ -1,10 +1,7 @@
-import { AppProvider } from "@/components/layout/app-provider";
-import "./globals.css";
+"use client";
 
-export const metadata = {
-  title: "Phòng Khám Phổi Nhi Đồng - CDSS",
-  description: "Hệ thống hỗ trợ chẩn đoán phổi cho trẻ em (1-5 tuổi)",
-};
+import "./globals.css";
+import { AppProvider } from "@/components/layout/app-provider";
 
 export default function RootLayout({
   children,
@@ -12,9 +9,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" suppressHydrationWarning>
-      <body className="font-sans antialiased" suppressHydrationWarning>
-        <AppProvider>{children}</AppProvider>
+    <html lang="en">
+      <body>
+        <AppProvider>
+          {children}
+        </AppProvider>
       </body>
     </html>
   );

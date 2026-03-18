@@ -3,14 +3,27 @@
 import { useEffect } from "react"
 import { Provider, useDispatch } from "react-redux"
 import { store, AppDispatch } from "@/store/store"
-import { restoreSession } from "@/store/slices/auth-slice"
+import { restoreSession, logout } from "@/store/slices/auth-slice"
+import { useRouter } from "next/navigation"
 
 function AuthInitializer() {
   const dispatch = useDispatch<AppDispatch>()
+  const router = useRouter()
 
   useEffect(() => {
     dispatch(restoreSession())
-  }, [dispatch])
+
+    const handleAuthLogout = () => {
+      dispatch(logout())
+      router.push("/auth/login")
+    }
+
+    window.addEventListener("auth:logout", handleAuthLogout)
+
+    return () => {
+      window.removeEventListener("auth:logout", handleAuthLogout)
+    }
+  }, [dispatch, router])
 
   return null
 }
