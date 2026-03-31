@@ -150,12 +150,14 @@ export function DiagnosisForm() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Chẩn đoán đa phương thức</h1>
-          <p className="text-slate-500 mt-1">
-            Kết hợp chẩn đoán hình ảnh X-quang và dấu hiệu lâm sàng
-          </p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 shrink-0 mt-1 sm:mt-0">
+            <Activity className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Chẩn đoán đa phương thức</h1>
+          </div>
         </div>
       </div>
 

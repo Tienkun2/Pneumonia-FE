@@ -1,5 +1,7 @@
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 export interface BreadcrumbItem {
   label: string;
@@ -13,11 +15,20 @@ const ROUTE_LABELS: Record<string, string> = {
   login: "Đăng nhập",
   register: "Tạo tài khoản",
   activate: "Kích hoạt tài khoản",
+  profile: "Hồ sơ cá nhân",
   "forgot-password": "Quên mật khẩu",
+  patients: "Quản lý Bệnh nhân",
+  diagnosis: "Thực hiện Chẩn đoán",
+  results: "Lịch sử Kết quả",
+  comparison: "So sánh Tiến triển",
+  knowledge: "Thư viện Y khoa",
+  settings: "Cài đặt hệ thống",
+  notifications: "Thông báo",
 };
 
 export function useBreadcrumb(): BreadcrumbItem[] {
   const pathname = usePathname();
+  const selectedPatient = useSelector((state: RootState) => state.patient?.selectedPatient);
 
   const breadcrumbs = useMemo(() => {
     // Remove query parameters or hash from url
@@ -39,14 +50,20 @@ export function useBreadcrumb(): BreadcrumbItem[] {
     pathSegments.forEach((segment) => {
       currentLink += `/${segment}`;
 
+      let label = ROUTE_LABELS[segment] || segment;
+
+      if (segment === selectedPatient?.id) {
+        label = selectedPatient.code;
+      }
+
       breadcrumbArray.push({
-        label: ROUTE_LABELS[segment] || segment, // fallback to segment name if not in dictionary
+        label,
         href: currentLink,
       });
     });
 
     return breadcrumbArray;
-  }, [pathname]);
+  }, [pathname, selectedPatient]);
 
   return breadcrumbs;
 }

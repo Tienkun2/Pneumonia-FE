@@ -1,227 +1,307 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { fetchPatients, deletePatientThunk } from "@/store/slices/patientSlice";
+
+import { usePatientTable } from "./patient-table/use-patient-table";
+import { PatientTable } from "./patient-table/patient-table";
+import { QuickAddPatientDialog } from "@/components/patients/quick-add-patient-dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { QuickAddPatientDialog } from "@/components/patients/quick-add-patient-dialog";
-import { PatientFilters } from "@/components/patients/patient-filters";
-import { Search, Plus, Eye, Download } from "lucide-react";
-import Link from "next/link";
-import { toast } from "sonner";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-// Mock data
-const mockPatients = [
-  {
-    id: "1",
-    name: "Nguyễn Văn A",
-    age: 3,
-    gender: "male",
-    phone: "0901234567",
-    address: "Hà Nội",
-    createdAt: "2024-01-15",
-    lastDiagnosis: "2024-01-20",
-    riskLevel: "Cao",
-  },
-  {
-    id: "2",
-    name: "Trần Thị B",
-    age: 1,
-    gender: "female",
-    phone: "0907654321",
-    address: "TP.HCM",
-    createdAt: "2024-01-10",
-    lastDiagnosis: "2024-01-18",
-    riskLevel: "Trung bình",
-  },
-  {
-    id: "3",
-    name: "Lê Văn C",
-    age: 5,
-    gender: "male",
-    phone: "0912345678",
-    address: "Đà Nẵng",
-    createdAt: "2024-01-05",
-    lastDiagnosis: "2024-01-15",
-    riskLevel: "Thấp",
-  },
-];
+import { Search, Loader2, Upload, Download, Settings2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Users } from "lucide-react";
+import { toast } from "sonner";
+import { Patient } from "@/types/patient";
 
 export function PatientList() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [riskFilter, setRiskFilter] = useState<string>("all");
-  const [genderFilter, setGenderFilter] = useState<string>("all");
-  const [ageRangeFilter, setAgeRangeFilter] = useState<string>("all");
+  const dispatch = useDispatch<AppDispatch>();
+  const { patients, isLoading, error, totalElements, totalPages, currentPage, pageSize } = useSelector((state: RootState) => state.patient);
 
-  let filteredPatients = mockPatients.filter(
-    (patient) =>
-      patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone.includes(searchQuery)
-  );
+  const [pagination, setPagination] = useState({
+    pageIndex: currentPage - 1, // table uses 0-based
+    pageSize: pageSize,
+  });
 
-  // Apply filters
-  if (riskFilter !== "all") {
-    filteredPatients = filteredPatients.filter(
-      (p) => p.riskLevel === riskFilter
-    );
-  }
-  if (genderFilter !== "all") {
-    filteredPatients = filteredPatients.filter(
-      (p) => p.gender === genderFilter
-    );
-  }
-  if (ageRangeFilter !== "all") {
-    const [min, max] = ageRangeFilter.includes("+")
-      ? [65, 200]
-      : ageRangeFilter.split("-").map(Number);
-    filteredPatients = filteredPatients.filter(
-      (p) => p.age >= min && (max ? p.age <= max : true)
-    );
-  }
+  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+
+  const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEdit = (patient: Patient) => {
+    setEditingPatient(patient);
+    setShowFormDialog(true);
+  };
+
+  const handleDeleteClick = (patient: Patient) => {
+    setPatientToDelete(patient);
+  };
+
+  const { table, columns, globalFilter, setGlobalFilter } = usePatientTable({
+    data: patients,
+    rowCount: totalElements,
+    pageCount: totalPages,
+    pagination,
+    onPaginationChange: setPagination,
+    onEditClick: handleEdit,
+    onDeleteClick: handleDeleteClick,
+  });
+
+  useEffect(() => {
+    dispatch(fetchPatients({ 
+      page: pagination.pageIndex + 1, 
+      size: pagination.pageSize,
+    }));
+  }, [dispatch, pagination.pageIndex, pagination.pageSize]);
+
+  const handleCreateNew = () => {
+    setEditingPatient(null);
+    setShowFormDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!patientToDelete) return;
+    try {
+      setIsDeleting(true);
+      await dispatch(deletePatientThunk(patientToDelete.id)).unwrap();
+      toast.success(`Đã xóa hồ sơ bệnh nhân ${patientToDelete.fullName}`);
+    } catch (err: unknown) {
+      toast.error(typeof err === "string" ? err : "Không thể xoá bệnh nhân");
+    } finally {
+      setIsDeleting(false);
+      setPatientToDelete(null);
+    }
+  };
 
   const handleExport = () => {
-    // Simulate export
     toast.success("Đang xuất dữ liệu...");
     setTimeout(() => {
       toast.success("Xuất dữ liệu thành công!");
     }, 1000);
   };
 
-  const handleAddSuccess = (patient: { name: string }) => {
-    toast.success(`Đã thêm bệnh nhi: ${patient.name}`);
-    // In real app, refresh patient list
-  };
-
-  const getRiskBadgeVariant = (risk: string) => {
-    switch (risk) {
-      case "Cao":
-        return "destructive";
-      case "Trung bình":
-        return "secondary";
-      case "Thấp":
-        return "default";
-      default:
-        return "outline";
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Quản lý bệnh nhi</h1>
-          <p className="text-muted-foreground">
-            Danh sách và thông tin bệnh nhi
-          </p>
+    <div className="space-y-4 px-2 pb-4">
+      {/* Page Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
+          <Users className="h-6 w-6" />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport}>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Quản lý bệnh nhân</h1>
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Search & Filters (Left) */}
+        <div className="flex items-center gap-2 flex-1 w-full flex-wrap">
+          <div className="relative w-full max-w-[280px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm mã BN, tên..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="pl-9 h-9"
+            />
+          </div>
+        </div>
+
+        {/* Actions (Right) */}
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <Button variant="outline" size="sm" className="h-9 shrink-0 gap-2" onClick={handleExport}>
+            <Upload className="h-4 w-4" />
+            Xuất
+          </Button>
+          <Button variant="outline" size="sm" className="h-9 shrink-0 gap-2">
             <Download className="h-4 w-4" />
-            Xuất dữ liệu
+            Nhập
           </Button>
-          <Button onClick={() => setShowAddDialog(true)}>
-            <Plus className="h-4 w-4" />
-            Thêm bệnh nhi
+          <Button size="sm" className="h-9 shrink-0" onClick={handleCreateNew}>
+            Thêm bệnh nhân
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-9 shrink-0 gap-2 font-normal ml-auto">
+                <Settings2 className="h-4 w-4" />
+                Hiển thị cột
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[150px]">
+              <DropdownMenuLabel>Chọn cột</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllColumns()
+                .filter(
+                  (column) =>
+                    column.accessorFn !== undefined && column.getCanHide()
+                )
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {column.id === "code" && "Mã BN"}
+                      {column.id === "fullName" && "Họ tên"}
+                      {column.id === "age" && "Tuổi"}
+                      {column.id === "gender" && "Giới tính"}
+                      {column.id === "phone" && "Số điện thoại"}
+                      {column.id === "address" && "Địa chỉ"}
+                      {column.id === "STT" && "STT"}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      <PatientFilters
-        riskLevel={riskFilter}
-        gender={genderFilter}
-        ageRange={ageRangeFilter}
-        onRiskLevelChange={setRiskFilter}
-        onGenderChange={setGenderFilter}
-        onAgeRangeChange={setAgeRangeFilter}
-        onClear={() => {
-          setRiskFilter("all");
-          setGenderFilter("all");
-          setAgeRangeFilter("all");
+      {/* Main Table Area */}
+      {isLoading && patients.length === 0 ? (
+        <div className="flex justify-center p-12">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        </div>
+      ) : error && !patients.length ? (
+        <div className="py-8 text-center text-red-500">{error}</div>
+      ) : (
+        <PatientTable table={table} columns={columns} globalFilter={globalFilter} />
+      )}
+
+      {/* Footer / Pagination Controls */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-sm text-gray-500">
+        <div>
+          Tổng cộng: <span className="font-medium text-gray-900">{totalElements}</span> dòng
+        </div>
+        
+        <div className="flex items-center gap-6 flex-wrap justify-center">
+          <div className="flex items-center space-x-2">
+            <p className="font-medium text-gray-900">Số hàng</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value));
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue placeholder={table.getState().pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 50].map((size) => (
+                  <SelectItem key={size} value={`${size}`}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center justify-center font-medium text-gray-900">
+            Trang {table.getState().pagination.pageIndex + 1} trên {table.getPageCount() || 1}
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Trang đầu</span>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Trang trước</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Trang sau</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Trang cuối</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Forms & Dialogs */}
+      <QuickAddPatientDialog
+        open={showFormDialog}
+        onOpenChange={setShowFormDialog}
+        patient={editingPatient}
+        onSuccess={() => {
+          dispatch(fetchPatients({ 
+            page: pagination.pageIndex + 1, 
+            size: pagination.pageSize,
+          }));
         }}
       />
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Danh sách bệnh nhi</CardTitle>
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Tìm kiếm theo tên hoặc SĐT..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Họ tên</TableHead>
-                <TableHead>Tuổi</TableHead>
-                <TableHead>Giới tính</TableHead>
-                <TableHead>Số điện thoại</TableHead>
-                <TableHead>Địa chỉ</TableHead>
-                <TableHead>Chẩn đoán cuối</TableHead>
-                <TableHead>Mức độ rủi ro</TableHead>
-                <TableHead>Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPatients.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8">
-                    Không tìm thấy bệnh nhi
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredPatients.map((patient) => (
-                  <TableRow key={patient.id}>
-                    <TableCell className="font-medium">{patient.name}</TableCell>
-                    <TableCell>{patient.age}</TableCell>
-                    <TableCell>
-                      {patient.gender === "male" ? "Nam" : "Nữ"}
-                    </TableCell>
-                    <TableCell>{patient.phone}</TableCell>
-                    <TableCell>{patient.address}</TableCell>
-                    <TableCell>{patient.lastDiagnosis}</TableCell>
-                    <TableCell>
-                      <Badge variant={getRiskBadgeVariant(patient.riskLevel)}>
-                        {patient.riskLevel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/patients/${patient.id}`}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Delete Dialog */}
+      <Dialog open={!!patientToDelete} onOpenChange={(open) => !open && setPatientToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa hồ sơ</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc chắn muốn xóa bệnh nhân <strong>{patientToDelete?.fullName}</strong>?
+              Hành động này không thể hoàn tác và sẽ cập nhật liên đới các thông tin khác.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setPatientToDelete(null)} disabled={isDeleting}>
+              Hủy
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isDeleting ? "Đang xóa..." : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      <QuickAddPatientDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onSuccess={handleAddSuccess}
-      />
     </div>
   );
 }

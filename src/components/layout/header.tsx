@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Bell, Search } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { logoutThunk } from "@/store/slices/auth-slice";
+import { markOneReadApi, markAllReadApi } from "@/store/slices/notification-slice";
+import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,141 +15,230 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/store/store";
-import { logoutThunk } from "@/store/slices/auth-slice";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { toast } from "sonner";
-import { useBreadcrumb } from "@/hooks/use-breadcrumb";
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from "@/components/ui/popover";
+import { 
+  Bell, 
+  User, 
+  Settings, 
+  LogOut, 
+  Search, 
+  HelpCircle, 
+  CheckCircle2, 
+  AlertTriangle, 
+  Clock,
+  Check
+} from "lucide-react";
+import React from "react";
 
 export function Header() {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const router = useRouter();
-  const breadcrumbs = useBreadcrumb();
+  const { user } = useAppSelector((state) => state.auth);
+  const { items: notifications, unreadCount } = useAppSelector((state) => state.notifications);
 
-  const displayName = "Bác sĩ";
-  const displayEmail = "bacsi@phoinhidong.com";
+  const getTypeFromContent = (content: string) => {
+    if (content.toLowerCase().includes("pneumonia") || content.toLowerCase().includes("nguy cơ cao") || content.toLowerCase().includes("kết quả")) return 'warning';
+    if (content.toLowerCase().includes("tài khoản") || content.toLowerCase().includes("khởi tạo") || content.toLowerCase().includes("thành công")) return 'success';
+    return 'info';
+  };
 
-  const [currentDate, setCurrentDate] = useState("");
+  const getIconForType = (type: string) => {
+    switch(type) {
+      case 'warning': return AlertTriangle;
+      case 'success': return CheckCircle2;
+      default: return Bell;
+    }
+  };
 
-  useEffect(() => {
-    setCurrentDate(
-      new Date().toLocaleDateString("vi-VN", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    );
-  }, []);
+  const getColorForType = (type: string) => {
+    switch(type) {
+      case 'warning': return "text-amber-500 bg-amber-50";
+      case 'success': return "text-emerald-500 bg-emerald-50";
+      default: return "text-blue-500 bg-blue-50";
+    }
+  };
 
   const handleLogout = async () => {
     try {
-      await dispatch(logoutThunk());
-      toast.success("Đăng xuất thành công");
+      await dispatch(logoutThunk()).unwrap();
       router.push("/auth/login");
-    } catch (e) {
-      toast.error("Có lỗi xảy ra khi đăng xuất");
+    } catch (error) {
+      console.error("Logout failed:", error);
     }
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 bg-white px-6 border-b border-gray-200">
-      
-      {/* Breadcrumbs (Left) */}
-      <nav className="flex items-center text-sm font-medium text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">
-        {breadcrumbs.map((crumb, index) => {
-          const isLast = index === breadcrumbs.length - 1;
-          return (
-            <div key={crumb.href} className="flex items-center">
-              {isLast ? (
-                <span className="text-gray-900 line-clamp-1">{crumb.label}</span>
-              ) : (
-                <Link
-                  href={crumb.href}
-                  className="hover:text-gray-900 transition-colors line-clamp-1"
-                >
-                  {crumb.label}
-                </Link>
+    <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b bg-white/80 px-6 backdrop-blur-md">
+      {/* Search Bar (Left) */}
+      <div className="relative w-full max-w-sm hidden md:block group">
+        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+        </div>
+        <input
+          type="text"
+          placeholder="Nhấn Ctrl + K để tìm kiếm nhanh..."
+          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all font-medium cursor-pointer"
+          readOnly
+          onClick={() => {
+             const event = new KeyboardEvent('keydown', {
+               key: 'k',
+               ctrlKey: true,
+               bubbles: true
+             });
+             document.dispatchEvent(event);
+          }}
+        />
+      </div>
+
+      {/* Actions (Right) */}
+      <div className="flex items-center gap-3">
+        {/* Help Center */}
+        <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-full hidden sm:flex">
+          <HelpCircle className="h-5 w-5" />
+        </Button>
+
+        {/* Notifications */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-full">
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
               )}
-              {!isLast && <span className="mx-2 text-gray-400">/</span>}
-            </div>
-          );
-        })}
-      </nav>
-
-      <div className="flex flex-1 items-center justify-end gap-6">
-        {/* Search */}
-        <div className="flex items-center gap-4 max-w-sm hidden md:flex">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Tìm kiếm bệnh nhi..."
-              className="w-full pl-9 bg-gray-50 border-gray-200 focus-visible:ring-blue-500 h-9"
-            />
-          </div>
-        </div>
-
-        {/* Date */}
-        <div className="hidden flex-col items-end text-sm md:flex">
-          <span className="font-medium text-gray-700 capitalize">
-            {currentDate}
-          </span>
-          <span className="text-xs text-gray-500">
-            Phòng khám Phổi Nhi Đồng
-          </span>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative text-gray-600 hover:text-blue-600"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="h-10 w-10 rounded-full border border-gray-200">
-                <Avatar>
-                  <AvatarFallback className="bg-blue-100 text-blue-600">
-                    {displayName.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{displayName}</p>
-                  <p className="text-xs text-gray-500">{displayEmail}</p>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-0 rounded-2xl border-none shadow-2xl overflow-hidden mt-2" align="end">
+             <div className="bg-slate-900 text-white p-4">
+                <div className="flex items-center justify-between">
+                   <h3 className="font-bold text-sm">Thông báo</h3>
+                   <div className="flex items-center gap-2">
+                     {unreadCount > 0 && (
+                       <Badge className="bg-white/10 text-white border-white/20 text-[10px] uppercase tracking-wider">{unreadCount > 99 ? '99+' : `Mới (${unreadCount})`}</Badge>
+                     )}
+                     <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6 text-white/50 hover:text-white hover:bg-white/10 rounded-lg"
+                      onClick={() => dispatch(markAllReadApi())}
+                      title="Đánh dấu tất cả đã đọc"
+                    >
+                        <Check className="h-3.5 w-3.5" />
+                     </Button>
+                   </div>
                 </div>
-              </DropdownMenuLabel>
+             </div>
+             <div className="max-h-[350px] overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                    <p className="text-xs font-medium">Bạn chưa có thông báo nào</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 5).map((notif) => {
+                    const Icon = getIconForType(getTypeFromContent(notif.content));
+                    const colorClasses = getColorForType(getTypeFromContent(notif.content));
+                    return (
+                        <div 
+                          key={notif.id} 
+                          className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-50 flex gap-3 relative ${!notif.isRead ? 'bg-blue-50/20' : ''}`}
+                          onClick={() => dispatch(markOneReadApi(notif.id))}
+                        >
+                           <div className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center ${colorClasses}`}>
+                              <Icon className="h-5 w-5" />
+                           </div>
+                           <div className="space-y-1 flex-1 min-w-0">
+                              <p className={`text-sm leading-tight truncate ${notif.isRead ? 'text-slate-600 font-medium' : 'text-slate-900 font-black'}`}>
+                                {notif.content}
+                              </p>
+                              <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                                 <Clock className="h-2.5 w-2.5" /> {notif.formattedTime}
+                              </span>
+                           </div>
+                           {!notif.isRead && (
+                             <span className="absolute top-4 right-4 h-1.5 w-1.5 rounded-full bg-blue-500" />
+                           )}
+                        </div>
+                    )
+                  })
+                )}
+             </div>
+             <div className="p-3 bg-slate-50 text-center border-t border-slate-100">
+                <Button variant="link" className="text-xs text-blue-600 font-bold p-0" onClick={() => router.push("/notifications")}>Xem tất cả thông báo</Button>
+             </div>
+          </PopoverContent>
+        </Popover>
 
-              <DropdownMenuSeparator />
+        {/* Vertical Divider */}
+        <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
 
-              <DropdownMenuItem>Hồ sơ cá nhân</DropdownMenuItem>
-              <DropdownMenuItem>Cài đặt hệ thống</DropdownMenuItem>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="group flex items-center gap-3 rounded-2xl px-2 py-6 hover:bg-blue-50/50 transition-all border border-transparent hover:border-blue-100 shadow-none"
+            >
+              <div className="flex flex-col items-end text-right hidden sm:flex">
+                <span className="text-sm font-bold text-slate-800 leading-none group-hover:text-blue-700 transition-colors">
+                  {user?.displayName || user?.username || "Bác sĩ"}
+                </span>
+              </div>
+              <Avatar className="h-10 w-10 border-2 border-white shadow-md transition-transform group-hover:scale-105 ring-2 ring-transparent group-hover:ring-blue-400/20">
+                <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
+                  {user?.username?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-64 rounded-2xl p-2 border-none shadow-2xl mt-2 animate-in fade-in zoom-in-95"
+          >
+            <DropdownMenuLabel className="px-3 py-4 flex flex-col items-center gap-2 border-b border-slate-50 mb-1">
+               <Avatar className="h-14 w-14 border shadow-sm">
+                  <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
+                  <AvatarFallback>{user?.username?.substring(0, 2).toUpperCase()}</AvatarFallback>
+               </Avatar>
+               <div className="text-center">
+                  <p className="font-black text-slate-800">{user?.displayName}</p>
+                  <p className="text-xs text-slate-500 font-medium">{user?.email}</p>
+               </div>
+            </DropdownMenuLabel>
+            
+            <DropdownMenuItem
+              className="gap-3 rounded-xl p-3 focus:bg-blue-50 focus:text-blue-700 cursor-pointer transition-colors"
+              onClick={() => router.push("/profile")}
+            >
+              <User className="h-4 w-4" />
+              <span className="font-bold">Hồ sơ cá nhân</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem
+              className="gap-3 rounded-xl p-3 focus:bg-blue-50 focus:text-blue-700 cursor-pointer transition-colors"
+              onClick={() => router.push("/settings")}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="font-bold">Cài đặt hệ thống</span>
+            </DropdownMenuItem>
 
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="text-red-600 focus:bg-red-50 cursor-pointer"
-              >
-                Đăng xuất
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            <DropdownMenuSeparator className="bg-slate-50 mx-2 my-1" />
+            
+            <DropdownMenuItem
+              className="gap-3 rounded-xl p-3 text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer transition-colors"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="font-bold">Đăng xuất</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

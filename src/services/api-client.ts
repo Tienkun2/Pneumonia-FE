@@ -17,9 +17,10 @@ export const apiClient = async (
       : null
 
   const { withAuth = true, ...fetchOptions } = options
+  const isFormData = fetchOptions.body instanceof FormData;
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
+    ...(!isFormData && { "Content-Type": "application/json" }),
     ...(withAuth && token && { Authorization: `Bearer ${token}` }),
     ...(fetchOptions.headers || {})
   }

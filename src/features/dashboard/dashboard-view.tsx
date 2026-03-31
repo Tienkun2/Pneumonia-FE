@@ -13,8 +13,10 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { Users, AlertTriangle, Clock, Activity, UserPlus, FileHeart } from "lucide-react";
-import { DiagnosisCard } from "@/components/medical/diagnosis-card";
+import { Users, AlertTriangle, Clock, Activity, UserPlus, FileHeart, BookOpen, Stethoscope, ArrowLeftRight } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const statsData = [
   {
@@ -68,38 +70,51 @@ const riskDistribution = [
 export function DashboardView() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Tổng quan bệnh án nhi khoa (1-5 tuổi)
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Tổng quan</h1>
+        <div className="flex flex-wrap gap-2">
+           <Link href="/diagnosis">
+              <Button className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2 h-9 px-4">
+                 <Stethoscope className="h-4 w-4" /> <span className="font-medium">Chẩn đoán mới</span>
+              </Button>
+           </Link>
+           <Link href="/patients">
+              <Button variant="outline" className="rounded-lg border-slate-200 shadow-sm flex items-center gap-2 h-9 px-4">
+                 <UserPlus className="h-4 w-4 text-slate-500" /> <span className="font-medium">Thêm bệnh nhân</span>
+              </Button>
+           </Link>
+           <Link href="/comparison">
+              <Button variant="outline" className="rounded-lg border-slate-200 shadow-sm flex items-center gap-2 h-9 px-4 hidden sm:flex">
+                 <ArrowLeftRight className="h-4 w-4 text-slate-500" /> <span className="font-medium">So sánh</span>
+              </Button>
+           </Link>
+           <Link href="/knowledge">
+              <Button variant="outline" className="rounded-lg border-slate-200 shadow-sm flex items-center gap-2 h-9 px-4 hidden sm:flex">
+                 <BookOpen className="h-4 w-4 text-slate-500" /> <span className="font-medium">Thư viện</span>
+              </Button>
+           </Link>
+        </div>
       </div>
 
-      {/* Stats Cards - Premium Styling */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {statsData.map((stat, index) => {
+      {/* Stats Cards - Compact Styling */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statsData.map((stat) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.title} className="overflow-hidden border-none shadow-md hover:shadow-lg transition-all duration-200">
-              <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[hsl(var(--primary))] to-transparent opacity-50" />
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+            <Card key={stat.title} className="overflow-hidden border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-slate-50/50">
+                <CardTitle className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-lg ${stat.bg || "bg-primary/10"}`}>
-                  <Icon className={`h-4 w-4 ${stat.color || "text-primary"}`} />
-                </div>
+                <Icon className={`h-4 w-4 ${stat.color || "text-slate-400"}`} />
               </CardHeader>
-              <CardContent>
-                <div className="flex items-baseline space-x-2">
-                  <div className="text-3xl font-bold tracking-tight">{stat.value}</div>
-                  <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+              <CardContent className="pt-4">
+                <div className="flex items-baseline justify-between">
+                  <div className="text-2xl font-bold tracking-tight text-slate-800">{stat.value}</div>
+                  <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
                     {stat.change}
                   </span>
                 </div>
-                {stat.description && (
-                  <p className="text-xs text-muted-foreground mt-2">{stat.description}</p>
-                )}
               </CardContent>
             </Card>
           );
@@ -116,7 +131,7 @@ export function DashboardView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={240}>
               <AreaChart data={patientsPerDay}>
                 <defs>
                   <linearGradient id="colorPatients" x1="0" y1="0" x2="0" y2="1">
@@ -152,7 +167,7 @@ export function DashboardView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={320}>
+            <ResponsiveContainer width="100%" height={240}>
               <BarChart data={riskDistribution} barSize={60}>
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} vertical={false} />
                 <XAxis dataKey="risk" axisLine={false} tickLine={false} tickMargin={10} fontSize={12} />
@@ -162,8 +177,8 @@ export function DashboardView() {
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                  {riskDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  {riskDistribution.map((entry) => (
+                    <Cell key={entry.risk} fill={entry.color} />
                   ))}
                 </Bar>
               </BarChart>
@@ -172,54 +187,7 @@ export function DashboardView() {
         </Card>
       </div>
 
-      {/* Recent Diagnoses */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Chẩn đoán gần đây</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                id: "d001",
-                patientName: "Nguyễn Văn A",
-                date: new Date().toISOString(),
-                overallRisk: 85,
-                riskLevel: "Cao" as const,
-                imageRisk: 88,
-                clinicalRisk: 82,
-                findings: "Phát hiện dấu hiệu viêm phổi ở thùy dưới phổi phải",
-              },
-              {
-                id: "d002",
-                patientName: "Trần Thị B",
-                date: new Date(Date.now() - 12 * 60000).toISOString(),
-                overallRisk: 45,
-                riskLevel: "Trung bình" as const,
-                imageRisk: 40,
-                clinicalRisk: 50,
-                findings: "Dấu hiệu nhẹ, cần theo dõi thêm",
-              },
-              {
-                id: "d003",
-                patientName: "Lê Văn C",
-                date: new Date(Date.now() - 18 * 60000).toISOString(),
-                overallRisk: 25,
-                riskLevel: "Thấp" as const,
-                imageRisk: 20,
-                clinicalRisk: 30,
-                findings: "Không phát hiện dấu hiệu bất thường",
-              },
-            ].map((diagnosis) => (
-              <DiagnosisCard
-                key={diagnosis.id}
-                {...diagnosis}
-                compact={true}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 }

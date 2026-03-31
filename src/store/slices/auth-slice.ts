@@ -1,12 +1,15 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { AuthState, LoginRequest, LoginResponse } from "@/types/auth"
 import { AuthService } from "@/services/auth-service"
+import { UserService } from "@/services/user-service"
+import { User } from "@/types/user"
 
 const initialState: AuthState = {
   token: null,
   isAuthenticated: false,
   isLoading: false,
-  error: null
+  error: null,
+  user: null
 }
 
 export const login = createAsyncThunk<
@@ -56,6 +59,20 @@ export const logoutThunk = createAsyncThunk(
     dispatch(logout())
   }
 )
+
+export const fetchMyInfo = createAsyncThunk<
+  User,
+  void,
+  { rejectValue: string }
+>("auth/fetchMyInfo", async (_, { rejectWithValue }) => {
+  try {
+    return await UserService.getMyInfo()
+  } catch (error: unknown) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Không thể lấy thông tin người dùng"
+    )
+  }
+})
 
 const authSlice = createSlice({
   name: "auth",
@@ -121,6 +138,18 @@ const authSlice = createSlice({
           action.payload || action.error.message || "Kích hoạt thất bại"
       })
       .addCase(logoutThunk.fulfilled, (state) => {
+      })
+      .addCase(fetchMyInfo.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(fetchMyInfo.fulfilled, (state, action) => {
+        state.isLoading = false
+        state.user = action.payload
+      })
+      .addCase(fetchMyInfo.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload || "Lỗi tải thông tin cá nhân"
       })
   }
 })

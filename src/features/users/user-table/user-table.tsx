@@ -17,14 +17,14 @@ interface UserTableProps {
 
 export function UserTable({ table, columns, globalFilter }: UserTableProps) {
   return (
-    <div className="rounded-md border bg-white overflow-hidden shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50/80">
+        <TableHeader className="bg-slate-50/80 border-b border-slate-200">
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="hover:bg-transparent">
+            <TableRow key={headerGroup.id} className="hover:bg-transparent border-none">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className="text-gray-900 font-medium py-4 whitespace-nowrap text-sm">
+                  <TableHead key={header.id} className="text-slate-700 py-3 whitespace-nowrap align-middle">
                     {header.isPlaceholder ? null : (
                       <div className={`flex items-center ${header.id === "actions" ? "justify-end" : "justify-start"}`}>
                         {flexRender(
@@ -45,10 +45,10 @@ export function UserTable({ table, columns, globalFilter }: UserTableProps) {
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
-                className="hover:bg-gray-50/50 transition-colors border-b-gray-100"
+                className="hover:bg-slate-50/60 transition-colors border-b-slate-100"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-4 text-gray-600">
+                  <TableCell key={cell.id} className="py-4 text-slate-600 font-medium text-sm align-middle">
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext()

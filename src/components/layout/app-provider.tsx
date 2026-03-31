@@ -6,14 +6,20 @@ import { Toaster } from "sonner";
 import { MainLayout } from "@/components/layout/main-layout";
 import { usePathname } from "next/navigation";
 
-export function AppProvider({ children }: { children: React.ReactNode }) {
+import { AuthInitializer } from "@/components/layout/auth-initializer";
+import { CommandPalette } from "@/components/layout/command-palette";
+
+export function AppProvider({ children }: { readonly children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname?.startsWith("/auth");
 
   return (
     <Provider store={store}>
-      {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
-      <Toaster position="top-center" richColors />
+      <AuthInitializer>
+        {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
+        <Toaster position="top-center" richColors />
+        {!isAuthPage && <CommandPalette />}
+      </AuthInitializer>
     </Provider>
   );
 }

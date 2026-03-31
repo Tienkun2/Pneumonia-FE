@@ -4,6 +4,8 @@ import patientReducer from "./slices/patientSlice";
 import authReducer from "./slices/auth-slice";
 import userReducer from "./slices/userSlice";
 import roleReducer from "./slices/roleSlice";
+import visitReducer from "./slices/visitSlice";
+import notificationReducer from "./slices/notification-slice";
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +13,9 @@ export const store = configureStore({
     patient: patientReducer,
     auth: authReducer,
     user: userReducer,
-    role: roleReducer
+    role: roleReducer,
+    visit: visitReducer,
+    notifications: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

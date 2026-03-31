@@ -44,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
-import { Search, Loader2, Upload, Download, Settings2, PlusCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, CalendarIcon } from "lucide-react";
+import { Search, Loader2, Upload, Download, Settings2, PlusCircle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X, CalendarIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 import { USER_STATUS, USER_STATUS_OPTIONS } from "@/constants/user";
 import { DateRange } from "react-day-picker";
@@ -167,7 +167,12 @@ export function UserListingContent() {
   return (
     <div className="space-y-4 px-2 pb-4">
       {/* Page Header is theoretically outside, but if we have local header we can put it here */}
-      <h1 className="text-2xl font-bold mb-6">Danh sách người dùng</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
+          <Users className="h-6 w-6" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Danh sách người dùng</h1>
+      </div>
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

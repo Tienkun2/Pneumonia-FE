@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   UserCog,
+  ArrowLeftRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -23,6 +24,7 @@ const menuItems = [
   { title: "Tài khoản", href: "/users", icon: UserCog },
   { title: "Chẩn đoán", href: "/diagnosis", icon: Stethoscope },
   { title: "Kết quả", href: "/results", icon: FileText },
+  { title: "So sánh tiến triển", href: "/comparison", icon: ArrowLeftRight },
   { title: "Kiến thức y khoa", href: "/knowledge", icon: BookOpen },
   { title: "Cài đặt", href: "/settings", icon: Settings },
 ];

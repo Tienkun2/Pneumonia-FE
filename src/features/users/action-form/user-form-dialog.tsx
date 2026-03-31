@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
+import { PhoneInput } from "@/components/ui/phone-input";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-
 interface UserFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,8 +38,6 @@ interface UserFormDialogProps {
 export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly<UserFormDialogProps>) {
   const dispatch = useDispatch<AppDispatch>();
   const [isSaving, setIsSaving] = useState(false);
-  
-
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
@@ -78,14 +76,12 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
     setIsSaving(true);
     try {
       if (user && user.id) {
-          // Update User
           const payload: UpdateUserPayload = {
             username: data.username,
             displayName: data.displayName || undefined,
             dob: data.dob || undefined,
             email: data.email || undefined,
             phoneNumber: data.phoneNumber || undefined,
-            // Keep existing values untampered since this form doesn't handle them
             status: user.status,
             roles: user.roles?.map(r => r.name) || [],
           };
@@ -93,13 +89,10 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
           await dispatch(updateUserThunk({ id: user.id, payload })).unwrap();
           toast.success("Cập nhật tài khoản thành công!");
       } else {
-          // Create User
           const payload: CreateUserPayload = {
             username: data.username,
             email: data.email || "",
           };
-          // Cannot pass roles on create right now based on provided JSON layout, 
-          // but if needed we could chain edit or modify Create payload if API supports it later.
           await dispatch(createUser(payload)).unwrap();
           toast.success("Thêm mới tài khoản thành công!");
       }
@@ -136,84 +129,66 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
               )}
             />
 
-            {!user && (
-               <FormField
-                 control={form.control}
-                 name="email"
-                 render={({ field }) => (
-                   <FormItem>
-                     <FormLabel>Email</FormLabel>
-                     <FormControl>
-                       <Input placeholder="email@example.com" type="email" {...field} />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>
-                 )}
-               />
-            )}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="email@example.com" type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {user && (
-               <FormField
-                 control={form.control}
-                 name="email"
-                 render={({ field }) => (
-                   <FormItem>
-                     <FormLabel>Email</FormLabel>
-                     <FormControl>
-                       <Input placeholder="email@example.com" type="email" {...field} />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>
-                 )}
-               />
-            )}
+              <>
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Họ và tên</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nhập họ và tên..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {user && (
-               <FormField
-                 control={form.control}
-                 name="displayName"
-                 render={({ field }) => (
-                   <FormItem>
-                     <FormLabel>Họ và tên</FormLabel>
-                     <FormControl>
-                       <Input placeholder="Nhập họ và tên..." {...field} />
-                     </FormControl>
-                     <FormMessage />
-                   </FormItem>
-                 )}
-               />
-            )}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="dob"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ngày sinh</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {user && (
-              <div className="grid grid-cols-2 gap-4">
-                 <FormField
-                   control={form.control}
-                   name="dob"
-                   render={({ field }) => (
-                     <FormItem>
-                       <FormLabel>Ngày sinh</FormLabel>
-                       <FormControl>
-                         <Input type="date" {...field} />
-                       </FormControl>
-                       <FormMessage />
-                     </FormItem>
-                   )}
-                 />
-
-                 <FormField
-                   control={form.control}
-                   name="phoneNumber"
-                   render={({ field }) => (
-                     <FormItem>
-                       <FormLabel>Số điện thoại</FormLabel>
-                       <FormControl>
-                         <Input placeholder="Nhập SĐT..." {...field} />
-                       </FormControl>
-                       <FormMessage />
-                     </FormItem>
-                   )}
-                 />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Số điện thoại</FormLabel>
+                        <FormControl>
+                          <PhoneInput placeholder="Nhập SĐT..." {...field} defaultCountry="VN" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
             )}
 
             <div className="flex justify-end gap-3 pt-4">

@@ -17,6 +17,7 @@ export interface User {
   phoneNumber?: string;
   dob?: string;
   status?: string;
+  avatar?: string;
   createdAt?: string;
   roles: Role[];
 }

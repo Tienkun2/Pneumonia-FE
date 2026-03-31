@@ -61,4 +61,46 @@ export const UserService = {
 
     return true;
   },
+
+  async getMyInfo(): Promise<User> {
+    const res = await apiClient("/users/my-info", {
+      method: "GET",
+    });
+
+    const data: ApiResponse<User> = await res.json();
+    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+      throw new Error(data.message || "Failed to fetch my info");
+    }
+
+    return data.result;
+  },
+
+  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
+    const res = await apiClient("/users/change-password", {
+      method: "POST",
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+
+    const data: ApiResponse<unknown> = await res.json();
+    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+      throw new Error(data.message || "Failed to change password");
+    }
+  },
+
+  async uploadAvatar(file: File): Promise<User> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await apiClient("/users/upload-avatar", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data: ApiResponse<User> = await res.json();
+    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+      throw new Error(data.message || "Failed to upload avatar");
+    }
+
+    return data.result;
+  },
 };
