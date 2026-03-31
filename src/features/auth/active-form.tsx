@@ -47,7 +47,7 @@ export default function ActivateForm() {
       </div>
 
       {/* Form Card */}
-      <div className="bg-white/50 p-8 rounded-2xl shadow-xl border">
+      <div className="bg-card p-8 rounded-2xl shadow-xl border border-border">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -68,9 +68,9 @@ export default function ActivateForm() {
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className={`pl-10 pr-10 h-11 ${
+                        className={`pl-10 pr-10 h-11 bg-muted/50 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all ${
                           form.formState.errors.password
-                            ? "border-red-500 focus-visible:ring-red-500"
+                            ? "border-destructive focus-visible:ring-destructive"
                             : ""
                         }`}
                         {...field}
@@ -112,9 +112,9 @@ export default function ActivateForm() {
                       <Input
                         type={showConfirm ? "text" : "password"}
                         placeholder="••••••••"
-                        className={`pl-10 pr-10 h-11 ${
+                        className={`pl-10 pr-10 h-11 bg-muted/50 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all ${
                           form.formState.errors.confirmPassword
-                            ? "border-red-500 focus-visible:ring-red-500"
+                            ? "border-destructive focus-visible:ring-destructive"
                             : ""
                         }`}
                         {...field}

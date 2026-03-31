@@ -32,7 +32,6 @@ import {
   Clock,
   Check
 } from "lucide-react";
-import React from "react";
 
 export function Header() {
   const dispatch = useAppDispatch();
@@ -56,9 +55,9 @@ export function Header() {
 
   const getColorForType = (type: string) => {
     switch(type) {
-      case 'warning': return "text-amber-500 bg-amber-50";
-      case 'success': return "text-emerald-500 bg-emerald-50";
-      default: return "text-blue-500 bg-blue-50";
+      case 'warning': return "text-amber-500 bg-amber-500/10";
+      case 'success': return "text-emerald-500 bg-emerald-500/10";
+      default: return "text-primary bg-primary/10";
     }
   };
 
@@ -72,16 +71,16 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b bg-white/80 px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md">
       {/* Search Bar (Left) */}
       <div className="relative w-full max-w-sm hidden md:block group">
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+          <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
         </div>
         <input
           type="text"
           placeholder="Nhấn Ctrl + K để tìm kiếm nhanh..."
-          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all font-medium cursor-pointer"
+          className="h-10 w-full rounded-xl border border-input bg-muted/50 pl-10 pr-4 text-sm focus:border-primary focus:bg-background focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium cursor-pointer"
           readOnly
           onClick={() => {
              const event = new KeyboardEvent('keydown', {
@@ -97,14 +96,14 @@ export function Header() {
       {/* Actions (Right) */}
       <div className="flex items-center gap-3">
         {/* Help Center */}
-        <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-full hidden sm:flex">
+        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full hidden sm:flex">
           <HelpCircle className="h-5 w-5" />
         </Button>
 
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-full">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
@@ -114,8 +113,8 @@ export function Header() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0 rounded-2xl border-none shadow-2xl overflow-hidden mt-2" align="end">
-             <div className="bg-slate-900 text-white p-4">
+          <PopoverContent className="w-80 p-0 rounded-2xl border border-border bg-card shadow-2xl overflow-hidden mt-2" align="end">
+             <div className="bg-primary text-primary-foreground p-4">
                 <div className="flex items-center justify-between">
                    <h3 className="font-bold text-sm">Thông báo</h3>
                    <div className="flex items-center gap-2">
@@ -136,7 +135,7 @@ export function Header() {
              </div>
              <div className="max-h-[350px] overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-slate-400">
+                  <div className="p-8 text-center text-muted-foreground/50">
                     <Bell className="h-8 w-8 mx-auto mb-2 opacity-20" />
                     <p className="text-xs font-medium">Bạn chưa có thông báo nào</p>
                   </div>
@@ -147,49 +146,49 @@ export function Header() {
                     return (
                         <div 
                           key={notif.id} 
-                          className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer border-b border-slate-50 flex gap-3 relative ${!notif.isRead ? 'bg-blue-50/20' : ''}`}
+                          className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer border-b border-border flex gap-3 relative ${!notif.isRead ? 'bg-primary/5' : ''}`}
                           onClick={() => dispatch(markOneReadApi(notif.id))}
                         >
                            <div className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center ${colorClasses}`}>
                               <Icon className="h-5 w-5" />
                            </div>
                            <div className="space-y-1 flex-1 min-w-0">
-                              <p className={`text-sm leading-tight truncate ${notif.isRead ? 'text-slate-600 font-medium' : 'text-slate-900 font-black'}`}>
+                              <p className={`text-sm leading-tight truncate ${notif.isRead ? 'text-muted-foreground font-medium' : 'text-foreground font-black'}`}>
                                 {notif.content}
                               </p>
-                              <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                  <Clock className="h-2.5 w-2.5" /> {notif.formattedTime}
                               </span>
                            </div>
                            {!notif.isRead && (
-                             <span className="absolute top-4 right-4 h-1.5 w-1.5 rounded-full bg-blue-500" />
+                             <span className="absolute top-4 right-4 h-1.5 w-1.5 rounded-full bg-primary" />
                            )}
                         </div>
                     )
                   })
                 )}
              </div>
-             <div className="p-3 bg-slate-50 text-center border-t border-slate-100">
-                <Button variant="link" className="text-xs text-blue-600 font-bold p-0" onClick={() => router.push("/notifications")}>Xem tất cả thông báo</Button>
-             </div>
+              <div className="p-3 bg-muted/50 text-center border-t border-border">
+                 <Button variant="link" className="text-xs text-primary font-bold p-0" onClick={() => router.push("/notifications")}>Xem tất cả thông báo</Button>
+              </div>
           </PopoverContent>
         </Popover>
 
         {/* Vertical Divider */}
-        <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+        <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="group flex items-center gap-3 rounded-2xl px-2 py-6 hover:bg-blue-50/50 transition-all border border-transparent hover:border-blue-100 shadow-none"
+              className="group flex items-center gap-3 rounded-2xl px-2 py-6 hover:bg-primary/5 transition-all border border-transparent hover:border-border shadow-none"
             >
               <div className="flex flex-col items-end text-right hidden sm:flex">
-                <span className="text-sm font-bold text-slate-800 leading-none group-hover:text-blue-700 transition-colors">
+                <span className="text-sm font-bold text-foreground leading-none group-hover:text-primary transition-colors">
                   {user?.displayName || user?.username || "Bác sĩ"}
                 </span>
               </div>
-              <Avatar className="h-10 w-10 border-2 border-white shadow-md transition-transform group-hover:scale-105 ring-2 ring-transparent group-hover:ring-blue-400/20">
+              <Avatar className="h-10 w-10 border-2 border-background shadow-md transition-transform group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/20">
                 <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
                   {user?.username?.substring(0, 2).toUpperCase()}
@@ -199,21 +198,21 @@ export function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-64 rounded-2xl p-2 border-none shadow-2xl mt-2 animate-in fade-in zoom-in-95"
+            className="w-64 rounded-2xl p-2 border border-border bg-card shadow-2xl mt-2 animate-in fade-in zoom-in-95"
           >
-            <DropdownMenuLabel className="px-3 py-4 flex flex-col items-center gap-2 border-b border-slate-50 mb-1">
+            <DropdownMenuLabel className="px-3 py-4 flex flex-col items-center gap-2 border-b border-border mb-1">
                <Avatar className="h-14 w-14 border shadow-sm">
                   <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
                   <AvatarFallback>{user?.username?.substring(0, 2).toUpperCase()}</AvatarFallback>
                </Avatar>
                <div className="text-center">
-                  <p className="font-black text-slate-800">{user?.displayName}</p>
-                  <p className="text-xs text-slate-500 font-medium">{user?.email}</p>
+                  <p className="font-black text-foreground">{user?.displayName}</p>
+                  <p className="text-xs text-muted-foreground font-medium">{user?.email}</p>
                </div>
             </DropdownMenuLabel>
             
             <DropdownMenuItem
-              className="gap-3 rounded-xl p-3 focus:bg-blue-50 focus:text-blue-700 cursor-pointer transition-colors"
+              className="gap-3 rounded-xl p-3 focus:bg-primary/10 focus:text-primary cursor-pointer transition-colors"
               onClick={() => router.push("/profile")}
             >
               <User className="h-4 w-4" />
@@ -221,14 +220,14 @@ export function Header() {
             </DropdownMenuItem>
             
             <DropdownMenuItem
-              className="gap-3 rounded-xl p-3 focus:bg-blue-50 focus:text-blue-700 cursor-pointer transition-colors"
+              className="gap-3 rounded-xl p-3 focus:bg-primary/10 focus:text-primary cursor-pointer transition-colors"
               onClick={() => router.push("/settings")}
             >
               <Settings className="h-4 w-4" />
               <span className="font-bold">Cài đặt hệ thống</span>
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator className="bg-slate-50 mx-2 my-1" />
+            <DropdownMenuSeparator className="bg-border mx-2 my-1" />
             
             <DropdownMenuItem
               className="gap-3 rounded-xl p-3 text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer transition-colors"

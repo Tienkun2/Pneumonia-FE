@@ -134,10 +134,12 @@ export function ProfileView() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
-      {/* Header Profile Section - Glassmorphism */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 p-8 text-white shadow-2xl transition-all hover:shadow-[0_20px_50px_rgba(8,_112,_184,_0.7)]">
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-cyan-400/20 blur-3xl" />
+      {/* Header Profile Section - Clinical Premium Style */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900 dark:bg-slate-950 p-8 text-white shadow-2xl transition-all">
+        {/* Subtle Decorative Elements */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-40" />
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         
         <div className="relative flex flex-col items-center gap-6 md:flex-row">
           <div className="group relative">
@@ -162,7 +164,7 @@ export function ProfileView() {
 
             <label 
               htmlFor="avatar-upload" 
-              className={`absolute bottom-0 right-0 rounded-full bg-white p-2 text-primary shadow-lg ring-2 ring-blue-500 cursor-pointer hover:bg-slate-100 transition-all active:scale-90 ${isUploadingAvatar ? 'opacity-50 pointer-events-none' : ''}`}
+              className={`absolute bottom-0 right-0 rounded-full bg-background p-2 text-primary shadow-lg ring-2 ring-primary cursor-pointer hover:bg-muted transition-all active:scale-90 ${isUploadingAvatar ? 'opacity-50 pointer-events-none' : ''}`}
             >
               <Camera className="h-5 w-5" />
               <input 
@@ -196,16 +198,16 @@ export function ProfileView() {
 
       {/* Main Content Sections - Tabs */}
       <Tabs defaultValue="general" className="w-full max-w-3xl mx-auto">
-        <TabsList className="grid w-full grid-cols-2 h-12 bg-slate-100/80 p-1 mb-6 rounded-xl">
+        <TabsList className="grid w-full grid-cols-2 h-12 bg-muted p-1 mb-6 rounded-xl border border-border">
           <TabsTrigger 
             value="general" 
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md transition-all gap-2"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all gap-2 font-bold"
           >
             <User className="h-4 w-4" /> Thông tin chung
           </TabsTrigger>
           <TabsTrigger 
             value="security" 
-            className="rounded-lg data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-md transition-all gap-2"
+            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all gap-2 font-bold"
           >
             <Shield className="h-4 w-4" /> Bảo mật & Tài khoản
           </TabsTrigger>
@@ -213,40 +215,40 @@ export function ProfileView() {
 
         <div className="space-y-8">
             <TabsContent value="general">
-              <Card className="border-none shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-6">
-                  <CardTitle className="text-xl font-bold text-slate-800">Cập nhật hồ sơ</CardTitle>
+              <Card className="border border-border shadow-xl rounded-2xl overflow-hidden bg-card">
+                <CardHeader className="bg-muted/30 border-b border-border pb-6">
+                  <CardTitle className="text-xl font-bold text-foreground">Cập nhật hồ sơ</CardTitle>
                   <CardDescription>Thay đổi thông tin liên lạc và hiển thị của bạn</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8">
                   <form onSubmit={handleUpdateProfile} className="space-y-6">
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="displayName" className="text-sm font-semibold flex items-center gap-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" /> Tên hiển thị
+                        <Label htmlFor="displayName" className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary/70" /> Tên hiển thị
                         </Label>
                         <Input
                           id="displayName"
                           placeholder="Nguyễn Văn A"
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
-                          className="h-11 rounded-lg border-slate-200 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                          className="h-11 rounded-lg border-border focus:ring-primary focus:border-primary transition-all bg-background"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2">
-                          <Mail className="h-3.5 w-3.5 text-blue-500" /> Email
+                        <Label htmlFor="email" className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5 text-primary/70" /> Email
                         </Label>
                         <Input
                           id="email"
                           disabled
                           value={user.email || "Chưa cập nhật"}
-                          className="h-11 rounded-lg bg-slate-50 border-slate-100 text-slate-400 italic"
+                          className="h-11 rounded-lg bg-muted/50 border-border text-muted-foreground italic"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone" className="text-sm font-semibold flex items-center gap-2">
-                          <Phone className="h-3.5 w-3.5 text-blue-500" /> Số điện thoại
+                        <Label htmlFor="phone" className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5 text-primary/70" /> Số điện thoại
                         </Label>
                         <PhoneInput
                           id="phone"
@@ -256,24 +258,24 @@ export function ProfileView() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="dob" className="text-sm font-semibold flex items-center gap-2">
-                          <Calendar className="h-3.5 w-3.5 text-blue-500" /> Ngày sinh
+                        <Label htmlFor="dob" className="text-sm font-semibold flex items-center gap-2 text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5 text-primary/70" /> Ngày sinh
                         </Label>
                         <Input
                           id="dob"
                           type="date"
                           value={dob}
                           onChange={(e) => setDob(e.target.value)}
-                          className="h-11 rounded-lg border-slate-200 focus:ring-blue-500"
+                          className="h-11 rounded-lg border-border focus:ring-primary bg-background"
                         />
                       </div>
                     </div>
                     
-                    <div className="flex justify-end pt-4 border-t border-slate-50">
+                    <div className="flex justify-end pt-4 border-t border-border">
                       <Button 
                         type="submit" 
                         disabled={isUpdating}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 h-11 px-8 rounded-xl shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
                       >
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isUpdating ? "Đang lưu..." : "Lưu thay đổi"}
@@ -285,13 +287,13 @@ export function ProfileView() {
             </TabsContent>
 
             <TabsContent value="security">
-              <Card className="border-none shadow-xl rounded-2xl overflow-hidden">
-                <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-6">
-                  <CardTitle className="text-xl font-bold text-slate-800">Đổi mật khẩu</CardTitle>
+              <Card className="border border-border shadow-xl rounded-2xl overflow-hidden bg-card">
+                <CardHeader className="bg-muted/30 border-b border-border pb-6">
+                  <CardTitle className="text-xl font-bold text-foreground">Đổi mật khẩu</CardTitle>
                   <CardDescription>Bảo mật tài khoản của bạn bằng mật khẩu mạnh</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-8 space-y-6">
-                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl flex gap-3 text-blue-700 text-sm">
+                  <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl flex gap-3 text-primary text-sm">
                     <AlertCircle className="h-5 w-5 shrink-0" />
                     <p>Mật khẩu mới phải dài ít nhất 6 ký tự và bao gồm các chữ cái, con số hoặc biểu tượng để đảm bảo an toàn.</p>
                   </div>
@@ -299,43 +301,43 @@ export function ProfileView() {
                   <form onSubmit={handleChangePassword} className="space-y-6">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="oldPass" className="font-semibold text-slate-700">Mật khẩu hiện tại</Label>
+                        <Label htmlFor="oldPass" className="font-semibold text-foreground">Mật khẩu hiện tại</Label>
                         <Input
                           id="oldPass"
                           type="password"
                           value={oldPassword}
                           onChange={(e) => setOldPassword(e.target.value)}
-                          className="h-11 rounded-lg"
+                          className="h-11 rounded-lg bg-background border-border"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="newPass" className="font-semibold text-slate-700">Mật khẩu mới</Label>
+                        <Label htmlFor="newPass" className="font-semibold text-foreground">Mật khẩu mới</Label>
                         <Input
                           id="newPass"
                           type="password"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="h-11 rounded-lg"
+                          className="h-11 rounded-lg bg-background border-border"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPass" className="font-semibold text-slate-700">Xác nhận mật khẩu</Label>
+                        <Label htmlFor="confirmPass" className="font-semibold text-foreground">Xác nhận mật khẩu</Label>
                         <Input
                           id="confirmPass"
                           type="password"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="h-11 rounded-lg"
+                          className="h-11 rounded-lg bg-background border-border"
                         />
                       </div>
                     </div>
                     
-                    <div className="flex justify-end pt-4 border-t border-slate-50">
+                    <div className="flex justify-end pt-4 border-t border-border">
                       <Button 
                         type="submit" 
                         disabled={isChangingPass}
                         variant="destructive"
-                        className="h-11 px-8 rounded-xl shadow-lg shadow-red-500/10 transition-all"
+                        className="h-11 px-8 rounded-xl shadow-lg shadow-destructive/20 transition-all"
                       >
                         {isChangingPass && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         {isChangingPass ? "Đang xử lý..." : "Đổi mật khẩu"}

@@ -10,13 +10,13 @@ export function MainLayout({ children }: { readonly children: React.ReactNode })
   const breadcrumbs = useBreadcrumb();
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-background text-foreground flex transition-colors duration-300">
       <Sidebar />
-      <div className="lg:ml-64 flex flex-col min-h-screen transition-all">
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
         <Header />
         
         {/* Breadcrumbs Navigation - Premium Underline Style */}
-        <nav className="flex items-center px-8 py-4 overflow-x-auto whitespace-nowrap bg-white/40 backdrop-blur-sm border-b border-slate-100">
+        <nav className="flex items-center px-8 py-4 overflow-x-auto whitespace-nowrap bg-background/50 backdrop-blur-md border-b border-border shadow-sm">
            <ol className="flex items-center gap-2">
               {breadcrumbs.map((item, index) => {
                  const isLast = index === breadcrumbs.length - 1;
@@ -24,10 +24,10 @@ export function MainLayout({ children }: { readonly children: React.ReactNode })
 
                  return (
                     <li key={item.href} className="flex items-center gap-2">
-                       {index > 0 && <ChevronRight className="h-3.5 w-3.5 text-slate-400" />}
+                       {index > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />}
                        <Link 
                          href={item.href}
-                         className={`text-sm font-bold transition-all flex items-center gap-1.5 ${isLast ? "text-blue-600 pointer-events-none" : "text-slate-500 hover:text-blue-500"}`}
+                         className={`text-sm font-semibold transition-all flex items-center gap-1.5 ${isLast ? "text-primary pointer-events-none" : "text-muted-foreground hover:text-primary hover:scale-[1.02]"}`}
                        >
                           {isHome && <Home className="h-3.5 w-3.5" />}
                           {item.label}

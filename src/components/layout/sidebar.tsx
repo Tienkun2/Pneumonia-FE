@@ -48,24 +48,24 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen w-64 transition-transform lg:translate-x-0",
+          "fixed left-0 top-0 z-40 h-screen w-64 transition-all lg:translate-x-0 border-r border-transparent dark:border-border shadow-2xl",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          "bg-blue-600 text-white"
+          "bg-sidebar text-sidebar-foreground"
         )}
       >
         <div className="flex h-full flex-col">
 
           {/* Header */}
-          <div className="flex h-20 items-center px-6 border-b border-blue-500">
+          <div className="flex h-20 items-center px-6 border-b border-blue-500/50 dark:border-slate-800">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center">
-                <Stethoscope className="h-5 w-5 text-blue-600" />
+              <div className="h-9 w-9 rounded-lg bg-white/10 dark:bg-primary/20 flex items-center justify-center">
+                <Stethoscope className="h-5 w-5 text-white dark:text-primary" />
               </div>
               <div>
-                <h2 className="text-base font-semibold text-white">
+                <h2 className="text-base font-semibold text-sidebar-foreground">
                   Phổi Nhi Đồng
                 </h2>
-                <span className="text-xs text-blue-100">
+                <span className="text-xs text-sidebar-foreground/70">
                   1 - 5 Tuổi
                 </span>
               </div>
@@ -84,10 +84,10 @@ export function Sidebar() {
                   href={item.href}
                   onClick={() => setIsOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors relative",
+                    "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all relative",
                     isActive
-                      ? "bg-white text-blue-600 shadow-sm"
-                      : "text-blue-100 hover:bg-blue-500 hover:text-white"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground transition-all"
                   )}
                 >
                   {isActive && (
@@ -97,7 +97,7 @@ export function Sidebar() {
                   <Icon
                     className={cn(
                       "h-5 w-5",
-                      isActive ? "text-blue-600" : "text-blue-200"
+                      isActive ? "text-primary-foreground" : "text-sidebar-foreground/60"
                     )}
                   />
 
@@ -108,14 +108,14 @@ export function Sidebar() {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-blue-500">
-            <div className="bg-blue-500/30 rounded-lg p-4">
-              <p className="text-xs text-blue-100 mb-2">
+          <div className="p-4 border-t border-border/20">
+            <div className="bg-white/10 rounded-lg p-4">
+              <p className="text-xs text-sidebar-foreground/60 mb-2">
                 Trạng thái hệ thống
               </p>
               <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs font-medium text-white">
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-xs font-medium text-sidebar-foreground">
                   Đang hoạt động
                 </span>
               </div>

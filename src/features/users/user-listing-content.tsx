@@ -168,10 +168,10 @@ export function UserListingContent() {
     <div className="space-y-4 px-2 pb-4">
       {/* Page Header is theoretically outside, but if we have local header we can put it here */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600">
+        <div className="p-2 bg-primary/10 rounded-xl text-primary">
           <Users className="h-6 w-6" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Danh sách người dùng</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Danh sách người dùng</h1>
       </div>
 
       {/* Toolbar */}
@@ -184,7 +184,7 @@ export function UserListingContent() {
               placeholder="Tìm kiếm tên, email, sđt..."
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 bg-background border-border"
             />
           </div>
           
@@ -345,7 +345,7 @@ export function UserListingContent() {
                     setGlobalFilter("");
                     setDateRange(undefined);
                   }}
-                  className="h-9 px-2 lg:px-3 text-gray-600 border-dashed"
+                  className="h-9 px-2 lg:px-3 text-muted-foreground border-dashed"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Đặt lại
@@ -420,21 +420,21 @@ export function UserListingContent() {
       )}
 
       {/* Footer / Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-sm text-gray-500">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-sm text-muted-foreground">
         <div>
-          Tổng cộng: <span className="font-medium text-gray-900">{totalElements}</span> dòng
+          Tổng cộng: <span className="font-medium text-foreground">{totalElements}</span> dòng
         </div>
         
         <div className="flex items-center gap-6 flex-wrap justify-center">
           <div className="flex items-center space-x-2">
-            <p className="font-medium text-gray-900">Số hàng trên mỗi trang</p>
+            <p className="font-medium text-foreground">Số hàng trên mỗi trang</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
                 table.setPageSize(Number(value));
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger className="h-8 w-[70px] bg-background border-border">
                 <SelectValue placeholder={table.getState().pagination.pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
@@ -447,7 +447,7 @@ export function UserListingContent() {
             </Select>
           </div>
           
-          <div className="flex items-center justify-center font-medium text-gray-900">
+          <div className="flex items-center justify-center font-medium text-foreground">
             Trang {table.getState().pagination.pageIndex + 1} trên {table.getPageCount() || 1}
           </div>
           

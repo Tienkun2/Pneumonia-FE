@@ -123,26 +123,26 @@ export function KnowledgeView() {
                    <Clock className="h-3.5 w-3.5" /> {selectedArticle.readTime}
                 </span>
              </div>
-             <h1 className="text-3xl font-bold tracking-tight text-slate-900 leading-tight">{selectedArticle.title}</h1>
-             <div className="flex items-center gap-3 py-4 border-y border-slate-100">
-                <div className="h-10 w-10 rounded-full bg-slate-200" />
-                <div>
-                   <p className="font-bold text-sm text-slate-800">{selectedArticle.author}</p>
-                   <p className="text-xs text-slate-400">Đăng ngày {selectedArticle.date}</p>
-                </div>
-             </div>
-             <div className="prose prose-slate max-w-none pt-4">
-                <p className="text-lg leading-relaxed text-slate-600">
-                   {selectedArticle.description}
-                </p>
-                <div className="mt-8 p-6 rounded-2xl bg-blue-50/50 border border-blue-100 flex gap-4">
-                   <Info className="h-6 w-6 text-blue-600 shrink-0" />
-                   <div>
-                      <h4 className="font-bold text-blue-900">Ghi chú lâm sàng</h4>
-                      <p className="text-sm text-blue-700 opacity-80">Đây là nội dung tóm lược phục vụ mục đích tham khảo nhanh cho bác sĩ. Vui lòng đối chiếu với phác đồ hiện hành của bệnh viện.</p>
-                   </div>
-                </div>
-             </div>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground leading-tight">{selectedArticle.title}</h1>
+              <div className="flex items-center gap-3 py-4 border-y border-border">
+                 <div className="h-10 w-10 rounded-full bg-muted" />
+                 <div>
+                    <p className="font-bold text-sm text-foreground">{selectedArticle.author}</p>
+                    <p className="text-xs text-muted-foreground">Đăng ngày {selectedArticle.date}</p>
+                 </div>
+              </div>
+              <div className="prose prose-slate dark:prose-invert max-w-none pt-4">
+                 <p className="text-lg leading-relaxed text-foreground/80">
+                    {selectedArticle.description}
+                 </p>
+                 <div className="mt-8 p-6 rounded-2xl bg-primary/5 border border-primary/20 flex gap-4">
+                    <Info className="h-6 w-6 text-primary shrink-0" />
+                    <div>
+                       <h4 className="font-bold text-primary">Ghi chú lâm sàng</h4>
+                       <p className="text-sm text-primary/80 opacity-80">Đây là nội dung tóm lược phục vụ mục đích tham khảo nhanh cho bác sĩ. Vui lòng đối chiếu với phác đồ hiện hành của bệnh viện.</p>
+                    </div>
+                 </div>
+              </div>
           </div>
        </div>
     );
@@ -151,14 +151,14 @@ export function KnowledgeView() {
   return (
     <div className="space-y-10 pb-20">
       {/* Header Section */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-100 pb-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-6">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 shrink-0 mt-1 sm:mt-0">
+          <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0 mt-1 sm:mt-0">
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Thư viện Kiến thức</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Thư viện Kiến thức</h1>
+            <p className="text-sm text-muted-foreground mt-1">
                Cập nhật phác đồ chẩn đoán và điều trị viêm phổi nhi khoa từ WHO và Bộ Y tế
             </p>
           </div>
@@ -169,7 +169,7 @@ export function KnowledgeView() {
             placeholder="Tìm tài liệu, phác đồ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 border-slate-200 rounded-lg shadow-sm focus-visible:ring-blue-500 text-sm"
+            className="pl-9 h-9 border-border bg-background rounded-lg shadow-sm focus-visible:ring-primary text-sm"
           />
         </div>
       </div>
@@ -218,14 +218,14 @@ export function KnowledgeView() {
       {/* Tabs & Content */}
       <Tabs defaultValue="all" onValueChange={setActiveTab} className="space-y-8">
         <div className="flex items-center justify-between overflow-x-auto pb-2 scrollbar-hide">
-          <TabsList className="bg-slate-100/50 p-1.5 rounded-2xl h-auto border border-slate-100">
+          <TabsList className="bg-muted/50 p-1.5 rounded-2xl h-auto border border-border">
             {categories.map((cat) => {
               const Icon = cat.icon;
               return (
                 <TabsTrigger
                   key={cat.id}
                   value={cat.id}
-                  className="rounded-xl px-6 py-3 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-lg transition-all gap-2 font-bold text-sm"
+                  className="rounded-xl px-6 py-3 data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-lg transition-all gap-2 font-bold text-sm"
                 >
                   <Icon className="h-4 w-4" /> {cat.label}
                 </TabsTrigger>
@@ -239,10 +239,10 @@ export function KnowledgeView() {
             {filteredArticles.map((article) => (
               <Card 
                 key={article.id} 
-                className="group cursor-pointer border border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl overflow-hidden flex flex-col bg-white"
+                className="group cursor-pointer border border-border shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl overflow-hidden flex flex-col bg-card"
                 onClick={() => setSelectedArticle(article)}
               >
-                <div className="relative h-40 w-full overflow-hidden border-b border-slate-100">
+                <div className="relative h-40 w-full overflow-hidden border-b border-border">
                    <Image 
                     src={article.image} 
                     alt={article.title} 
@@ -251,33 +251,33 @@ export function KnowledgeView() {
                     unoptimized
                    />
                    <div className="absolute top-3 left-3">
-                      <Badge className="bg-white/95 backdrop-blur-sm text-slate-700 border border-slate-200 font-medium shadow-sm">
+                      <Badge className="bg-background/95 backdrop-blur-sm text-foreground border border-border font-medium shadow-sm">
                          {article.categoryLabel}
                       </Badge>
                    </div>
                 </div>
                 <CardHeader className="p-4 pb-2">
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium uppercase tracking-wider mb-2">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium uppercase tracking-wider mb-2">
                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {article.readTime}</span>
                      <span>•</span>
                      <span>{article.date}</span>
                   </div>
-                  <CardTitle className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-tight line-clamp-2">
+                  <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-2">
                     {article.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 flex-1 flex flex-col">
-                  <p className="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-4">
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
                     {article.description}
                   </p>
                   <div className="flex items-center justify-between mt-auto">
                     <div className="flex items-center gap-2">
-                       <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 uppercase border border-slate-200">
+                       <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground uppercase border border-border">
                           {article.author.charAt(0)}
                        </div>
-                       <span className="text-xs font-medium text-slate-600">{article.author}</span>
+                       <span className="text-xs font-medium text-muted-foreground">{article.author}</span>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
                        <ExternalLink className="h-4 w-4" />
                     </Button>
                   </div>
@@ -287,36 +287,36 @@ export function KnowledgeView() {
           </div>
 
           {filteredArticles.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-slate-50 rounded-[3rem] border border-dashed border-slate-200">
-               <div className="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center">
-                  <Search className="h-8 w-8 text-slate-300" />
-               </div>
-               <div>
-                  <h3 className="text-xl font-bold text-slate-800">Không tìm thấy tài liệu</h3>
-                  <p className="text-slate-400 text-sm">Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm lại.</p>
-               </div>
-               <Button variant="outline" onClick={() => {setSearchQuery(""); setActiveTab("all")}}>
-                  Xóa tất cả bộ lọc
-               </Button>
-            </div>
+             <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-muted/30 rounded-[3rem] border border-dashed border-border">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                   <Search className="h-8 w-8 text-muted-foreground/30" />
+                </div>
+                <div>
+                   <h3 className="text-xl font-bold text-foreground">Không tìm thấy tài liệu</h3>
+                   <p className="text-muted-foreground text-sm">Thử thay đổi từ khóa hoặc bộ lọc để tìm kiếm lại.</p>
+                </div>
+                <Button variant="outline" onClick={() => {setSearchQuery(""); setActiveTab("all")}}>
+                   Xóa tất cả bộ lọc
+                </Button>
+             </div>
           )}
         </TabsContent>
       </Tabs>
 
       {/* Newsletter / Contribution Sidebar - Refined */}
-      <div className="rounded-2xl bg-blue-50 border border-blue-100 p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
-         <div className="space-y-3 max-w-2xl">
-            <h2 className="text-xl font-bold text-blue-900">Chia sẻ phác đồ & kinh nghiệm lâm sàng?</h2>
-            <p className="text-slate-600 text-sm leading-relaxed">
-               Gửi các bài báo cáo ca bệnh hoặc cập nhật nghiên cứu mới trong khoang Nhi khoa để cùng xây dựng cộng đồng y khoa phát triển.
-            </p>
-         </div>
-         <div className="flex gap-3 shrink-0">
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 rounded-lg h-9 font-medium shadow-sm">
-              Đóng góp bài viết
-            </Button>
-         </div>
-      </div>
+       <div className="rounded-2xl bg-primary/5 border border-primary/20 p-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-3 max-w-2xl">
+             <h2 className="text-xl font-bold text-primary">Chia sẻ phác đồ & kinh nghiệm lâm sàng?</h2>
+             <p className="text-muted-foreground text-sm leading-relaxed">
+                Gửi các bài báo cáo ca bệnh hoặc cập nhật nghiên cứu mới trong khoang Nhi khoa để cùng xây dựng cộng đồng y khoa phát triển.
+             </p>
+          </div>
+          <div className="flex gap-3 shrink-0">
+             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-9 font-medium shadow-sm">
+               Đóng góp bài viết
+             </Button>
+          </div>
+       </div>
     </div>
   );
 }

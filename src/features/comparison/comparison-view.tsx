@@ -82,21 +82,21 @@ export function ComparisonView() {
              <ArrowLeftRight className="h-5 w-5" />
            </div>
            <div>
-             <h1 className="text-2xl font-bold tracking-tight text-slate-900">So sánh tiến triển</h1>
+             <h1 className="text-2xl font-bold tracking-tight text-foreground">So sánh tiến triển</h1>
            </div>
         </div>
       </div>
 
       {/* Selection Panel */}
-      <Card className="border border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white">
+      <Card className="border border-border shadow-sm rounded-2xl overflow-hidden bg-card">
         <CardContent className="p-6">
           <div className="grid gap-6 md:grid-cols-4 items-end">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                  <Search className="h-4 w-4" /> Bệnh nhân
               </label>
               <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-                <SelectTrigger className="h-10 bg-white rounded-lg border-slate-200 shadow-sm font-medium">
+                <SelectTrigger className="h-10 bg-background rounded-lg border-border shadow-sm font-medium">
                   <SelectValue placeholder="Tìm kiếm bệnh nhi..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -108,7 +108,7 @@ export function ComparisonView() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                  <Calendar className="h-4 w-4" /> Lượt khám Cơ sở
               </label>
               <Select 
@@ -116,7 +116,7 @@ export function ComparisonView() {
                 onValueChange={setVisitAId} 
                 disabled={!selectedPatientId || isVisitsLoading}
               >
-                <SelectTrigger className="h-10 bg-white rounded-lg border-slate-200 shadow-sm font-medium">
+                <SelectTrigger className="h-10 bg-background rounded-lg border-border shadow-sm font-medium">
                   <SelectValue placeholder={isVisitsLoading ? "Đang tải..." : "Chọn ngày khám..."} />
                 </SelectTrigger>
                 <SelectContent>
@@ -128,7 +128,7 @@ export function ComparisonView() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                  <Calendar className="h-4 w-4" /> Lượt khám Đối chiếu
               </label>
               <Select 
@@ -136,7 +136,7 @@ export function ComparisonView() {
                 onValueChange={setVisitBId}
                 disabled={!selectedPatientId || isVisitsLoading}
               >
-                <SelectTrigger className="h-10 bg-white rounded-lg border-slate-200 shadow-sm font-medium">
+                <SelectTrigger className="h-10 bg-background rounded-lg border-border shadow-sm font-medium">
                   <SelectValue placeholder={isVisitsLoading ? "Đang tải..." : "Chọn ngày khám..."} />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,10 +164,10 @@ export function ComparisonView() {
       {isComparing && (
          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Summary Delta Card */}
-            <div className={`p-8 rounded-[2.5rem] border shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 transition-all ${delta <= 0 ? "bg-emerald-50 border-emerald-100" : "bg-orange-50 border-orange-100"}`}>
+            <div className={`p-8 rounded-[2.5rem] border shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8 transition-all ${delta <= 0 ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900" : "bg-orange-50 dark:bg-orange-950/20 border-orange-100 dark:border-orange-900"}`}>
                <div className="space-y-2 text-center md:text-left">
-                  <h3 className="text-2xl font-black text-slate-800">Kết quả phân tích tiến triển</h3>
-                  <p className="text-slate-500 max-w-md">
+                  <h3 className="text-2xl font-black text-foreground">Kết quả phân tích tiến triển</h3>
+                  <p className="text-muted-foreground max-w-md">
                      {delta <= 0 
                         ? "Hệ thống phát hiện các dấu hiệu phục hồi tích cực. Vùng tổn thương phổi đang có xu hướng thu hẹp." 
                         : "Cảnh báo: Có sự gia tăng các chỉ số nguy cơ. Cần xem xét lại phác đồ điều trị hiện tại."}
@@ -175,9 +175,9 @@ export function ComparisonView() {
                </div>
                
                <div className="flex items-center gap-6">
-                  <div className={`p-6 rounded-[2rem] bg-white shadow-xl flex flex-col items-center gap-1 min-w-[200px]`}>
-                     <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Thay đổi nguy cơ</span>
-                     <div className={`text-4xl font-black flex items-center gap-1 ${delta <= 0 ? "text-emerald-600" : "text-orange-600"}`}>
+                  <div className={`p-6 rounded-[2rem] bg-card border border-border shadow-xl flex flex-col items-center gap-1 min-w-[200px]`}>
+                     <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Thay đổi nguy cơ</span>
+                     <div className={`text-4xl font-black flex items-center gap-1 ${delta <= 0 ? "text-emerald-500" : "text-orange-500"}`}>
                         {delta <= 0 ? <TrendingDown className="h-8 w-8" /> : <TrendingUp className="h-8 w-8" />}
                         {Math.abs(delta).toFixed(1)}%
                      </div>
@@ -186,7 +186,7 @@ export function ComparisonView() {
                      <Badge className={delta <= 0 ? "bg-emerald-500" : "bg-orange-500"}>
                         {delta <= 0 ? "Tiến triển Tốt" : "Cần Chú ý"}
                      </Badge>
-                     <Button variant="ghost" className="text-slate-400 text-xs gap-1">
+                     <Button variant="ghost" className="text-muted-foreground text-xs gap-1">
                         <Info className="h-3 w-3" /> Chi tiết thuật toán
                      </Button>
                   </div>
@@ -209,7 +209,7 @@ export function ComparisonView() {
                      </div>
                   </CardHeader>
                   <CardContent className="p-8 space-y-8">
-                     <div className="aspect-[4/5] rounded-[2rem] bg-slate-200 overflow-hidden relative shadow-inner">
+                     <div className="aspect-[4/5] rounded-[2rem] bg-muted overflow-hidden relative shadow-inner">
                         <Image 
                           src="https://via.placeholder.com/800x1000?text=X-Ray+Visit+A" 
                           width={800}
@@ -220,7 +220,7 @@ export function ComparisonView() {
                         />
                         <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                      </div>
-                     <div className="flex items-center justify-center p-6 bg-slate-50 rounded-3xl">
+                     <div className="flex items-center justify-center p-6 bg-muted/50 rounded-3xl">
                         <RiskGauge 
                           riskScore={riskA} 
                           riskLevel={riskA > 70 ? "Cao" : riskA > 40 ? "Trung bình" : "Thấp"} 
@@ -244,7 +244,7 @@ export function ComparisonView() {
                      </div>
                   </CardHeader>
                   <CardContent className="p-8 space-y-8">
-                     <div className="aspect-[4/5] rounded-[2rem] bg-slate-200 overflow-hidden relative shadow-inner">
+                     <div className="aspect-[4/5] rounded-[2rem] bg-muted overflow-hidden relative shadow-inner">
                         <Image 
                           src="https://via.placeholder.com/800x1000?text=X-Ray+Visit+B" 
                           width={800}
@@ -255,7 +255,7 @@ export function ComparisonView() {
                         />
                         <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                      </div>
-                     <div className="flex items-center justify-center p-6 bg-blue-50/50 rounded-3xl">
+                     <div className="flex items-center justify-center p-6 bg-primary/5 rounded-3xl">
                         <RiskGauge 
                           riskScore={riskB} 
                           riskLevel={riskB > 70 ? "Cao" : riskB > 40 ? "Trung bình" : "Thấp"} 

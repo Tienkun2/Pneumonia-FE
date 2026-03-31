@@ -77,7 +77,7 @@ export function LoginForm() {
       </div>
 
       {/* Form */}
-      <div className="bg-white p-8 rounded-2xl shadow-lg border">
+      <div className="bg-card p-8 rounded-2xl shadow-lg border border-border">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
@@ -92,11 +92,10 @@ export function LoginForm() {
                   <FormLabel>Tài khoản</FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-blue-600" />
-
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         placeholder="admin"
-                        className="pl-10 h-11 bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg"
+                        className="pl-10 h-11 bg-muted/50 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"
                         {...field}
                       />
                     </div>
@@ -115,12 +114,11 @@ export function LoginForm() {
                   <FormLabel>Mật khẩu</FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-blue-600" />
-
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
-                        className="pl-10 pr-10 h-11 bg-gray-50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-blue-500/20 rounded-lg"
+                        className="pl-10 pr-10 h-11 bg-muted/50 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"
                         {...field}
                       />
 

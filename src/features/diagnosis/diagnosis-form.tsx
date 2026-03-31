@@ -26,9 +26,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Badge } from "@/components/ui/badge";
 
 const RISKS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  Low: { label: "NGUY CƠ THẤP", color: "text-emerald-700", bg: "bg-emerald-100", border: "border-emerald-200" },
-  Moderate: { label: "NGUY CƠ TRUNG BÌNH", color: "text-yellow-700", bg: "bg-yellow-100", border: "border-yellow-200" },
-  Severe: { label: "NGUY CƠ CAO", color: "text-red-700", bg: "bg-red-100", border: "border-red-200" },
+  Low: { label: "NGUY CƠ THẤP", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800" },
+  Moderate: { label: "NGUY CƠ TRUNG BÌNH", color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-950/30", border: "border-yellow-200 dark:border-yellow-800" },
+  Severe: { label: "NGUY CƠ CAO", color: "text-red-700 dark:text-red-400", bg: "bg-red-100 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" },
 };
 
 const PREDICTION_MAP: Record<string, string> = {
@@ -152,25 +152,25 @@ export function DiagnosisForm() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 shrink-0 mt-1 sm:mt-0">
+          <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0 mt-1 sm:mt-0">
             <Activity className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Chẩn đoán đa phương thức</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Chẩn đoán đa phương thức</h1>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         {/* Left Column: Image Diagnosis */}
-        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+        <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
+          <CardHeader className="bg-muted/30 border-b border-border pb-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileImage className="w-5 h-5 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <FileImage className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <CardTitle className="text-lg">Chẩn đoán hình ảnh</CardTitle>
+                <CardTitle className="text-lg text-foreground">Chẩn đoán hình ảnh</CardTitle>
                 <CardDescription>Phân tích X-quang phổi</CardDescription>
               </div>
             </div>
@@ -182,7 +182,7 @@ export function DiagnosisForm() {
                 className={`
                   border-2 border-dashed rounded-xl p-8 text-center cursor-pointer 
                   transition-all duration-200 ease-in-out h-64 flex flex-col justify-center items-center
-                  ${isDragActive ? 'border-blue-500 bg-blue-50 scale-[1.02]' : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'}
+                  ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-muted/30'}
                 `}
               >
                 <input {...getInputProps()} />
@@ -216,14 +216,14 @@ export function DiagnosisForm() {
                   </div>
                 ) : (
                   <div className="space-y-4 py-4">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Upload className="h-8 w-8 text-blue-600" />
+                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Upload className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                      <p className="text-base font-semibold text-slate-900">
+                      <p className="text-base font-semibold text-foreground">
                         {isDragActive ? "Thả file vào đây" : "Tải lên ảnh X-quang"}
                       </p>
-                      <p className="text-sm text-slate-500 mt-1 max-w-xs mx-auto">
+                      <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
                         Kéo thả file hoặc click để chọn (JPG, PNG, DICOM)
                       </p>
                     </div>
@@ -233,7 +233,7 @@ export function DiagnosisForm() {
               <div className="mt-auto pt-6">
                 <Button
                   onClick={handleImageSubmit}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 transition-all font-medium py-6"
+                  className="w-full bg-primary hover:opacity-90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium py-6"
                   disabled={isSubmittingImage || !selectedFile}
                 >
                   {isSubmittingImage ? (
@@ -316,14 +316,14 @@ export function DiagnosisForm() {
         </Card>
 
         {/* Right Column: Clinical Diagnosis */}
-        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
-          <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-4">
+        <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
+          <CardHeader className="bg-muted/30 border-b border-border pb-4">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Activity className="w-5 h-5 text-emerald-600" />
+              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <CardTitle className="text-lg">Chẩn đoán lâm sàng</CardTitle>
+                <CardTitle className="text-lg text-foreground">Chẩn đoán lâm sàng</CardTitle>
                 <CardDescription>Dựa trên triệu chứng & chỉ số sinh tồn</CardDescription>
               </div>
             </div>
@@ -374,8 +374,8 @@ export function DiagnosisForm() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-sm font-semibold text-slate-700">Triệu chứng & Dấu hiệu</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/50 p-4 rounded-xl border border-slate-100">
+                  <Label className="text-sm font-semibold text-foreground/80">Triệu chứng & Dấu hiệu</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/20 p-4 rounded-xl border border-border">
                     {[
                       { name: "cough", label: "Ho (Cough)" },
                       { name: "fever", label: "Sốt (Fever)" },
@@ -388,7 +388,7 @@ export function DiagnosisForm() {
                         control={form.control}
                         name={item.name as keyof typeof clinicalSchema.shape}
                         render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-white transition-colors">
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50 transition-colors">
                             <FormControl>
                               <Checkbox
                                 checked={Boolean(field.value)}
@@ -411,7 +411,7 @@ export function DiagnosisForm() {
                 <div className="mt-auto pt-6">
                   <Button
                     type="submit"
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 transition-all font-medium py-6"
+                    className="bg-gradient-to-r from-primary to-indigo-600 hover:opacity-90 h-11 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
                     disabled={isSubmittingClinical}
                   >
                     {isSubmittingClinical ? (
@@ -510,15 +510,15 @@ export function DiagnosisForm() {
       {/* Fusion Diagnosis Section - Full Width */}
       {diagnosisData.predictionResult && diagnosisData.clinicalPredictionResult && (
         <div className="animate-in fade-in slide-in-from-bottom-5 duration-700">
-          <Card className="border-purple-200 shadow-md bg-purple-50/30">
-            <CardHeader className="bg-purple-100/50 border-b border-purple-200 pb-4">
+          <Card className="border-primary/20 shadow-md bg-primary/5">
+            <CardHeader className="bg-primary/10 border-b border-primary/20 pb-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-200 rounded-lg">
-                  <BrainCircuit className="w-6 h-6 text-purple-700" />
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <BrainCircuit className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-purple-900">Tổng hợp Kết quả & Chẩn đoán</CardTitle>
-                  <CardDescription className="text-purple-700">
+                  <CardTitle className="text-xl text-foreground">Tổng hợp Kết quả & Chẩn đoán</CardTitle>
+                  <CardDescription className="text-muted-foreground">
                     Kết hợp phân tích từ cả Hình ảnh và Lâm sàng để đưa ra kết luận cuối cùng
                   </CardDescription>
                 </div>
@@ -554,33 +554,33 @@ export function DiagnosisForm() {
                   <div className="flex flex-col md:flex-row gap-6">
                     {/* Key Findings */}
                     <div className="flex-1 space-y-4">
-                      <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
-                        <span className="text-slate-600 font-medium">Đánh giá chung:</span>
-                        <span className="text-lg font-bold text-purple-900">{diagnosisData.fusionResult.condition_assessment}</span>
+                      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
+                        <span className="text-muted-foreground font-medium">Đánh giá chung:</span>
+                        <span className="text-lg font-bold text-primary">{diagnosisData.fusionResult.condition_assessment}</span>
                       </div>
 
-                      <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
-                        <span className="text-slate-600 font-medium">Mức độ nghiêm trọng:</span>
-                        <Badge className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-base">
+                      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
+                        <span className="text-muted-foreground font-medium">Mức độ nghiêm trọng:</span>
+                        <Badge className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-1 text-base">
                           {diagnosisData.fusionResult.severity_level}
                         </Badge>
                       </div>
 
-                      <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-purple-100 shadow-sm">
-                        <span className="text-slate-600 font-medium">Độ tin cậy hệ thống:</span>
-                        <span className="text-purple-700 font-semibold">{diagnosisData.fusionResult.confidence_level}</span>
+                      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
+                        <span className="text-muted-foreground font-medium">Độ tin cậy hệ thống:</span>
+                        <span className="text-primary font-semibold">{diagnosisData.fusionResult.confidence_level}</span>
                       </div>
                     </div>
 
                     {/* Reasoning */}
-                    <div className="flex-1 bg-white p-6 rounded-xl border border-purple-100 shadow-sm">
-                      <h4 className="font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                    <div className="flex-1 bg-card p-6 rounded-xl border border-border shadow-sm">
+                      <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
                         <Activity className="w-4 h-4" /> Cơ sở lập luận
                       </h4>
                       <ul className="space-y-3">
                         {diagnosisData.fusionResult.fusion_reasoning.map((reason, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm text-slate-700">
-                            <Check className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                          <li key={index} className="flex items-start gap-2 text-sm text-foreground/80">
+                            <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
                             <span>{reason}</span>
                           </li>
                         ))}

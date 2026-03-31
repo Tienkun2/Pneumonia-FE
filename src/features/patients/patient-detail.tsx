@@ -114,7 +114,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">Chi tiết bệnh nhân</h1>
+            <h1 className="text-3xl font-bold text-foreground">Chi tiết bệnh nhân</h1>
             <p className="text-muted-foreground">
               Thông tin và lịch sử lượt khám
             </p>
@@ -193,11 +193,11 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                 <div className="py-12 text-center text-red-500">{visitsError}</div>
               ) : !visits || visits.length === 0 ? (
                 <div className="py-16 text-center text-muted-foreground flex flex-col items-center">
-                  <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-dashed border-slate-200">
-                    <Activity className="h-8 w-8 text-slate-300" />
+                  <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4 border border-dashed border-border">
+                    <Activity className="h-8 w-8 text-muted-foreground/30" />
                   </div>
                   <p className="mb-4 font-medium">Bệnh nhân này chưa có lượt khám nào.</p>
-                  <Button variant="outline" onClick={handleCreateVisit} className="rounded-xl border-slate-200">
+                  <Button variant="outline" onClick={handleCreateVisit} className="rounded-xl border-border">
                     Tạo lượt khám đầu tiên
                   </Button>
                 </div>
@@ -211,8 +211,8 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                       return (
                         <div key={visit.id} className="relative flex gap-6 group">
                           {/* Dot / Indicator */}
-                          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)] mt-1 transition-transform group-hover:scale-110">
-                            <div className="h-2 w-2 rounded-full bg-blue-500" />
+                          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card border-2 border-primary shadow-[0_0_15px_rgba(59,130,246,0.2)] mt-1 transition-transform group-hover:scale-110">
+                            <div className="h-2 w-2 rounded-full bg-primary" />
                           </div>
 
                           {/* Content Card */}
@@ -220,14 +220,14 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <h4 className="font-bold text-lg text-slate-900 leading-none">
+                                  <h4 className="font-bold text-lg text-foreground leading-none">
                                     Lượt khám #{visits.length - index}
                                   </h4>
-                                  <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-none font-bold text-[10px] py-0.5 uppercase tracking-wider">
+                                  <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none font-bold text-[10px] py-0.5 uppercase tracking-wider">
                                     {formatDate(visit.visitDate, "DD/MM/YYYY")}
                                   </Badge>
                                 </div>
-                                <p className="text-xs font-medium text-slate-400 flex items-center gap-1.5 uppercase tracking-widest pt-1">
+                                <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 uppercase tracking-widest pt-1">
                                     <Loader2 className="h-3 w-3 animate-none opacity-50" />
                                     BS. {visit.createdBy || "Chưa xác định"} • {formatDate(visit.visitDate, "HH:mm")}
                                 </p>
@@ -236,7 +236,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                               <div className="flex gap-2 items-center">
                                 {visit.diagnoses && visit.diagnoses.length > 0 && (
                                   <Link href={`/results/${visit.id}`}>
-                                    <Button variant="outline" size="sm" className="bg-slate-900 text-white border-none hover:bg-slate-800 h-9 px-4 rounded-xl gap-2 font-bold shadow-md shadow-slate-200">
+                                    <Button variant="outline" size="sm" className="bg-primary text-primary-foreground border-none hover:bg-primary/90 h-9 px-4 rounded-xl gap-2 font-bold shadow-md">
                                       <FileCheck className="h-4 w-4" />
                                       Kết quả AI
                                     </Button>
@@ -244,8 +244,8 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                                 )}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-slate-100">
-                                      <MoreVertical className="h-4 w-4 text-slate-400" />
+                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-muted">
+                                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="rounded-xl border-none shadow-2xl p-1 w-40">
@@ -263,20 +263,20 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                             </div>
                             
                             {/* Clinical Data Summary */}
-                            <div className="grid grid-cols-1 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100/50 text-sm">
+                            <div className="grid grid-cols-1 gap-3 p-4 rounded-2xl bg-muted/30 border border-border text-sm">
                               {visit.symptoms ? (
                                 <div className="space-y-1">
-                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Triệu chứng lâm sàng</span>
-                                  <p className="text-slate-700 leading-relaxed font-medium">{visit.symptoms}</p>
+                                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Triệu chứng lâm sàng</span>
+                                  <p className="text-foreground/80 leading-relaxed font-medium">{visit.symptoms}</p>
                                 </div>
                               ) : (
-                                <p className="text-slate-400 italic text-xs">Không có dữ liệu triệu chứng lâm sàng được ghi nhận.</p>
+                                <p className="text-muted-foreground italic text-xs">Không có dữ liệu triệu chứng lâm sàng được ghi nhận.</p>
                               )}
                               
                               {visit.note && (
-                                <div className="space-y-1 pt-2 border-t border-slate-100">
-                                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Ghi chú bác sĩ</span>
-                                  <p className="text-slate-600 italic text-[13px]">{visit.note}</p>
+                                <div className="space-y-1 pt-2 border-t border-border">
+                                  <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest block">Ghi chú bác sĩ</span>
+                                  <p className="text-foreground/60 italic text-[13px]">{visit.note}</p>
                                 </div>
                               )}
                             </div>
