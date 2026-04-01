@@ -3,8 +3,13 @@ import { ApiResponse, PageResponse } from "@/types/api";
 import { Patient, CreatePatientPayload } from "@/types/patient";
 
 export const PatientService = {
-  async getPatients(page: number = 1, size: number = 10): Promise<PageResponse<Patient>> {
-    const query = `/patients?page=${page}&size=${size}`;
+  async getPatients(page: number = 1, size: number = 10, filters?: Record<string, string | number | boolean | string[] | undefined>): Promise<PageResponse<Patient>> {
+    let query = `/patients?page=${page}&size=${size}`;
+    if (filters?.search) query += `&search=${encodeURIComponent(String(filters.search))}`;
+    if (filters?.gender) query += `&gender=${encodeURIComponent(String(filters.gender))}`;
+    if (filters?.startDate) query += `&startDate=${encodeURIComponent(String(filters.startDate))}`;
+    if (filters?.endDate) query += `&endDate=${encodeURIComponent(String(filters.endDate))}`;
+
     const res = await apiClient(query, {
       method: "GET",
     });

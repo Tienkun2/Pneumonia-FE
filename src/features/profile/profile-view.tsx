@@ -134,19 +134,19 @@ export function ProfileView() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 pb-10">
-      {/* Header Profile Section - Clinical Premium Style */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900 dark:bg-slate-950 p-8 text-white shadow-2xl transition-all">
+      {/* Header Profile Section - Adaptive Premium Style */}
+      <div className="relative overflow-hidden rounded-3xl border border-border dark:border-white/10 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-950 p-8 text-foreground dark:text-white shadow-xl dark:shadow-2xl transition-all">
         {/* Subtle Decorative Elements */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent opacity-40" />
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-40" />
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl opacity-50" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/10 dark:via-white/10 to-transparent" />
         
         <div className="relative flex flex-col items-center gap-6 md:flex-row">
           <div className="group relative">
-            <div className="relative overflow-hidden rounded-full border-4 border-white/30 shadow-xl transition-transform duration-500 group-hover:scale-105 h-32 w-32 bg-white/10">
+            <div className="relative overflow-hidden rounded-full border-4 border-white/80 dark:border-white/30 shadow-xl transition-transform duration-500 group-hover:scale-105 h-32 w-32 bg-white/50 dark:bg-white/10">
               <Avatar className="h-full w-full">
                 <AvatarImage src={optimisticAvatar || user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} />
-                <AvatarFallback className="bg-white/20 text-3xl font-bold uppercase">
+                <AvatarFallback className="bg-primary/10 dark:bg-white/20 text-3xl font-bold uppercase text-primary dark:text-white">
                   {user.username.substring(0, 2)}
                 </AvatarFallback>
               </Avatar>
@@ -179,15 +179,15 @@ export function ProfileView() {
           </div>
           
           <div className="flex-1 text-center md:text-left space-y-1">
-            <h1 className="text-4xl font-black tracking-tight drop-shadow-md">
+            <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white transition-colors">
               {user.displayName || user.username}
             </h1>
             <div className="flex flex-wrap items-center justify-center gap-3 mt-2 md:justify-start">
-              <span className="flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-sm font-medium backdrop-blur-md">
+              <span className="flex items-center gap-1 rounded-full bg-slate-200/50 dark:bg-white/20 px-3 py-1 text-sm font-medium text-slate-600 dark:text-white backdrop-blur-md">
                 <User className="h-3.5 w-3.5" />
                 @{user.username}
               </span>
-              <span className="flex items-center gap-1 rounded-full bg-indigo-500/30 px-3 py-1 text-sm font-medium backdrop-blur-md">
+              <span className="flex items-center gap-1 rounded-full bg-primary/10 dark:bg-indigo-500/30 px-3 py-1 text-sm font-medium text-primary dark:text-indigo-200 backdrop-blur-md">
                 <Shield className="h-3.5 w-3.5" />
                 {user.roles?.[0]?.description || "Thành viên"}
               </span>

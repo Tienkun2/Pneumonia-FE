@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchPatients } from "@/store/slices/patientSlice";
 import { fetchPatientVisits } from "@/store/slices/visitSlice";
@@ -22,20 +22,32 @@ import {
   TrendingUp,
   Image as ImageIcon,
   ChevronRight,
-  Info
+  Info,
+  Check,
+  ChevronsUpDown
 } from "lucide-react";
 import Image from "next/image";
 import { RiskGauge } from "@/components/medical/risk-gauge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { Visit } from "@/types/visit";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+
+// Mock Risk Logic for Demo - Outside component to prevent closure re-creation
+const getMockRisk = (visit: Visit | undefined) => {
+   if (!visit) return 0;
+   const codePoint = visit.id.codePointAt(0) || 0;
+   return (codePoint % 60) + 30; // 30-90%
+};
 
 export function ComparisonView() {
   const dispatch = useAppDispatch();
-  const { patients } = useAppSelector((state) => state.patient);
+  const patients = useAppSelector((state) => state.patient.patients);
   const { visits, isLoading: isVisitsLoading } = useAppSelector((state) => state.visit);
 
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
+  const [comboboxOpen, setComboboxOpen] = useState(false);
   const [visitAId, setVisitAId] = useState<string>("");
   const [visitBId, setVisitBId] = useState<string>("");
   const [isComparing, setIsComparing] = useState(false);
@@ -53,16 +65,8 @@ export function ComparisonView() {
     }
   }, [selectedPatientId, dispatch]);
 
-  const visitA = visits.find((v) => v.id === visitAId);
-  const visitB = visits.find((v) => v.id === visitBId);
-
-  // Mock Risk Logic for Demo
-  const getMockRisk = (visit: Visit | undefined) => {
-     if (!visit) return 0;
-     // Deterministic mock risk
-     const codePoint = visit.id.codePointAt(0) || 0;
-     return (codePoint % 60) + 30; // 30-90%
-  };
+  const visitA = useMemo(() => visits.find((v) => v.id === visitAId), [visits, visitAId]);
+  const visitB = useMemo(() => visits.find((v) => v.id === visitBId), [visits, visitBId]);
 
   const riskA = getMockRisk(visitA);
   const riskB = getMockRisk(visitB);
@@ -95,16 +99,55 @@ export function ComparisonView() {
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                  <Search className="h-4 w-4" /> Bệnh nhân
               </label>
-              <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
-                <SelectTrigger className="h-10 bg-background rounded-lg border-border shadow-sm font-medium">
-                  <SelectValue placeholder="Tìm kiếm bệnh nhi..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {patients.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.fullName} ({p.code})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between h-10 bg-background rounded-lg border-border shadow-sm font-medium hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                       {selectedPatientId
+                         ? patients.find((p) => p.id === selectedPatientId)?.fullName
+                         : "Tìm kiếm bệnh nhi..."}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Nhập tên hoặc mã..." />
+                    <CommandList>
+                      <CommandEmpty>Không tìm thấý bệnh nhi.</CommandEmpty>
+                      <CommandGroup>
+                        {patients.map((patient) => (
+                          <CommandItem
+                            key={patient.id}
+                            value={patient.fullName}
+                            onSelect={() => {
+                              setSelectedPatientId(patient.id);
+                              setComboboxOpen(false);
+                            }}
+                            className="cursor-pointer"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4 text-blue-600",
+                                selectedPatientId === patient.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div className="flex flex-col">
+                               <span className="font-bold">{patient.fullName}</span>
+                               <span className="text-[10px] text-muted-foreground uppercase">{patient.code}</span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
@@ -220,13 +263,13 @@ export function ComparisonView() {
                         />
                         <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                      </div>
-                     <div className="flex items-center justify-center p-6 bg-muted/50 rounded-3xl">
+                      <div className="flex items-center justify-center p-6 bg-muted/50 rounded-3xl">
                         <RiskGauge 
                           riskScore={riskA} 
-                          riskLevel={riskA > 70 ? "Cao" : riskA > 40 ? "Trung bình" : "Thấp"} 
+                          riskLevel={riskA > 70 ? "Cao" : (riskA > 40 ? "Trung bình" : "Thấp")} 
                           label="Nguy cơ AI"
                         />
-                     </div>
+                      </div>
                   </CardContent>
                </Card>
 
@@ -255,13 +298,13 @@ export function ComparisonView() {
                         />
                         <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
                      </div>
-                     <div className="flex items-center justify-center p-6 bg-primary/5 rounded-3xl">
+                      <div className="flex items-center justify-center p-6 bg-primary/5 rounded-3xl">
                         <RiskGauge 
                           riskScore={riskB} 
-                          riskLevel={riskB > 70 ? "Cao" : riskB > 40 ? "Trung bình" : "Thấp"} 
+                          riskLevel={riskB > 70 ? "Cao" : (riskB > 40 ? "Trung bình" : "Thấp")} 
                           label="Nguy cơ AI"
                         />
-                     </div>
+                      </div>
                   </CardContent>
                </Card>
             </div>

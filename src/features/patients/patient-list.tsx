@@ -35,12 +35,36 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-import { Search, Loader2, Upload, Download, Settings2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Users } from "lucide-react";
+import { 
+  Search, 
+  Loader2, 
+  Upload, 
+  Download, 
+  Settings2, 
+  ChevronLeft, 
+  ChevronRight, 
+  ChevronsLeft, 
+  ChevronsRight, 
+  Users,
+  CalendarIcon,
+  X 
+} from "lucide-react";
 import { toast } from "sonner";
 import { Patient } from "@/types/patient";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 export function PatientList() {
   const dispatch = useDispatch<AppDispatch>();
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const { patients, isLoading, error, totalElements, totalPages, currentPage, pageSize } = useSelector((state: RootState) => state.patient);
 
   const [pagination, setPagination] = useState({
@@ -54,6 +78,9 @@ export function PatientList() {
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Advanced Filters
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+
   const handleEdit = (patient: Patient) => {
     setEditingPatient(patient);
     setShowFormDialog(true);
@@ -63,7 +90,7 @@ export function PatientList() {
     setPatientToDelete(patient);
   };
 
-  const { table, columns, globalFilter, setGlobalFilter } = usePatientTable({
+  const { table, columns, globalFilter, setGlobalFilter, columnFilters } = usePatientTable({
     data: patients,
     rowCount: totalElements,
     pageCount: totalPages,
@@ -74,11 +101,24 @@ export function PatientList() {
   });
 
   useEffect(() => {
+    const filters = {
+       search: globalFilter,
+       gender: columnFilters.find(f => f.id === 'gender')?.value as string[],
+       startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+       endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+    };
+
     dispatch(fetchPatients({ 
       page: pagination.pageIndex + 1, 
       size: pagination.pageSize,
+      filters
     }));
-  }, [dispatch, pagination.pageIndex, pagination.pageSize]);
+  }, [dispatch, pagination.pageIndex, pagination.pageSize, globalFilter, columnFilters, dateRange]);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setPagination(prev => prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 });
+  }, [globalFilter, columnFilters, dateRange]);
 
   const handleCreateNew = () => {
     setEditingPatient(null);
@@ -110,10 +150,10 @@ export function PatientList() {
     <div className="space-y-4 px-2 pb-4">
       {/* Page Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-primary/10 rounded-xl text-primary">
+        <div className="p-2 bg-slate-100 rounded-xl text-slate-600">
           <Users className="h-6 w-6" />
         </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Quản lý bệnh nhân</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Hồ sơ bệnh nhân</h1>
       </div>
 
       {/* Toolbar */}
@@ -123,12 +163,65 @@ export function PatientList() {
           <div className="relative w-full max-w-[280px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Tìm kiếm mã BN, tên..."
+              placeholder="Tìm mã BN, tên, SĐT..."
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-9 h-9"
+              className="pl-9 h-9 bg-background border-border text-sm"
             />
           </div>
+
+          {/* Lọc Ngày tiếp nhận (giả lập createdAt) - Render only after mount to prevent hydration mismatch */}
+          {isMounted && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 border-dashed hidden lg:flex"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "dd/MM/yy", { locale: vi })} -{" "}
+                        {format(dateRange.to, "dd/MM/yy", { locale: vi })}
+                      </>
+                    ) : (
+                      format(dateRange.from, "dd/MM/yy", { locale: vi })
+                    )
+                  ) : (
+                    <span>Ngày tiếp nhận</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  numberOfMonths={1}
+                />
+              </PopoverContent>
+            </Popover>
+          )}
+
+          {(table.getState().columnFilters.length > 0 || globalFilter || dateRange) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                table.resetColumnFilters();
+                setGlobalFilter("");
+                setDateRange(undefined);
+              }}
+              className="h-9 px-2 lg:px-3 text-muted-foreground border-dashed"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Đặt lại
+            </Button>
+          )}
         </div>
 
         {/* Actions (Right) */}

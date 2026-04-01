@@ -15,6 +15,7 @@ import {
   Activity as ActivityIcon,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { ImageViewer } from "@/components/medical/image-viewer";
 import { toast } from "sonner";
 
@@ -134,7 +135,14 @@ export function ResultView({ resultId }: { resultId: string }) {
           {/* Visual Section */}
           <div className="lg:col-span-5 space-y-6">
             <div className="relative group rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner bg-slate-100 aspect-square">
-              <img src={result.imageUrl} alt="X-Ray" className="w-full h-full object-contain" />
+              <Image 
+                src={result.imageUrl} 
+                alt="X-Ray Image" 
+                fill
+                priority
+                className="w-full h-full object-contain" 
+                unoptimized={result.imageUrl.startsWith("http")}
+              />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Button
                   variant="secondary"

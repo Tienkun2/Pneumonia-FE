@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchPatientById } from "@/store/slices/patientSlice";
@@ -8,6 +8,7 @@ import { fetchPatientVisits, deleteVisitThunk } from "@/store/slices/visitSlice"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,26 @@ export function PatientDetail({ patientId }: { patientId: string }) {
 
   const { selectedPatient: patient, isLoading: isPatientLoading, error: patientError } = useSelector((state: RootState) => state.patient);
   const { visits, isLoading: isVisitsLoading, error: visitsError } = useSelector((state: RootState) => state.visit);
+
+  const translateGender = useCallback((gender: string) => {
+    switch (gender) {
+      case "MALE": return "Nam";
+      case "FEMALE": return "Nữ";
+      default: return "Khác";
+    }
+  }, []);
+
+  const calculateAge = useCallback((dateOfBirth?: string) => {
+    if (!dateOfBirth) return "N/A";
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return Math.max(0, age);
+  }, []);
 
   useEffect(() => {
     if (patientId) {
@@ -74,8 +95,21 @@ export function PatientDetail({ patientId }: { patientId: string }) {
 
   if (isPatientLoading) {
     return (
-      <div className="flex justify-center py-10">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-32 rounded-xl" />
+        </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Skeleton className="h-[400px] rounded-2xl md:col-span-1" />
+          <Skeleton className="h-[600px] rounded-2xl md:col-span-2" />
+        </div>
       </div>
     );
   }
@@ -83,26 +117,6 @@ export function PatientDetail({ patientId }: { patientId: string }) {
   if (patientError || !patient) {
     return <div className="py-10 text-center text-red-500">{patientError || "Không tìm thấy bệnh nhân"}</div>;
   }
-
-  const translateGender = (gender: string) => {
-    switch (gender) {
-      case "MALE": return "Nam";
-      case "FEMALE": return "Nữ";
-      default: return "Khác";
-    }
-  };
-
-  const calculateAge = (dateOfBirth?: string) => {
-    if (!dateOfBirth) return "N/A";
-    const birthDate = new Date(dateOfBirth);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return Math.max(0, age);
-  };
 
   return (
     <div className="space-y-6">
@@ -209,10 +223,10 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                   <div className="space-y-8">
                     {visits.map((visit, index) => {
                       return (
-                        <div key={visit.id} className="relative flex gap-6 group">
+                        <div key={visit.id} className="relative flex gap-6 group transition-all duration-300 hover:scale-[1.01]">
                           {/* Dot / Indicator */}
-                          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card border-2 border-primary shadow-[0_0_15px_rgba(59,130,246,0.2)] mt-1 transition-transform group-hover:scale-110">
-                            <div className="h-2 w-2 rounded-full bg-primary" />
+                          <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card border-2 border-primary shadow-[0_0_15px_rgba(59,130,246,0.1)] mt-1 transition-all duration-300 group-hover:bg-primary group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+                            <div className="h-2 w-2 rounded-full bg-primary group-hover:bg-white transition-colors" />
                           </div>
 
                           {/* Content Card */}

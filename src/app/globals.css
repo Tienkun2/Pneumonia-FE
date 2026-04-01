@@ -121,28 +121,79 @@
 }
 
 @layer base {
+  :root {
+    /* System font stacks for maximum performance and native feel across OSs */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
   * {
     border-color: var(--color-border);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-feature-settings: "rlig" 1, "calt" 1;
-    /* Medical-friendly typography */
-    font-size: 16px; /* Larger base for readability */
-    line-height: 1.6; /* Better readability */
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1, "cv05" 1;
+    font-size: 15px; /* Optimizing for density vs readability */
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
   }
-  /* Medical data emphasis */
+
+  /* Premium Selection Color */
+  ::selection {
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+  }
+
+  /* Modern Scrollbar Optimization for all OSs (especially Windows/Linux) */
+  @media (min-width: 768px) {
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+  
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+  
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--muted-foreground) / 0.2);
+      border-radius: 20px;
+      border: 3px solid transparent;
+      background-clip: content-box;
+      transition: background 0.3s;
+    }
+  
+    ::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--muted-foreground) / 0.4);
+      background-clip: content-box;
+    }
+
+    .dark ::-webkit-scrollbar-thumb {
+      background: hsl(var(--muted-foreground) / 0.1);
+    }
+  }
+
+  /* Medical data emphasis utilities */
   .medical-critical {
     color: hsl(var(--destructive));
-    font-weight: 600;
+    font-weight: 700;
   }
   .medical-warning {
     color: hsl(var(--warning));
-    font-weight: 500;
+    font-weight: 600;
   }
   .medical-success {
     color: hsl(var(--success));
-    font-weight: 500;
+    font-weight: 600;
   }
 }

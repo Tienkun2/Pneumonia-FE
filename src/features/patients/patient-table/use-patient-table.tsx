@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Patient } from "@/types/patient";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Edit, Trash2, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -50,7 +50,7 @@ export function usePatientTable({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const calculateAge = (dateOfBirth?: string) => {
+  const calculateAge = useCallback((dateOfBirth?: string) => {
     if (!dateOfBirth) return "N/A";
     const birthDate = new Date(dateOfBirth);
     const today = new Date();
@@ -60,17 +60,17 @@ export function usePatientTable({
       age--;
     }
     return Math.max(0, age);
-  };
+  }, []);
 
-  const translateGender = (gender: string) => {
+  const translateGender = useCallback((gender: string) => {
     switch (gender) {
       case "MALE": return "Nam";
       case "FEMALE": return "Nữ";
       default: return "Khác";
     }
-  };
+  }, []);
 
-  const columns: ColumnDef<Patient>[] = [
+  const columns: ColumnDef<Patient>[] = useMemo(() => [
     {
       id: "STT",
       header: "STT",
@@ -117,31 +117,27 @@ export function usePatientTable({
           <div className="text-right">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg">
                   <span className="sr-only">Mở menu thao tác</span>
-                  <div className="flex flex-col gap-1 items-center justify-center h-full">
-                    <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                    <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                    <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                  </div>
+                  <MoreVertical className="h-4 w-4 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">Thao tác</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border">
+                <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" asChild>
+                <DropdownMenuItem className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium" asChild>
                   <Link href={`/patients/${patient.id}`} className="flex items-center w-full">
-                    <Eye className="mr-2 h-4 w-4" />
+                    <Eye className="h-4 w-4 text-slate-400" />
                     <span>Xem chi tiết</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEditClick(patient)} className="cursor-pointer">
-                  <Edit className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={() => onEditClick(patient)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                  <Edit className="h-4 w-4 text-slate-400" />
                   <span>Cập nhật</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDeleteClick(patient)} className="cursor-pointer focus:bg-red-50 focus:text-red-600 text-red-600">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>Xoá</span>
+                <DropdownMenuItem onClick={() => onDeleteClick(patient)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-red-50 focus:text-red-700 text-slate-400 hover:text-red-600 transition-colors">
+                  <Trash2 className="h-4 w-4" />
+                  <span>Xoá hồ sơ</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -149,7 +145,7 @@ export function usePatientTable({
         );
       },
     },
-  ];
+  ], [calculateAge, translateGender, onDeleteClick, onEditClick]);
 
   const table = useReactTable({
     data,

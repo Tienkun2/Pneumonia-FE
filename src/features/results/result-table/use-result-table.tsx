@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Visit } from "@/types/visit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,17 +35,17 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const getPatientName = (patientId: string) => {
+  const getPatientName = useCallback((patientId: string) => {
     const p = patients.find(p => p.id === patientId);
     return p ? p.fullName : "N/A";
-  };
+  }, [patients]);
 
-  const getPatientCode = (patientId: string) => {
+  const getPatientCode = useCallback((patientId: string) => {
     const p = patients.find(p => p.id === patientId);
     return p ? p.code : "N/A";
-  };
+  }, [patients]);
 
-  const getRiskStatus = (visit: Visit) => {
+  const getRiskStatus = useCallback((visit: Visit) => {
     const lastDiag = visit.diagnoses?.[0];
     if (lastDiag?.riskLevel) return lastDiag.riskLevel;
     
@@ -55,15 +55,15 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
     if (hash === 0) return "Cao";
     if (hash === 1) return "Trung bình";
     return "Thấp";
-  };
+  }, []);
 
-  const getBadgeStyles = (risk: string) => {
+  const getBadgeStyles = useCallback((risk: string) => {
     if (risk === "Cao") return "bg-rose-100 text-rose-700";
     if (risk === "Trung bình") return "bg-amber-100 text-amber-700";
     return "bg-emerald-100 text-emerald-700";
-  };
+  }, []);
 
-  const columns: ColumnDef<Visit>[] = [
+  const columns: ColumnDef<Visit>[] = useMemo(() => [
     {
       id: "patientCode",
       accessorFn: (row) => getPatientCode(row.patientId),
@@ -139,7 +139,7 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
         </div>
       ),
     },
-  ];
+  ], [getPatientCode, getPatientName, getRiskStatus, getBadgeStyles]);
 
   const table = useReactTable({
     data,

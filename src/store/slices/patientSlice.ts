@@ -25,13 +25,14 @@ const initialState: PatientState = {
   pageSize: 10,
 };
 
-export const fetchPatients = createAsyncThunk<PageResponse<Patient>, { page?: number; size?: number }, { rejectValue: string }>(
+export const fetchPatients = createAsyncThunk<PageResponse<Patient>, { page?: number; size?: number; filters?: Record<string, string | number | boolean | string[] | undefined> }, { rejectValue: string }>(
   "patient/fetchAll",
   async (params, { rejectWithValue }) => {
     try {
       const page = params?.page || 1;
       const size = params?.size || 10;
-      return await PatientService.getPatients(page, size);
+      const filters = params?.filters || {};
+      return await PatientService.getPatients(page, size, filters);
     } catch (err: unknown) {
       return rejectWithValue((err as Error).message || "Lỗi khi lấy danh sách bệnh nhân");
     }

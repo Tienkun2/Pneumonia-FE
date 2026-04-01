@@ -35,8 +35,8 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      {/* Mobile button - Centered vertically in 64px header */}
+      <div className="lg:hidden fixed top-[12px] left-4 z-50">
         <Button
           variant="outline"
           size="icon"

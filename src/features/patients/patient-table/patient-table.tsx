@@ -17,16 +17,16 @@ interface PatientTableProps {
 
 export function PatientTable({ table, columns, globalFilter }: PatientTableProps) {
   return (
-    <div className="rounded-md border border-border bg-card overflow-hidden shadow-sm">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-muted/50">
+        <TableHeader className="bg-muted/50 border-b border-border">
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="hover:bg-transparent">
+            <TableRow key={headerGroup.id} className="hover:bg-transparent border-none">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id} className="text-foreground font-medium py-4 whitespace-nowrap text-sm">
+                  <TableHead key={header.id} className="text-foreground py-3 whitespace-nowrap align-middle">
                     {header.isPlaceholder ? null : (
-                      <div className={`flex items-center ${header.id === "actions" ? "justify-end pr-4" : "justify-start"}`}>
+                      <div className={`flex items-center ${header.id === "actions" ? "justify-end" : "justify-start"}`}>
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
@@ -48,7 +48,7 @@ export function PatientTable({ table, columns, globalFilter }: PatientTableProps
                 className="hover:bg-muted/50 transition-colors border-b border-border"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-4 text-foreground/80">
+                  <TableCell key={cell.id} className="py-4 text-foreground/80 font-medium text-sm align-middle">
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext()

@@ -53,6 +53,12 @@ import { vi } from "date-fns/locale";
 
 export function UserListingContent() {
   const dispatch = useDispatch<AppDispatch>();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const { users, isLoading, totalElements, totalPages, currentPage, pageSize } = useSelector((state: RootState) => state.user);
 
   const [pagination, setPagination] = useState({
@@ -188,8 +194,8 @@ export function UserListingContent() {
             />
           </div>
           
-          {/* Lọc Trạng Thái */}
-          {table.getColumn("status") && (
+          {/* Lọc Trạng Thái - Render strictly on client */}
+          {isMounted && table.getColumn("status") && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 border-dashed hidden lg:flex">
@@ -239,8 +245,8 @@ export function UserListingContent() {
             </DropdownMenu>
           )}
 
-          {/* Lọc Vai Trò */}
-          {table.getColumn("roles") && (
+          {/* Lọc Vai Trò - Render strictly on client */}
+          {isMounted && table.getColumn("roles") && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 border-dashed hidden lg:flex">
@@ -292,8 +298,8 @@ export function UserListingContent() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {/* Lọc Ngày Tạo */}
-          {table.getColumn("createdAt") && (
+          {/* Lọc Ngày Tạo - Render strictly on client */}
+          {isMounted && table.getColumn("createdAt") && (
             <div className="flex items-center gap-2">
               <Popover>
                 <PopoverTrigger asChild>

@@ -78,7 +78,7 @@ export function useWebSockets() {
     client.activate();
     stompClientRef.current = client;
 
-  }, [token, isAuthenticated, user, dispatch]);
+  }, [token, isAuthenticated, dispatch, user]); // Added 'user' to ensure role-based subscriptions are accurate
 
   useEffect(() => {
     connect();

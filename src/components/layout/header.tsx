@@ -71,16 +71,19 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b bg-background/80 px-6 backdrop-blur-md">
-      {/* Search Bar (Left) */}
-      <div className="relative w-full max-w-sm hidden md:block group">
+    <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b bg-background/80 px-4 sm:px-6 backdrop-blur-md">
+      {/* Mobile Menu Spacer (Reserved space for Sidebar trigger - 64px width) */}
+      <div className="w-16 lg:hidden shrink-0" />
+
+      {/* Search Bar (Left - Desktop only) */}
+      <div className="relative w-full max-w-sm hidden lg:block group">
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
         </div>
         <input
           type="text"
-          placeholder="Nhấn Ctrl + K để tìm kiếm nhanh..."
-          className="h-10 w-full rounded-xl border border-input bg-muted/50 pl-10 pr-4 text-sm focus:border-primary focus:bg-background focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium cursor-pointer"
+          placeholder={`Nhấn ${typeof navigator !== 'undefined' && navigator.platform.indexOf('Mac') !== -1 ? '⌘K' : 'Ctrl + K'} để tìm kiếm nhanh...`}
+          className="h-10 w-full rounded-xl border border-input bg-muted/30 pl-10 pr-4 text-sm focus:border-primary focus:bg-background focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium cursor-pointer placeholder:text-muted-foreground/60"
           readOnly
           onClick={() => {
              const event = new KeyboardEvent('keydown', {

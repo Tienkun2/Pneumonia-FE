@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { User } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Settings, Power } from "lucide-react";
+import { Edit, Trash2, Settings, Power, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,7 +56,7 @@ export function useUserTable({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  const columns: ColumnDef<User>[] = [
+  const columns: ColumnDef<User>[] = useMemo(() => [
     {
       id: "STT",
       header: "STT",
@@ -156,38 +156,34 @@ export function useUserTable({
           <div className="text-right">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg">
                   <span className="sr-only">Mở menu thao tác</span>
-                  <div className="flex flex-col gap-1 items-center justify-center h-full">
-                    <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                    <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                    <span className="h-1 w-1 rounded-full bg-gray-500"></span>
-                  </div>
+                  <MoreVertical className="h-4 w-4 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">Thao tác</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border">
+                <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onRoleClick(user)} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={() => onRoleClick(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                  <Settings className="h-4 w-4 text-slate-400" />
                   <span>Sửa vai trò</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(user)} className="cursor-pointer">
-                  <Edit className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={() => onEdit(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                  <Edit className="h-4 w-4 text-slate-400" />
                   <span>Cập nhật</span>
                 </DropdownMenuItem>
                 {user.status !== USER_STATUS.PENDING && (
-                  <DropdownMenuItem onClick={() => onToggleStatusClick(user)} className="cursor-pointer">
-                    <Power className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={() => onToggleStatusClick(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                    <Power className="h-4 w-4 text-slate-400" />
                     <span>{user.status === USER_STATUS.ACTIVE ? "Khóa tài khoản" : "Kích hoạt tài khoản"}</span>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
                   onClick={() => onDeleteClick(user.id, user.username)}
-                  className="cursor-pointer"
+                  className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-red-50 focus:text-red-700 text-slate-400 hover:text-red-600 transition-colors"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  <span>Xóa</span>
+                  <Trash2 className="h-4 w-4" />
+                  <span>Xóa tài khoản</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -195,7 +191,7 @@ export function useUserTable({
         );
       },
     },
-  ];
+  ], [onEdit, onRoleClick, onToggleStatusClick, onDeleteClick]);
 
   const table = useReactTable({
     data,

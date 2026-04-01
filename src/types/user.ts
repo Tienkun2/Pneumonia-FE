@@ -25,6 +25,9 @@ export interface User {
 export interface CreateUserPayload {
   username: string;
   email: string;
+  password?: string;
+  displayName?: string;
+  dob?: string;
 }
 
 export interface UpdateUserPayload {
