@@ -2,242 +2,371 @@
 
 import { Button } from "@/components/ui/button";
 import { useState, useRef } from "react";
-import { useAppSelector } from "@/store/hooks";
 import { useReactToPrint } from "react-to-print";
 import {
   ArrowLeft,
-  ArrowLeftRight,
   Printer,
   ShieldCheck,
   Eye,
   FileCheck,
   Stethoscope,
   Activity as ActivityIcon,
+  BrainCircuit,
+  AlertTriangle,
+  ChevronRight,
+  Clock,
+  Hash,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { ImageViewer } from "@/components/medical/image-viewer";
 import { toast } from "sonner";
 
-// Mock data
-const mockResult = {
-  id: "123",
-  patientName: "Nguyễn Văn A",
-  date: "2024-01-20 14:30",
-  imageRisk: 85,
-  clinicalRisk: 78,
-  overallRisk: 82,
-  riskLevel: "Cao",
-  findings: `Dựa trên phân tích hình ảnh X-quang và dữ liệu lâm sàng, hệ thống phát hiện:
 
-1. Hình ảnh X-quang: Có dấu hiệu thâm nhiễm ở thùy dưới phổi phải, mật độ không đồng nhất, gợi ý viêm phổi.
 
-2. Dữ liệu lâm sàng:
-   - Bệnh nhân có sốt, ho, khó thở
-   - WBC tăng cao (12.5 x10³/µL)
-   - CRP tăng (45 mg/L)
-   - SpO2 giảm (92%)
-
-3. Kết luận: Nguy cơ viêm phổi cao (82%). Khuyến nghị:
-   - Điều trị kháng sinh phù hợp
-   - Theo dõi sát tình trạng hô hấp
-   - Xét nghiệm thêm nếu cần`,
-  recommendations: [
-    "Điều trị kháng sinh theo phác đồ viêm phổi cộng đồng",
-    "Theo dõi SpO2 và tình trạng hô hấp",
-    "Chụp X-quang lại sau 48-72 giờ để đánh giá đáp ứng",
-    "Xét nghiệm máu để theo dõi tình trạng viêm",
-  ],
-  imageUrl: "https://res.cloudinary.com/dkgj2x06c/image/upload/v1743243059/xray_1743243056984.jpg",
+/* ─── Risk config ──────────────────────────────────────────── */
+const RISK_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; dot: string; barColor: string }> = {
+  Cao:       { label: "NGUY CƠ CAO",       color: "text-red-500",     bg: "bg-red-500/10",     border: "border-red-500/20",     dot: "bg-red-500",     barColor: "bg-red-500" },
+  "Trung bình": { label: "TRUNG BÌNH",     color: "text-amber-500",   bg: "bg-amber-500/10",   border: "border-amber-500/20",   dot: "bg-amber-500",   barColor: "bg-amber-500" },
+  Thấp:      { label: "NGUY CƠ THẤP",      color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20", dot: "bg-emerald-500", barColor: "bg-emerald-500" },
 };
 
-export function ResultView({ resultId }: { resultId: string }) {
-  const predictionResult = useAppSelector((state) => state.diagnosis.predictionResult);
-  const imagePreview = useAppSelector((state) => state.diagnosis.imagePreview);
-  const patientId = useAppSelector((state) => state.diagnosis.patientId);
-  const contentRef = useRef<HTMLDivElement>(null);
+const getBarColor = (val: number) => val > 70 ? "bg-red-500" : val > 40 ? "bg-amber-500" : "bg-emerald-500";
 
+/* ─── Component ─────────────────────────────────────────────── */
+import { useEffect } from "react";
+import { VisitService } from "@/services/visit-service";
+import { PatientService } from "@/services/patient-service";
+import { Visit } from "@/types/visit";
+import { Patient } from "@/types/patient";
+import { Loader2 } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+
+import { useSearchParams } from "next/navigation";
+
+export function ResultView({ resultId }: { resultId: string }) {
+  const [visit, setVisit] = useState<Visit | null>(null);
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const patientIdParam = searchParams.get("patientId");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching visit details for ID:", resultId);
+        
+        let visitData: Visit | null = null;
+        
+        try {
+          visitData = await VisitService.getVisitById(resultId);
+        } catch (vError) {
+          console.warn("Direct visit fetch failed, trying patient visits fallback:", vError);
+          // If we have a patientId from URL, we can try to find the visit in their history
+          if (patientIdParam) {
+            const patientVisits = await VisitService.getPatientVisits(patientIdParam);
+            visitData = patientVisits.find(v => v.id === resultId) || null;
+          }
+          
+          if (!visitData) throw vError; // Re-throw if fallback fails too
+        }
+
+        if (!visitData) {
+          throw new Error("Không nhận được dữ liệu từ hệ thống");
+        }
+
+        setVisit(visitData);
+        
+        const effectivePatientId = visitData.patientId || patientIdParam;
+        if (effectivePatientId) {
+          try {
+            const patientData = await PatientService.getPatientById(effectivePatientId);
+            setPatient(patientData);
+          } catch (pError) {
+            console.error("Failed to fetch patient details:", pError);
+          }
+        }
+      } catch (error: unknown) {
+        console.error("Failed to fetch visit details trace:", error);
+        const message = error instanceof Error ? error.message : "Kết nối Backend thất bại";
+        toast.error(`Lỗi tải dữ liệu: ${message}`);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [resultId, patientIdParam]);
 
   const handlePrint = useReactToPrint({
-    contentRef: contentRef,
+    contentRef,
     documentTitle: `Pneumonia_Report_${resultId}`,
   });
 
-  const getResult = () => {
-    if (predictionResult) {
-      const riskScore = predictionResult.probability_pneumonia * 100;
-      return {
-        id: predictionResult.filename || resultId,
-        patientName: "Bệnh nhân hiện tại",
-        date: new Date().toLocaleDateString("vi-VN"),
-        imageRisk: riskScore,
-        clinicalRisk: 75,
-        overallRisk: riskScore,
-        riskLevel: riskScore > 70 ? "Cao" : riskScore > 40 ? "Trung bình" : "Thấp",
-        findings: predictionResult.explanation_vi || predictionResult.message || "Không có giải thích cụ thể.",
-        imageUrl: imagePreview || "https://via.placeholder.com/800x800?text=X-Ray+Image",
-      };
+  const handleExport = () => { toast.info("Đang mở trình in..."); handlePrint(); };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <p className="text-[14px] font-bold text-muted-foreground">Đang tải dữ liệu hồ sơ...</p>
+      </div>
+    );
+  }
+
+  if (!visit) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 gap-4">
+        <AlertTriangle className="h-12 w-12 text-amber-500" />
+        <p className="text-[16px] font-black text-foreground">Không tìm thấy hồ sơ chẩn đoán</p>
+        <Link href="/results">
+          <Button variant="outline">Quay lại danh sách</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const getRiskStatus = (v: Visit) => {
+    const lastDiag = v.diagnoses?.[0];
+    if (lastDiag?.result) {
+      if (lastDiag.result === "PNEUMONIA") return "Cao";
+      if (lastDiag.result === "NORMAL") return "Thấp";
+      return lastDiag.result;
     }
-    return mockResult;
+    return "Thấp";
   };
 
-  const result = getResult();
-
-  const handleExport = () => {
-    toast.info("Đang mở trình quản lý in...");
-    handlePrint();
-  };
+  const lastDiagnosis = visit.diagnoses?.[0];
+  const riskScore = lastDiagnosis ? lastDiagnosis.confidenceScore * 100 : 0;
+  const riskStatus = getRiskStatus(visit);
+  const risk = RISK_CONFIG[riskStatus] ?? RISK_CONFIG["Thấp"];
 
   return (
-    <div className="space-y-6 pb-20 max-w-5xl mx-auto">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2">
+    <div className="space-y-5 pb-10 max-w-5xl mx-auto animate-in fade-in duration-500">
+      {/* ── Top Bar ─────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/diagnosis">
-            <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl hover:bg-slate-100 border border-slate-200">
+          <Link href="/results">
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-border/50 bg-card shadow-sm hover:bg-muted/30">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Kết quả chẩn đoán</h1>
-            <p className="text-sm text-slate-500 font-medium tracking-wide">PHIẾU KẾT QUẢ AI #{result.id}</p>
+            <h1 className="text-[20px] font-black text-foreground tracking-tight leading-tight">Kết quả chẩn đoán</h1>
+            <p className="text-[12px] font-semibold text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <Hash className="h-3 w-3" /> Phiếu kết quả AI #{visit.id.slice(0, 8)}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={handleExport}
-            className="rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-lg px-6 h-10 gap-2"
-          >
-            <Printer className="h-4 w-4" />
-            In phiếu kết quả
-          </Button>
+        <Button
+          onClick={handleExport}
+          className="h-10 rounded-xl bg-slate-900 hover:bg-slate-800 text-white gap-2 px-5 shadow-lg text-[13px] font-bold"
+        >
+          <Printer className="h-4 w-4" /> In phiếu kết quả
+        </Button>
+      </div>
+
+      {/* ── Risk Banner ─────────────────────────────────── */}
+      <div className={`rounded-[20px] border px-6 py-5 flex items-center justify-between gap-4 ${risk.bg} ${risk.border}`}>
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-card shadow-sm border ${risk.border}`}>
+            <BrainCircuit className={`h-6 w-6 ${risk.color}`} />
+          </div>
+          <div>
+            <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-widest">Kết quả phân tích AI</p>
+            <p className={`text-[20px] font-black ${risk.color} leading-tight uppercase`}>{risk.label}</p>
+          </div>
+        </div>
+        <div className="text-right hidden sm:block">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Điểm tổng hợp</p>
+          <p className={`text-[38px] font-black leading-none ${risk.color}`}>{riskScore.toFixed(0)}%</p>
         </div>
       </div>
 
-      <div ref={contentRef} id="medical-report-content" className="bg-white p-6 sm:p-10 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden">
-        {/* Medical Header Overlay */}
-        <div className="flex justify-between items-start mb-10 border-b border-slate-100 pb-8">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-blue-600 mb-2">
-              <ShieldCheck className="h-7 w-7" />
-              <span className="text-xl font-black tracking-tighter uppercase italic">Antigravity AI</span>
+      {/* ── Main Report Card ────────────────────────────── */}
+      <div
+        ref={contentRef}
+        id="medical-report-content"
+        className="bg-card rounded-[20px] shadow-sm border border-border/20 overflow-hidden"
+      >
+        {/* Report Header */}
+        <div className="flex items-center justify-between px-8 py-5 border-b border-border/30 bg-muted/20">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+              <ShieldCheck className="h-5 w-5 text-white" />
             </div>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Medical Imaging System v2.0</p>
+            <div>
+              <span className="text-[16px] font-black text-foreground tracking-tight">Care DR.</span>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Hệ thống chẩn đoán phổi AI · v2.0</p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-slate-900 uppercase">Bệnh nhân: {result.patientName}</p>
-            <p className="text-xs text-slate-500 font-medium">Ngày chẩn đoán: {result.date}</p>
-            <p className="text-xs text-slate-500 font-medium">Mã kết quả: #{result.id}</p>
+          <div className="text-right space-y-0.5">
+            <p className="text-[13px] font-black text-foreground uppercase">Bệnh nhân: {patient?.fullName || "N/A"}</p>
+            <p className="text-[12px] font-semibold text-muted-foreground flex items-center justify-end gap-1.5">
+              <Clock className="h-3 w-3" /> {formatDate(visit.visitDate, "HH:mm:ss DD/MM/YYYY")}
+            </p>
+            <p className="text-[11px] font-semibold text-muted-foreground">Mã BN: {patient?.code || "N/A"}</p>
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-12">
-          {/* Visual Section */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="relative group rounded-3xl overflow-hidden border-4 border-slate-50 shadow-inner bg-slate-100 aspect-square">
-              <Image 
-                src={result.imageUrl} 
-                alt="X-Ray Image" 
-                fill
-                priority
-                className="w-full h-full object-contain" 
-                unoptimized={result.imageUrl.startsWith("http")}
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="rounded-xl font-bold gap-2"
-                  onClick={() => setShowImageViewer(true)}
-                >
-                  <Eye className="h-4 w-4" /> Trình xem chuyên dụng
-                </Button>
+        {/* Content grid */}
+        <div className="grid gap-0 lg:grid-cols-12">
+          {/* Left: Image + Scores */}
+          <div className="lg:col-span-5 border-r border-border/20 p-6 space-y-5">
+            {/* X-ray image */}
+            <div
+              className="relative group aspect-square w-full overflow-hidden rounded-2xl bg-slate-950 border border-border/20 cursor-pointer shadow-inner"
+              onClick={() => setShowImageViewer(true)}
+            >
+              {visit.medicalImages && visit.medicalImages.length > 0 ? (
+                <Image
+                  src={visit.medicalImages[0].imageUrl}
+                  alt="X-Ray Image"
+                  fill
+                  priority
+                  className="object-contain"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full bg-slate-900 text-slate-500">
+                   <AlertTriangle className="h-8 w-8 mb-2" />
+                   <p className="text-[12px] font-bold">Không có hình ảnh</p>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all duration-200 flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-xl flex items-center gap-2 px-4 py-2 text-[13px] font-bold text-foreground">
+                  <Eye className="h-4 w-4" /> Phóng to xem
+                </div>
+              </div>
+              <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                X-Ray Image
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                <div className="flex items-center gap-2 text-slate-500 mb-1">
-                  <FileCheck className="h-3 w-3" />
-                  <span className="text-[10px] uppercase font-black">Hình ảnh</span>
+            {/* Score Cards */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Hình ảnh (Vision)", icon: FileCheck, value: riskScore },
+                { label: "Lâm sàng (Clinical)", icon: ActivityIcon, value: 75 }, // Static or calculate if possible
+              ].map(({ label, icon: Icon, value }) => (
+                <div key={label} className="bg-muted/30 rounded-2xl p-4 border border-border/30 space-y-2">
+                  <div className="flex items-center gap-1.5">
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{label}</span>
+                  </div>
+                  <p className="text-[24px] font-black text-foreground leading-none">{value.toFixed(1)}%</p>
+                  <div className="h-1.5 bg-muted/60 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${getBarColor(value)}`} style={{ width: `${value}%` }} />
+                  </div>
                 </div>
-                <p className="text-xl font-black text-slate-900">{result.imageRisk.toFixed(1)}%</p>
+              ))}
+            </div>
+
+            {/* Overall score bar */}
+            <div className={`rounded-2xl p-4 border ${risk.bg} ${risk.border} space-y-2 shadow-sm`}>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">Điểm Tổng hợp AI</span>
+                <span className={`text-[15px] font-black ${risk.color}`}>{riskScore.toFixed(1)}%</span>
               </div>
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                <div className="flex items-center gap-2 text-slate-500 mb-1">
-                  <ActivityIcon className="h-3 w-3" />
-                  <span className="text-[10px] uppercase font-black">Lâm sàng</span>
-                </div>
-                <p className="text-xl font-black text-slate-900">{result.clinicalRisk}%</p>
+              <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden shadow-inner">
+                <div
+                  className={`h-full rounded-full ${risk.barColor} transition-all duration-700`}
+                  style={{ width: `${riskScore}%` }}
+                />
               </div>
             </div>
           </div>
 
-          {/* Analysis Section */}
-          <div className="lg:col-span-7 space-y-8 lg:pl-4">
+          {/* Right: Analysis & Recommendations */}
+          <div className="lg:col-span-7 p-6 space-y-6">
+            {/* Findings */}
             <div className="space-y-3">
-              <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                <Stethoscope className="h-4 w-4" /> Phân tích & Kết luận
-              </h3>
-              <div className="p-5 rounded-2xl bg-slate-50 text-slate-700 text-sm leading-relaxed border border-slate-100">
-                {result.findings}
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Stethoscope className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <h3 className="text-[13px] font-black text-primary uppercase tracking-widest">Ghi chú & Chẩn đoán</h3>
+              </div>
+              <div className="bg-muted/30 rounded-2xl border border-border/30 p-5 space-y-4">
+                 <div className="space-y-1">
+                    <p className="text-[11px] font-black text-muted-foreground uppercase">Triệu chứng lâm sàng:</p>
+                    <p className="text-[13px] text-foreground/80 leading-relaxed font-semibold">
+                      {visit.symptoms || "Không có ghi chú triệu chứng."}
+                    </p>
+                 </div>
+                 <div className="space-y-1">
+                    <p className="text-[11px] font-black text-muted-foreground uppercase">Ghi chú của bác sĩ:</p>
+                    <p className="text-[13px] text-foreground/80 leading-relaxed italic font-medium">
+                      {visit.note || "Không có ghi chú thêm."}
+                    </p>
+                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-sm font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
-                <FileCheck className="h-4 w-4" /> Khuyến nghị y khoa
-              </h3>
-              <div className="grid gap-3">
-                {mockResult.recommendations.map((rec, i) => (
-                  <div key={i} className="flex gap-4 p-3 rounded-xl border border-slate-100 bg-white shadow-sm italic text-xs text-slate-600">
-                    <div className="h-5 w-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">{i + 1}</div>
-                    {rec}
+            {/* Recommendations */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <FileCheck className="h-3.5 w-3.5 text-blue-600" />
+                </div>
+                <h3 className="text-[13px] font-black text-blue-700 uppercase tracking-widest">Khuyến nghị chẩn đoán</h3>
+              </div>
+              <div className="space-y-2.5">
+                {[
+                  "Kiểm tra lâm sàng định kỳ theo chỉ dẫn của bác sĩ",
+                  "Theo dõi sát các triệu chứng hô hấp",
+                  "Liên hệ ngay cơ sở y tế khi có dấu hiệu khó thở tăng dần"
+                ].map((rec, i) => (
+                  <div key={i} className="flex items-start gap-3 p-3.5 rounded-xl border border-border/30 bg-card hover:bg-muted/40 transition-colors shadow-sm group">
+                    <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[11px] font-black shrink-0 mt-0.5 group-hover:bg-primary group-hover:text-white transition-colors">
+                      {i + 1}
+                    </div>
+                    <p className="text-[13px] font-semibold text-foreground/80 leading-relaxed">{rec}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Severity Badge */}
-            <div className="pt-4 flex items-center justify-between border-t border-slate-100">
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-400">NGUY CƠ:</span>
-                <div className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest ${result.riskLevel === "Cao" ? "bg-red-500 text-white" :
-                    result.riskLevel === "Trung bình" ? "bg-amber-500 text-white" : "bg-emerald-500 text-white"
-                  }`}>
-                  {result.riskLevel}
+            {/* Footer stamp */}
+            <div className="flex items-center justify-between pt-4 border-t border-border/30">
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Phân loại AI:</span>
+                <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black text-white ${risk.barColor}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {risk.label}
                 </div>
               </div>
-              <div className="text-[10px] text-slate-300 font-mono italic">
-                Verified by Antigravity DeepLearning Core
-              </div>
+              <p className="text-[10px] text-muted-foreground/50 font-mono italic">Verified · Admin • Care DR. v2.0</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 pt-4 justify-center">
-        <Button asChild variant="outline" className="rounded-xl px-10 h-12 border-slate-200 font-bold hover:bg-slate-50">
-          <Link href="/diagnosis">Chẩn đoán mới</Link>
+      {/* ── Disclaimer ──────────────────────────────────── */}
+      <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-5 py-4 flex items-start gap-3">
+        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+        <p className="text-[12px] text-amber-500/90 font-medium leading-relaxed italic">
+          Báo cáo này được tự động tạo ra bởi mô hình AI và chỉ dành cho mục đích tham khảo lâm sàng. Quyết định cuối cùng thuộc về bác sĩ điều trị.
+        </p>
+      </div>
+
+      {/* ── Action Buttons ──────────────────────────────── */}
+      <div className="flex flex-wrap gap-3 justify-center">
+        <Button asChild variant="outline" className="rounded-xl px-8 h-11 border-border/50 bg-card font-bold text-[13px] shadow-sm hover:bg-muted/30">
+          <Link href="/results">Quay lại danh sách</Link>
         </Button>
-        <Button variant="outline" asChild className="rounded-xl px-10 h-12 border-slate-200 font-bold hover:bg-slate-50">
-          <Link href="/comparison" className="flex items-center gap-2">
-            <ArrowLeftRight className="h-4 w-4" />
-            So sánh tiến triển
-          </Link>
-        </Button>
-        {patientId && (
-          <Button variant="ghost" size="lg" asChild className="rounded-2xl px-8 text-slate-500 hover:bg-slate-50 font-bold">
-            <Link href={`/patients/${patientId}`}>Xem hồ sơ bệnh nhân</Link>
+        {patient && (
+          <Button asChild className="rounded-xl px-8 h-11 font-bold text-[13px] shadow-md shadow-primary/20 gap-2">
+            <Link href={`/diagnosis`}>
+              Tạo chẩn đoán mới <ChevronRight className="h-4 w-4" />
+            </Link>
           </Button>
         )}
       </div>
 
-      <ImageViewer
-        src={result.imageUrl}
-        open={showImageViewer}
-        onOpenChange={setShowImageViewer}
-      />
+      <ImageViewer src={visit.medicalImages?.[0]?.imageUrl || ""} open={showImageViewer} onOpenChange={setShowImageViewer} />
     </div>
   );
 }

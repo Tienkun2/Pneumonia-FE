@@ -106,9 +106,9 @@ export function usePatientTable({
           <div className="text-right">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg">
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted/60 rounded-lg">
                   <span className="sr-only">Mở menu thao tác</span>
-                  <MoreVertical className="h-4 w-4 text-slate-400" />
+                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border">
@@ -116,15 +116,15 @@ export function usePatientTable({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium" asChild>
                   <Link href={`/patients/${patient.id}`} className="flex items-center w-full">
-                    <Eye className="h-4 w-4 text-slate-400" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                     <span>Xem chi tiết</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEditClick(patient)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
-                  <Edit className="h-4 w-4 text-slate-400" />
+                  <Edit className="h-4 w-4 text-muted-foreground" />
                   <span>Cập nhật</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onDeleteClick(patient)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-red-50 focus:text-red-700 text-slate-400 hover:text-red-600 transition-colors">
+                <DropdownMenuItem onClick={() => onDeleteClick(patient)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-destructive/10 focus:text-destructive text-muted-foreground hover:text-destructive transition-colors">
                   <Trash2 className="h-4 w-4" />
                   <span>Xoá hồ sơ</span>
                 </DropdownMenuItem>

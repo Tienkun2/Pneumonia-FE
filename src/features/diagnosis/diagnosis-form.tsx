@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -9,22 +9,46 @@ import {
   setMultimodalResult,
 } from "@/store/slices/diagnosisSlice";
 import { AiService } from "@/services/ai-service";
-import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone } from "react-dropzone";
-import { Upload, Loader2, Activity, FileImage, Stethoscope, AlertTriangle, Check, BrainCircuit } from "lucide-react";
+import { PatientService } from "@/services/patient-service";
+import { VisitService } from "@/services/visit-service";
+import { Patient } from "@/types/patient";
+import { Visit } from "@/types/visit";
+import { Textarea } from "@/components/ui/textarea";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
+import {
+  Upload,
+  Loader2,
+  Activity,
+  FileImage,
+  Stethoscope,
+  AlertTriangle,
+  Check,
+  BrainCircuit,
+  X,
+  ImageIcon,
+  Zap,
+  Search,
+  UserCircle,
+  Hash,
+  History,
+  Calendar,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
 
-const RISKS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  LOW: { label: "NGUY CƠ THẤP", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800" },
-  MEDIUM: { label: "NGUY CƠ TRUNG BÌNH", color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-950/30", border: "border-yellow-200 dark:border-yellow-800" },
-  HIGH: { label: "NGUY CƠ CAO", color: "text-red-700 dark:text-red-400", bg: "bg-red-100 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" },
-  Unknown: { label: "CHƯA XÁC ĐỊNH", color: "text-gray-700", bg: "bg-gray-100", border: "border-gray-200" }
+/* ─── Constants ─────────────────────────────────────────────────── */
+const RISKS_MAP: Record<string, { label: string; color: string; bg: string; dot: string }> = {
+  LOW: { label: "Nguy cơ thấp", color: "text-emerald-500", bg: "bg-emerald-500/10 border-emerald-500/20", dot: "bg-emerald-500" },
+  MEDIUM: { label: "Nguy cơ trung bình", color: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/20", dot: "bg-amber-500" },
+  HIGH: { label: "Nguy cơ cao", color: "text-red-500", bg: "bg-red-500/10 border-red-500/20", dot: "bg-red-500" },
+  Unknown: { label: "Chưa xác định", color: "text-muted-foreground", bg: "bg-muted/40 border-border/40", dot: "bg-muted-foreground" },
 };
 
 const SYMPTOM_LABELS: Record<string, string> = {
@@ -37,377 +61,769 @@ const SYMPTOM_LABELS: Record<string, string> = {
   chest_pain: "Đau ngực",
   fast_heart_rate: "Nhịp tim nhanh",
   rusty_sputum: "Đờm màu gỉ sắt",
-  malaise: "Uể oải"
+  malaise: "Uể oải",
 };
 
-
-const PREDICTION_MAP: Record<string, string> = {
-  PNEUMONIA: "VIÊM PHỔI",
-  "Pneumonia Likely (Imaging Pattern Detected)": "CÓ DẤU HIỆU VIÊM PHỔI",
-  NORMAL: "BÌNH THƯỜNG",
-};
-
-const getScoreColor = (score: number) => {
+const getBarColor = (score: number) => {
   if (score > 0.7) return "bg-red-500";
   if (score > 0.4) return "bg-amber-500";
   return "bg-emerald-500";
 };
 
-
+/* ─── Main Component ────────────────────────────────────────────── */
 export function DiagnosisForm() {
   const dispatch = useAppDispatch();
   const diagnosisData = useAppSelector((state) => state.diagnosis);
-  const [isSubmittingFusion, setIsSubmittingFusion] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [note, setNote] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+
+  // Patient Selection State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientVisits, setPatientVisits] = useState<Visit[]>([]);
+  const [isLoadingVisits, setIsLoadingVisits] = useState(false);
+  const [showHistory, setShowHistory] = useState(false); 
+
+  // Infinite Scroll & Dropdown State
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Handle clicking outside to close Dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const lastPatientElementRef = useCallback((node: HTMLButtonElement | null) => {
+    if (isSearching) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    }, { rootMargin: '100px' });
+    if (node) observerRef.current.observe(node);
+  }, [isSearching, hasMore]);
+
+  // Fetch Patients
+  const fetchPatients = useCallback(async (currentPage: number, qs: string, append = false) => {
+    try {
+      if (currentPage === 1) setIsSearching(true);
+      const data = await PatientService.getPatients(currentPage, 10, { search: qs });
+      const newItems = data.data || [];
+      setPatients(prev => append ? [...prev, ...newItems] : newItems);
+      setHasMore(currentPage < (data.totalPages || 1) && newItems.length > 0);
+    } catch (error) {
+      console.error("Failed to fetch patients:", error);
+      if (!append) setPatients([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  // Debounce Search Logic
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    // Only debounce if there's actual typing
+    const delay = searchQuery ? 800 : 0;
+
+    const timer = setTimeout(() => {
+      setPage(1);
+      fetchPatients(1, searchQuery, false);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, isDropdownOpen, fetchPatients]);
+
+  // Pagination Logic (Infinite Scroll)
+  useEffect(() => {
+    if (!isDropdownOpen || page <= 1) return;
+    fetchPatients(page, searchQuery, true);
+  }, [page, isDropdownOpen, searchQuery, fetchPatients]);
 
   useEffect(() => {
     const fetchSymptoms = async () => {
       try {
         const symptoms = await AiService.getSymptoms();
         setAvailableSymptoms(symptoms);
-      } catch (error) {
-        console.error("Failed to fetch symptoms", error);
+      } catch {
         toast.error("Không thể tải danh sách triệu chứng từ AI");
       }
     };
     fetchSymptoms();
   }, []);
 
+  // Fetch Patient Visits on Selection
+  useEffect(() => {
+    if (selectedPatient) {
+      const fetchVisits = async () => {
+        try {
+          setIsLoadingVisits(true);
+          const visits = await VisitService.getPatientVisits(selectedPatient.id);
+          setPatientVisits(visits);
+        } catch (error) {
+          console.error("Failed to fetch visits:", error);
+          // toast.error("Không thể tải lịch sử khám");
+        } finally {
+          setIsLoadingVisits(false);
+        }
+      };
+      fetchVisits();
+    } else {
+      setPatientVisits([]);
+      setShowHistory(false);
+    }
+  }, [selectedPatient]);
 
-  // Image Upload Logic
   const onDrop = (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
       setSelectedFile(file);
-      const objectUrl = URL.createObjectURL(file);
-      dispatch(setImagePreview(objectUrl));
+      dispatch(setImagePreview(URL.createObjectURL(file)));
     }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "image/*": [".jpg", ".jpeg", ".png", ".dcm"],
-    },
+    accept: { "image/*": [".jpg", ".jpeg", ".png", ".dcm"] },
     maxFiles: 1,
   });
 
-  const handleMultimodalSubmit = async () => {
+  const handleSubmit = async () => {
     if (!selectedFile) {
       toast.error("Vui lòng tải lên ảnh X-quang để phân tích");
       return;
     }
-
     try {
-      setIsSubmittingFusion(true);
-      const symptomsStr = selectedSymptoms.join(",");
-      const result = await AiService.predictMultimodal(selectedFile, symptomsStr);
-      console.log("Multimodal AI Result:", result);
-      toast.success("Phân tích đa phương thức thành công!");
+      setIsSubmitting(true);
+      const result = await AiService.predictMultimodal(selectedFile, selectedSymptoms.join(","));
       dispatch(setMultimodalResult(result));
-    } catch (error) {
-      console.error(error);
+      toast.success("Phân tích đa phương thức thành công!");
+    } catch {
       toast.error("Có lỗi xảy ra khi phân tích đa phương thức");
     } finally {
-      setIsSubmittingFusion(false);
+      setIsSubmitting(false);
     }
   };
 
+  const clearImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedFile(null);
+    dispatch(setImagePreview(undefined));
+    dispatch(setPredictionResult(null));
+  };
+
+  const toggleSymptom = (symptom: string, checked: boolean) => {
+    setSelectedSymptoms(prev =>
+      checked ? [...prev, symptom] : prev.filter(s => s !== symptom)
+    );
+  };
+
+  const handleSaveVisit = async () => {
+    if (!selectedPatient) {
+      toast.error("Vui lòng chọn bệnh nhân trước khi lưu");
+      return;
+    }
+
+    if (!diagnosisData.multimodalResult) {
+      toast.error("Vui lòng thực hiện chẩn đoán trước khi lưu");
+      return;
+    }
+
+    try {
+      setIsSaving(true)
+      await VisitService.createMultimodalVisit({
+        patientId: selectedPatient.id,
+        symptoms: selectedSymptoms.map(s => SYMPTOM_LABELS[s] || s).join(", "),
+        note: note,
+        imageUrl: diagnosisData.multimodalResult.heatmap || "",
+        imageType: "XRAY",
+        result: diagnosisData.multimodalResult.risk_level === "HIGH" ? "PNEUMONIA" : "NORMAL",
+        confidenceScore: diagnosisData.multimodalResult.final_score,
+        modelVersion: "v1.0"
+      });
+
+      toast.success("Đã lưu kết quả chẩn đoán vào hồ sơ bệnh nhân!");
+      setNote(""); // Clear note after success
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Lỗi khi lưu kết quả chẩn đoán";
+      toast.error(message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const riskInfo = RISKS_MAP[diagnosisData.multimodalResult?.risk_level ?? "Unknown"] ?? RISKS_MAP.Unknown;
+  const canSubmit = !!selectedFile && !isSubmitting;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 pb-6 animate-in fade-in duration-500">
+      {/* ── Header ──────────────────────────────────────────────── */}
       <PageHeader
         title="Chẩn đoán đa phương thức"
-        icon={Activity}
-        description="Kết hợp hình ảnh X-quang và triệu chứng lâm sàng để chẩn đoán chính xác"
+        subtitle="Kết hợp hình ảnh X-quang và triệu chứng lâm sàng để phân tích chính xác hơn"
+        icon={BrainCircuit}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-        {/* Left Column: Image Diagnosis */}
-        <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
-          <CardHeader className="bg-muted/30 border-b border-border pb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <FileImage className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <CardTitle className="text-lg text-foreground">Chẩn đoán hình ảnh</CardTitle>
-                <CardDescription>Phân tích X-quang phổi</CardDescription>
-              </div>
+      {/* ── Patient Selection Section ──────────────────────────────── */}
+      <div className="bg-card rounded-[20px] shadow-sm border border-border/50 p-5 sm:px-8 sm:py-6 relative z-20 transition-colors">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <UserCircle className="h-5 w-5 text-primary" />
             </div>
-          </CardHeader>
-          <CardContent className="pt-6 flex-1 flex flex-col">
-            <div className="space-y-6 flex-1 flex flex-col">
-              <div
-                {...getRootProps()}
-                className={`
-                  border-2 border-dashed rounded-xl p-8 text-center cursor-pointer 
-                  transition-all duration-200 ease-in-out h-64 flex flex-col justify-center items-center
-                  ${isDragActive ? 'border-primary bg-primary/5 scale-[1.02]' : 'border-border hover:border-primary/50 hover:bg-muted/30'}
-                `}
-              >
-                <input {...getInputProps()} />
-                {diagnosisData.imagePreview ? (
-                  <div className="space-y-4 w-full h-full flex flex-col items-center justify-center">
-                    <div className="relative group overflow-hidden rounded-lg border border-slate-200 shadow-sm w-full h-48">
-                      <Image
-                        src={diagnosisData.imagePreview}
-                        alt="Preview"
-                        fill
-                        className="object-contain transition-transform duration-300 group-hover:scale-105"
-                        unoptimized
-                      />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-white text-sm font-medium truncate">{selectedFile?.name || "Uploaded Image"}</p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedFile(null);
-                        dispatch(setImagePreview(undefined));
-                        dispatch(setPredictionResult(null));
-                      }}
-                    >
-                      Xóa ảnh
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4 py-4">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Upload className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-base font-semibold text-foreground">
-                        {isDragActive ? "Thả file vào đây" : "Tải lên ảnh X-quang"}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1 max-w-xs mx-auto">
-                        Kéo thả file hoặc click để chọn (JPG, PNG, DICOM)
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div>
+              <h2 className="text-[15px] font-black text-foreground">Hồ sơ bệnh nhân</h2>
+              <p className="text-[12px] font-medium text-muted-foreground">Chọn bệnh nhân để lưu kết quả chẩn đoán</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Right Column: Symptoms and Multimodal Action */}
-        <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
-          <CardHeader className="bg-muted/30 border-b border-border pb-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          <div className="w-full sm:w-[350px] relative" ref={dropdownRef}>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Tìm kiếm theo Tên, SĐT, Mã BN..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1);
+              }}
+              onFocus={() => {
+                setIsDropdownOpen(true);
+                setPage(1);
+              }}
+              className="pl-9 h-11 rounded-xl bg-muted/40 border-border/40 focus:bg-card transition-all font-medium text-[13px]"
+            />
+            {isDropdownOpen && (
+              <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-card border border-border/50 rounded-xl shadow-xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 z-50">
+                <div className="px-3 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider bg-muted/40 border-b border-border/30 flex items-center justify-between">
+                  <span>Danh sách bệnh nhân</span>
+                  <button onClick={() => setIsDropdownOpen(false)}><X className="h-4 w-4 hover:text-slate-700" /></button>
+                </div>
+
+                <div className="max-h-[300px] overflow-y-auto">
+                  {patients.map((patient, index) => {
+                    const isLast = index === patients.length - 1;
+                    return (
+                      <button
+                        key={patient.id}
+                        ref={isLast ? lastPatientElementRef : null}
+                        onClick={() => { setSelectedPatient(patient); setIsDropdownOpen(false); setSearchQuery(''); }}
+                        className="w-full text-left px-4 py-3 hover:bg-muted/40 flex items-center justify-between group transition-colors border-b border-border/20 last:border-0"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-muted/60 border border-border/40 flex items-center justify-center text-[12px] font-bold text-muted-foreground group-hover:bg-primary/20 group-hover:border-primary/40 group-hover:text-primary transition-colors">
+                            {patient.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-foreground">{patient.fullName}</p>
+                            <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 flex gap-2">
+                              <span>SĐT: {patient.phone || "Trống"}</span>
+                              <span>•</span>
+                              <span>{patient.gender === "MALE" ? "Nam" : patient.gender === "FEMALE" ? "Nữ" : "Khác"}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] bg-card text-muted-foreground whitespace-nowrap ml-2"><Hash className="w-3 h-3 mr-1" /> {patient.code}</Badge>
+                      </button>
+                    );
+                  })}
+
+                  {isSearching && (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    </div>
+                  )}
+
+                  {!isSearching && patients.length === 0 && (
+                    <div className="p-4 text-center text-[13px] text-muted-foreground font-semibold">Không tìm thấy bệnh nhân nào.</div>
+                  )}
+ 
+                  {!isSearching && patients.length > 0 && !hasMore && (
+                    <div className="p-3 text-center text-[11px] text-muted-foreground/60 font-black uppercase tracking-wider">Đã tải toàn bộ dữ liệu</div>
+                  )}
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg text-foreground">Triệu chứng & Lâm sàng</CardTitle>
-                <CardDescription>Chọn các triệu chứng để phân tích tổng hợp</CardDescription>
+            )}
+          </div>
+        </div>
+
+        {selectedPatient && (
+          <>
+            <div className="mt-5 pt-5 border-t border-border/30 flex items-center justify-between animate-in fade-in">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 gap-1 rounded-full px-3 py-1 text-[12px]">
+                  <Check className="w-3.5 h-3.5" />
+                  Đã chọn: <strong className="font-black ml-1 text-foreground">{selectedPatient.fullName}</strong>
+                </Badge>
+                <Badge variant="outline" className="border-border/40 text-muted-foreground rounded-full px-3 py-1 text-[11px] font-semibold bg-card">
+                  {selectedPatient.code}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="flex items-center gap-1.5 text-[12px] font-black text-primary hover:opacity-80 transition-all"
+                >
+                  <History className="h-4 w-4" />
+                  {showHistory ? "Thoát lịch sử" : `Xem lịch sử (${patientVisits.length})`}
+                </button>
+                <button onClick={() => setSelectedPatient(null)} className="text-[12px] font-bold text-muted-foreground hover:text-destructive transition-colors">Hủy chọn</button>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="pt-6 flex-1 flex flex-col">
-            <div className="space-y-6 flex-1 flex flex-col">
-              <div className="bg-muted/20 p-4 rounded-xl border border-border">
-                <Label className="text-sm font-semibold text-foreground/80 mb-3 block">Chọn các triệu chứng hiện tại</Label>
-                {availableSymptoms.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {availableSymptoms.map((symptom) => (
-                      <div key={symptom} className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50 transition-colors">
-                        <Checkbox
-                          id={`symptom-${symptom}`}
-                          checked={selectedSymptoms.includes(symptom)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              setSelectedSymptoms([...selectedSymptoms, symptom]);
-                            } else {
-                              setSelectedSymptoms(selectedSymptoms.filter((s) => s !== symptom));
-                            }
-                          }}
-                          className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                        />
-                        <div className="space-y-1 leading-none">
-                          <label htmlFor={`symptom-${symptom}`} className="text-sm font-medium cursor-pointer">
-                            {SYMPTOM_LABELS[symptom] || symptom}
-                          </label>
+
+            {showHistory && (
+              <div className="mt-6 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                <h3 className="text-[12px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
+                    <Calendar className="h-3.5 w-3.5" />
+                  </div>
+                  Lịch sử khám bệnh
+                </h3>
+                
+                {isLoadingVisits ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
+                  </div>
+                ) : patientVisits.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {patientVisits.map((visit) => (
+                      <div key={visit.id} className="bg-muted/30 border border-border/30 rounded-2xl p-4 space-y-3 hover:border-primary/40 transition-all cursor-default group">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span className="text-[11px] font-bold uppercase">
+                              {format(new Date(visit.visitDate), "dd MMM yyyy", { locale: vi })}
+                            </span>
+                          </div>
+                          {visit.diagnoses && visit.diagnoses.length > 0 && (
+                            <Badge className={`${visit.diagnoses[0].result === "PNEUMONIA" ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"} text-[10px] uppercase font-black`}>
+                              {visit.diagnoses[0].result}
+                            </Badge>
+                          )}
+                        </div>
+
+                        <div className="aspect-[4/3] rounded-xl overflow-hidden relative bg-muted/40 border border-border/30">
+                          {visit.medicalImages && visit.medicalImages.length > 0 ? (
+                            <Image
+                              src={visit.medicalImages[0].imageUrl} 
+                              alt="X-Ray" 
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40">
+                              <ImageIcon className="h-8 w-8 opacity-20" />
+                              <span className="text-[10px] font-bold">KHÔNG CÓ ẢNH</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-tighter">Triệu chứng & Chẩn đoán</p>
+                          <p className="text-[12px] font-semibold text-foreground/80 line-clamp-2 leading-relaxed">
+                            {visit.symptoms || "Không ghi chú triệu chứng"}
+                          </p>
+                          {visit.diagnoses && visit.diagnoses.length > 0 && (
+                            <div className="pt-1 flex items-center justify-between">
+                              <span className="text-[10px] font-extrabold text-muted-foreground/70 uppercase">Độ tin cậy AI</span>
+                              <span className="text-[11px] font-black text-foreground">
+                                {(visit.diagnoses[0].confidenceScore * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center py-4 text-muted-foreground text-sm">
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Đang tải danh sách triệu chứng...
+                  <div className="py-12 bg-muted/20 rounded-2xl border border-dashed border-border/50 flex flex-col items-center justify-center gap-2">
+                    <History className="h-6 w-6 text-muted-foreground/30" />
+                    <p className="text-[12px] font-semibold text-muted-foreground/50">Chưa có lịch sử khám bệnh trước đây</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── Input Section ───────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative z-10">
+        {/* Left: Image Upload */}
+        <div className="bg-card rounded-[20px] shadow-sm border border-border/50 flex flex-col overflow-hidden">
+          {/* Card Header */}
+          <div className="flex items-center gap-3 px-6 py-4 border-b border-border/30">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <FileImage className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-[14px] font-black text-foreground leading-tight">Chẩn đoán hình ảnh</h2>
+              <p className="text-[12px] font-medium text-muted-foreground">Tải lên ảnh X-quang phổi để AI phân tích</p>
+            </div>
+          </div>
+
+          {/* Dropzone */}
+          <div className="p-5 flex-1 flex flex-col">
+            <div
+              {...getRootProps()}
+              className={`
+                relative flex-1 min-h-[280px] rounded-2xl border-2 border-dashed cursor-pointer
+                flex flex-col items-center justify-center transition-all duration-200 group
+                ${isDragActive
+                  ? "border-primary bg-primary/5 scale-[1.01]"
+                  : diagnosisData.imagePreview
+                    ? "border-transparent bg-transparent p-0"
+                    : "border-border/50 bg-muted/20 hover:border-primary/40 hover:bg-primary/5"
+                }
+              `}
+            >
+              <input {...getInputProps()} />
+
+              {diagnosisData.imagePreview ? (
+                /* Image Preview */
+                <div className="relative w-full h-full min-h-[280px] rounded-2xl overflow-hidden border border-border/30 bg-slate-950">
+                  <Image
+                    src={diagnosisData.imagePreview}
+                    alt="X-quang Preview"
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                  {/* Overlay controls */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                    <button
+                      onClick={clearImage}
+                      className="flex items-center gap-1.5 bg-red-500 text-white text-[12px] font-bold px-4 py-2 rounded-full shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" /> Xóa ảnh
+                    </button>
+                    <span className="text-white text-[11px] font-semibold bg-black/50 px-3 py-1.5 rounded-full">
+                      Click để thay thế
+                    </span>
+                  </div>
+                  {/* File name badge */}
+                  <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-3 py-1.5 rounded-full max-w-[80%] truncate">
+                    {selectedFile?.name}
+                  </div>
+                  {/* Check badge */}
+                  <div className="absolute top-3 right-3 bg-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg">
+                    <Check className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+              ) : (
+                /* Empty State */
+                <div className="flex flex-col items-center gap-4 p-8 text-center">
+                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all duration-200 ${isDragActive ? "bg-primary/20 scale-110" : "bg-primary/10"}`}>
+                    <Upload className={`h-9 w-9 transition-colors ${isDragActive ? "text-primary" : "text-primary/70"}`} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[15px] font-bold text-foreground">
+                      {isDragActive ? "Thả file vào đây!" : "Tải lên ảnh X-quang"}
+                    </p>
+                    <p className="text-[12px] font-medium text-muted-foreground max-w-[200px] leading-relaxed">
+                      Kéo thả hoặc <span className="text-primary font-bold underline underline-offset-2">click để chọn</span> file<br />(JPG, PNG, DICOM)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2">
+                    <ImageIcon className="h-3.5 w-3.5" />
+                    Hỗ trợ: JPG, PNG, DICOM • Tối đa 10MB
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Symptoms + Submit */}
+        <div className="bg-card rounded-[20px] shadow-sm border border-border/50 flex flex-col overflow-hidden">
+          {/* Card Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Activity className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-[14px] font-black text-foreground leading-tight">Triệu chứng & Lâm sàng</h2>
+                <p className="text-[12px] font-medium text-muted-foreground">Chọn các triệu chứng bệnh nhân</p>
+              </div>
+            </div>
+            {selectedSymptoms.length > 0 && (
+              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full">
+                <Check className="h-3 w-3" /> {selectedSymptoms.length} triệu chứng
+              </span>
+            )}
+          </div>
+
+          {/* Symptoms Grid */}
+          <div className="flex-1 overflow-y-auto p-5">
+            <Label className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider mb-3 block">
+              Tích chọn triệu chứng hiện tại
+            </Label>
+
+            {availableSymptoms.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {availableSymptoms.map((symptom) => {
+                  const isChecked = selectedSymptoms.includes(symptom);
+                  return (
+                    <label
+                      key={symptom}
+                      htmlFor={`symptom-${symptom}`}
+                      className={`
+                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-150
+                        ${isChecked
+                          ? "border-primary/40 bg-primary/10"
+                          : "border-border/40 bg-muted/20 hover:border-border hover:bg-muted/40"
+                        }
+                      `}
+                    >
+                      <Checkbox
+                        id={`symptom-${symptom}`}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => toggleSymptom(symptom, !!checked)}
+                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary shrink-0"
+                      />
+                      <span className={`text-[13px] font-semibold ${isChecked ? "text-primary" : "text-foreground/80"}`}>
+                        {SYMPTOM_LABELS[symptom] || symptom}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
+                <Loader2 className="h-7 w-7 animate-spin text-primary" />
+                <p className="text-[13px] font-semibold">Đang tải triệu chứng từ AI...</p>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* ── Central Submit Button ───────────────────────────────── */}
+      <div className="flex flex-col items-center justify-center pt-2 pb-6">
+        {!selectedFile && (
+          <p className="text-[12px] font-semibold text-amber-600 flex items-center gap-1.5 mb-3 px-4 py-1.5 bg-amber-500/10 rounded-full border border-amber-500/20">
+            <AlertTriangle className="h-3.5 w-3.5" /> Vui lòng tải ảnh X-quang trước khi phân tích
+          </p>
+        )}
+        <Button
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          className={`h-14 px-12 rounded-full gap-3 text-[16px] font-black shadow-xl transition-all duration-300 ${!canSubmit ? 'opacity-40 cursor-not-allowed scale-100' : 'hover:scale-105 active:scale-95 shadow-primary/30'}`}
+          style={{
+            background: canSubmit
+              ? "linear-gradient(135deg, hsl(var(--primary)) 0%, #4f46e5 100%)"
+              : undefined,
+          }}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-6 w-6 animate-spin" />
+              Đang phân tích AI...
+            </>
+          ) : (
+            <>
+              <Zap className="h-6 w-6 fill-white" />
+              Tiến Hành Chẩn Đoán AI
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* ── Results Section ──────────────────────────────────────── */}
+      {diagnosisData.multimodalResult && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-5">
+          {/* Result Header Banner */}
+          <div className={`rounded-[20px] border px-6 py-5 flex items-center justify-between ${riskInfo.bg}`}>
+            <div className="flex items-center gap-3">
+              <div className={`w-3 h-3 rounded-full ${riskInfo.dot} animate-pulse`} />
+              <div>
+                <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">Kết quả chẩn đoán AI</p>
+                <h3 className={`text-[22px] font-black tracking-tight ${riskInfo.color}`}>{riskInfo.label}</h3>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-[11px] font-bold text-muted-foreground uppercase">Điểm tổng hợp</p>
+                <p className={`text-[26px] font-black ${riskInfo.color}`}>
+                  {(diagnosisData.multimodalResult.final_score * 100).toFixed(0)}%
+                </p>
+              </div>
+              <BrainCircuit className={`h-10 w-10 ${riskInfo.color} opacity-60`} />
+            </div>
+          </div>
+
+          {/* Results Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Left: Heatmap */}
+            <div className="bg-card rounded-[20px] shadow-sm border border-border/50 overflow-hidden">
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-border/30">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                  <FileImage className="h-4 w-4 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-black text-foreground">Heatmap Grad-CAM</h3>
+                  <p className="text-[12px] font-medium text-muted-foreground">Vùng AI nhận diện tổn thương</p>
+                </div>
+              </div>
+              <div className="p-5">
+                <div className="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-slate-950 border border-border/20">
+                  {(diagnosisData.multimodalResult.heatmap || diagnosisData.imagePreview) ? (
+                    <>
+                      <Image
+                        src={
+                          diagnosisData.multimodalResult.heatmap
+                            ? diagnosisData.multimodalResult.heatmap.startsWith("data:")
+                              ? diagnosisData.multimodalResult.heatmap
+                              : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`
+                            : (diagnosisData.imagePreview || "")
+                        }
+                        alt="AI Heatmap"
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                      {diagnosisData.multimodalResult.heatmap && (
+                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                          🔴 Vùng tổn thương
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                      <FileImage className="h-10 w-10 opacity-30" />
+                      <p className="text-[12px] font-semibold">Không có dữ liệu hình ảnh</p>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[11px] font-semibold text-muted-foreground text-center italic mt-3">
+                  Vùng màu đỏ/vàng là khu vực AI xác định có xác suất tổn thương cao
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Scores + Clinical Notes */}
+            <div className="space-y-4">
+              {/* Score Bars */}
+              <div className="bg-card rounded-[20px] shadow-sm border border-border/50 overflow-hidden">
+                <div className="flex items-center gap-3 px-6 py-4 border-b border-border/30">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Activity className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="text-[14px] font-black text-foreground">Phân bổ xác suất</h3>
+                </div>
+                <div className="p-5 space-y-5">
+                  {([
+                    { label: "Hình ảnh (Vision AI)", value: diagnosisData.multimodalResult.vision_probability },
+                    { label: "Lâm sàng (Clinical AI)", value: diagnosisData.multimodalResult.clinical_probability },
+                    { label: "Tổng hợp (Multimodal)", value: diagnosisData.multimodalResult.final_score, highlight: true },
+                  ] as { label: string; value: number; highlight?: boolean }[]).map((item) => (
+                    <div key={item.label}>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className={`text-[13px] font-${item.highlight ? "black" : "semibold"} ${item.highlight ? "text-primary" : "text-foreground/80"}`}>
+                          {item.label}
+                        </span>
+                        <span className={`text-[14px] font-black ${item.highlight ? "text-primary" : "text-foreground"}`}>
+                          {(item.value * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className={`w-full rounded-full overflow-hidden shadow-inner ${item.highlight ? "h-3 bg-muted/80" : "h-2 bg-muted/60"}`}>
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ease-out ${getBarColor(item.value)}`}
+                          style={{ width: `${item.value * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clinical assessment */}
+              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-primary" />
+                  <h4 className="text-[13px] font-black text-primary/90">Nhận định lâm sàng</h4>
+                </div>
+                <p className="text-[13px] text-foreground/80 leading-relaxed font-medium">
+                  Dựa trên phân tích kết hợp X-quang và{" "}
+                  <strong className="text-primary">{selectedSymptoms.length}</strong> triệu chứng, mức độ rủi ro viêm phổi được đánh giá là{" "}
+                  <strong className="uppercase text-primary">{riskInfo.label}</strong>.
+                </p>
+                {selectedSymptoms.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {selectedSymptoms.map(s => (
+                      <span key={s} className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-3 py-1 rounded-full border border-primary/10">
+                        <Check className="h-2.5 w-2.5" /> {SYMPTOM_LABELS[s] || s}
+                      </span>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <div className="mt-auto pt-6">
+              {/* Disclaimer */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
+                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[12px] text-amber-500/90 leading-relaxed font-semibold italic">
+                  Kết quả này chỉ mang tính tham khảo từ AI. Bác sĩ cần đối chiếu với lâm sàng thực tế và các xét nghiệm bổ sung trước khi kết luận.
+                </p>
+              </div>
+
+              {/* Save Results Action */}
+              <div className="bg-card rounded-[20px] shadow-sm border border-border/50 p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-[13px] font-black text-foreground">Ghi chú của bác sĩ</Label>
+                  <Textarea
+                    placeholder="Ghi chú thêm về tình trạng bệnh nhân hoặc chỉ dẫn điều trị..."
+                    className="min-h-[100px] rounded-xl bg-muted/20 border-border/40 focus:bg-card resize-none text-[13px]"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  />
+                </div>
+
+                {!selectedPatient && (
+                  <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <p className="text-[11px] font-bold text-destructive">Bạn chưa chọn bệnh nhân để lưu hồ sơ</p>
+                  </div>
+                )}
+
                 <Button
-                  onClick={handleMultimodalSubmit}
-                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:opacity-90 h-12 rounded-xl shadow-lg shadow-primary/20 transition-all font-semibold"
-                  disabled={isSubmittingFusion || !selectedFile}
+                  onClick={handleSaveVisit}
+                  disabled={isSaving || !selectedPatient}
+                  className="w-full h-12 rounded-xl gap-2 font-black text-[14px] shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all"
                 >
-                  {isSubmittingFusion ? (
+                  {isSaving ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Đang phân tích tổng hợp...
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Đang lưu hồ sơ...
                     </>
                   ) : (
                     <>
-                      <BrainCircuit className="mr-2 h-5 w-5" />
-                      Chẩn đoán đa phương thức
+                      <Check className="h-5 w-5" />
+                      Lưu Kết Quả Vào Hồ Sơ
                     </>
                   )}
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Multimodal Results Section - Heatmap and Probabilities */}
-      {diagnosisData.multimodalResult && (
-        <div className="animate-in fade-in slide-in-from-bottom-5 duration-700">
-          <Card className="border-primary/20 shadow-md">
-            <CardHeader className="bg-primary/5 border-b border-primary/10">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <BrainCircuit className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl text-foreground">Kết quả Chẩn đoán Đa phương thức</CardTitle>
-                    <CardDescription>Phân tích kết hợp Hình ảnh & Triệu chứng</CardDescription>
-                  </div>
-                </div>
-                <Badge
-                  className={`px-4 py-1.5 text-base font-bold shadow-sm ${(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).bg
-                    } ${(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).color
-                    } ${(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).border
-                    }`}
-                >
-                  {(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).label}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Heatmap Visualization */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-foreground flex items-center gap-2">
-                    <FileImage className="w-4 h-4 text-primary" /> Hình ảnh Heatmap (Grad-CAM)
-                  </h4>
-                  <div className="relative aspect-square w-full max-w-md mx-auto overflow-hidden rounded-2xl border border-border shadow-inner bg-slate-100 flex items-center justify-center">
-                    {(diagnosisData.multimodalResult?.heatmap || diagnosisData.imagePreview) ? (
-                      <>
-                        <img
-                          src={diagnosisData.multimodalResult?.heatmap
-                            ? (diagnosisData.multimodalResult.heatmap.startsWith('data:')
-                              ? diagnosisData.multimodalResult.heatmap
-                              : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`)
-                            : diagnosisData.imagePreview}
-                          alt="AI Heatmap Analysis"
-                          className="object-contain w-full h-full"
-                        />
-                        {diagnosisData.multimodalResult?.heatmap && (
-                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full border border-white/20">
-                            Vùng tổn thương được AI nhận diện
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="text-center p-6 space-y-2">
-                        <FileImage className="w-12 h-12 text-muted-foreground/30 mx-auto" />
-                        <p className="text-sm text-muted-foreground">Không có dữ liệu hình ảnh</p>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center italic">
-                    Vùng màu đỏ/vàng biểu thị xác suất tổn thương cao được AI nhận diện
-                  </p>
-                </div>
-
-                {/* Probabilities and Insights */}
-                <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h4 className="font-semibold text-foreground flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-primary" /> Phân bổ xác suất
-                    </h4>
-                    <div className="grid grid-cols-1 gap-4">
-                      {/* Vision Probability */}
-                      <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-foreground">Xác suất Hình ảnh (Vision AI)</span>
-                          <span className="text-sm font-bold text-primary">{(diagnosisData.multimodalResult.vision_probability * 100).toFixed(1)}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden shadow-inner">
-                          <div
-                            className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreColor(diagnosisData.multimodalResult.vision_probability)}`}
-                            style={{ width: `${diagnosisData.multimodalResult.vision_probability * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Clinical Probability */}
-                      <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-foreground">Xác suất Lâm sàng (Clinical AI)</span>
-                          <span className="text-sm font-bold text-primary">{(diagnosisData.multimodalResult.clinical_probability * 100).toFixed(1)}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden shadow-inner">
-                          <div
-                            className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreColor(diagnosisData.multimodalResult.clinical_probability)}`}
-                            style={{ width: `${diagnosisData.multimodalResult.clinical_probability * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Final Combined Score */}
-                      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 shadow-sm ring-1 ring-primary/10">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-bold text-primary">Điểm số Tổng hợp (Multimodal)</span>
-                          <span className="text-sm font-extrabold text-primary">{(diagnosisData.multimodalResult.final_score * 100).toFixed(1)}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden shadow-inner">
-                          <div
-                            className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreColor(diagnosisData.multimodalResult.final_score)}`}
-                            style={{ width: `${diagnosisData.multimodalResult.final_score * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-xl p-5 space-y-3 shadow-sm">
-                    <h5 className="text-blue-900 dark:text-blue-300 font-semibold flex items-center gap-2 text-sm">
-                      <Stethoscope className="w-4 h-4 text-blue-500" /> Nhận định lâm sàng
-                    </h5>
-                    <p className="text-sm text-blue-800 dark:text-blue-400 leading-relaxed">
-                      Dựa trên phân tích kết hợp giữa hình ảnh X-quang và bộ {selectedSymptoms.length} triệu chứng được chọn,
-                      hệ thống đánh giá mức độ rủi ro viêm phổi là <strong className="uppercase">{RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.label}</strong>.
-                    </p>
-                    <div className="pt-2">
-                      <p className="text-xs text-blue-700 dark:text-blue-500 flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Triệu chứng ghi nhận: {selectedSymptoms.map(s => SYMPTOM_LABELS[s] || s).join(", ")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/50 rounded-xl p-4 flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-yellow-800 dark:text-yellow-500 italic">
-                      Đây là kết quả phân tích tham khảo từ AI. Bác sĩ cần đối chiếu với các kết quả xét nghiệm khác và tình trạng thực tế của bệnh nhân để đưa ra quyết định cuối cùng.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
       )}
     </div>

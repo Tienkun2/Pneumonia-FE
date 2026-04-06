@@ -25,7 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, PlusCircle, Loader2, MoreVertical, Edit, Trash2, Activity, FileCheck, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
+import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import { QuickAddVisitDialog } from "@/components/patients/quick-add-visit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Visit } from "@/types/visit";
@@ -170,7 +171,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ngày sinh</p>
-                <p className="font-medium">{patient.dateOfBirth ? formatDate(patient.dateOfBirth, "DD/MM/YYYY") : "---"}</p>
+                <p className="font-medium">{patient.dateOfBirth ? format(new Date(patient.dateOfBirth), "dd/MM/yyyy", { locale: vi }) : "---"}</p>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Người giám hộ</p>
@@ -186,7 +187,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Ngày tạo hồ sơ</p>
-                <p className="font-medium">{formatDate(patient.createdAt, "DD/MM/YYYY")}</p>
+                <p className="font-medium">{patient.createdAt ? format(new Date(patient.createdAt), "dd/MM/yyyy", { locale: vi }) : "---"}</p>
               </div>
             </CardContent>
           </Card>
@@ -201,7 +202,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
             <CardContent className="p-0">
               {isVisitsLoading ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : visitsError ? (
                 <div className="py-12 text-center text-red-500">{visitsError}</div>
@@ -218,7 +219,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
               ) : (
                 <div className="relative p-6 px-8">
                   {/* Vertical Timeline Line */}
-                  <div className="absolute left-[2.45rem] top-10 bottom-10 w-0.5 bg-gradient-to-b from-blue-500/20 via-blue-500/10 to-transparent pointer-events-none" />
+                  <div className="absolute left-[2.45rem] top-10 bottom-10 w-0.5 bg-gradient-to-b from-primary/20 via-primary/10 to-transparent pointer-events-none" />
 
                   <div className="space-y-8">
                     {visits.map((visit, index) => {
@@ -238,19 +239,18 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                                     Lượt khám #{visits.length - index}
                                   </h4>
                                   <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none font-bold text-[10px] py-0.5 uppercase tracking-wider">
-                                    {formatDate(visit.visitDate, "DD/MM/YYYY")}
+                                    {format(new Date(visit.visitDate), "dd/MM/yyyy", { locale: vi })}
                                   </Badge>
                                 </div>
-                                <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5 uppercase tracking-widest pt-1">
-                                    <Loader2 className="h-3 w-3 animate-none opacity-50" />
-                                    BS. {visit.createdBy || "Chưa xác định"} • {formatDate(visit.visitDate, "HH:mm")}
+                                <p className="text-[11px] font-bold text-muted-foreground/60 flex items-center gap-1.5 uppercase tracking-widest pt-1">
+                                    BS. {visit.createdBy || "BINHTIEN"} • {format(new Date(visit.visitDate), "HH:mm:ss dd/MM/yyyy", { locale: vi })}
                                 </p>
                               </div>
                               
                               <div className="flex gap-2 items-center">
                                 {visit.diagnoses && visit.diagnoses.length > 0 && (
-                                  <Link href={`/results/${visit.id}`}>
-                                    <Button variant="outline" size="sm" className="bg-primary text-primary-foreground border-none hover:bg-primary/90 h-9 px-4 rounded-xl gap-2 font-bold shadow-md">
+                                  <Link href={`/results/${visit.id}?patientId=${patientId}`}>
+                                    <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 rounded-xl gap-2 font-black shadow-lg shadow-primary/20">
                                       <FileCheck className="h-4 w-4" />
                                       Kết quả AI
                                     </Button>
@@ -267,7 +267,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                                       <Edit className="h-4 w-4 text-blue-600" />
                                       <span>Điều chỉnh</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setVisitToDelete(visit)} className="cursor-pointer rounded-lg font-bold gap-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                    <DropdownMenuItem onClick={() => setVisitToDelete(visit)} className="cursor-pointer rounded-lg font-bold gap-2 text-red-500 focus:text-red-500 focus:bg-red-500/10">
                                       <Trash2 className="h-4 w-4" />
                                       <span>Xóa bỏ</span>
                                     </DropdownMenuItem>
@@ -297,12 +297,12 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                             
                             {/* Resources Footer */}
                             <div className="flex gap-2 pt-1">
-                               <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">
-                                  <Activity className="h-3 w-3" /> {visit.medicalImages?.length || 0} Ảnh X-Ray
-                               </div>
-                               <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
-                                  <ShieldCheck className="h-3 w-3" /> {visit.diagnoses?.length || 0} Diagnosis
-                               </div>
+                                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">
+                                   <Activity className="h-3 w-3" /> {visit.medicalImages?.length || 0} Ảnh X-Ray
+                                </div>
+                                <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-500/10 text-blue-500 text-[10px] font-bold uppercase tracking-wider">
+                                   <ShieldCheck className="h-3 w-3" /> {visit.diagnoses?.length || 0} Diagnosis
+                                </div>
                             </div>
                           </div>
                         </div>
@@ -331,7 +331,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
           <DialogHeader>
             <DialogTitle>Xác nhận xóa lượt khám</DialogTitle>
             <DialogDescription>
-              Bạn có chắc chắn muốn xóa lượt khám ngày <strong>{visitToDelete ? formatDate(visitToDelete.visitDate, "DD/MM/YYYY") : ""}</strong>?
+              Bạn có chắc chắn muốn xóa lượt khám ngày <strong>{visitToDelete ? format(new Date(visitToDelete.visitDate), "dd/MM/yyyy", { locale: vi }) : ""}</strong>?
               Toàn bộ Ảnh X-Ray và Kết luận AI của lượt khám này cũng sẽ bị xoá đi. Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>

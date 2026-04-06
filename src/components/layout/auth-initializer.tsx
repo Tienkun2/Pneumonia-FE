@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { restoreSession, fetchMyInfo } from "@/store/slices/auth-slice";
+import { restoreSession, fetchMyInfo, setToken, logout } from "@/store/slices/auth-slice";
 import { useWebSockets } from "@/hooks/use-websockets";
 import { fetchUnreadCount, fetchNotifications } from "@/store/slices/notification-slice";
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { token, isAuthenticated, user, isLoading } = useAppSelector((state) => state.auth);
+  const { token, isAuthenticated, user, hasFetchedUser } = useAppSelector((state) => state.auth);
 
   // Real-time Notifications via WebSocket
   useWebSockets();
@@ -18,10 +18,10 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
   }, [dispatch]);
 
   useEffect(() => {
-    if (isAuthenticated && token && !user && !isLoading) {
+    if (isAuthenticated && token && !user && !hasFetchedUser) {
       dispatch(fetchMyInfo());
     }
-  }, [isAuthenticated, token, user, isLoading, dispatch]);
+  }, [isAuthenticated, token, user, hasFetchedUser, dispatch]);
 
   // Fetch unread badge count and initial notifications on login
   useEffect(() => {
@@ -30,6 +30,26 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
       dispatch(fetchNotifications(1));
     }
   }, [isAuthenticated, token, dispatch]);
+
+  // Sync Redux store with token refresh / forced logout from api-client
+  useEffect(() => {
+    const handleTokenRefreshed = (e: Event) => {
+      const newToken = (e as CustomEvent<{ token: string }>).detail.token;
+      dispatch(setToken(newToken));
+    };
+
+    const handleForceLogout = () => {
+      dispatch(logout());
+    };
+
+    globalThis.window.addEventListener('auth:token-refreshed', handleTokenRefreshed);
+    globalThis.window.addEventListener('auth:logout', handleForceLogout);
+
+    return () => {
+      globalThis.window.removeEventListener('auth:token-refreshed', handleTokenRefreshed);
+      globalThis.window.removeEventListener('auth:logout', handleForceLogout);
+    };
+  }, [dispatch]);
 
   return <>{children}</>;
 }

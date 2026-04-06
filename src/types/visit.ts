@@ -1,9 +1,16 @@
+export interface MedicalImage {
+  id: string;
+  imageUrl: string;
+  type: string;
+  uploadedAt: string;
+}
+
 export interface Diagnosis {
   id: string;
-  visitId: string;
   result: string;
-  riskScore: number;
-  riskLevel: string;
+  confidenceScore: number;
+  modelVersion: string;
+  doctorConfirm: boolean;
   createdAt: string;
 }
 
@@ -14,8 +21,8 @@ export interface Visit {
   symptoms?: string;
   note?: string;
   createdBy: string;
-  medicalImages: unknown[] | null;
-  diagnoses: Diagnosis[] | null;
+  medicalImages: MedicalImage[];
+  diagnoses: Diagnosis[];
 }
 
 export interface CreateVisitPayload {

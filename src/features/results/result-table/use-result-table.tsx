@@ -35,20 +35,19 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
 
   const getRiskStatus = useCallback((visit: Visit) => {
     const lastDiag = visit.diagnoses?.[0];
-    if (lastDiag?.riskLevel) return lastDiag.riskLevel;
-    
-    // Hash-based mock for variety
-    const codePoint = visit.id.codePointAt(0) || 0;
-    const hash = codePoint % 3;
-    if (hash === 0) return "Cao";
-    if (hash === 1) return "Trung bình";
+    if (lastDiag?.result) {
+      if (lastDiag.result === "PNEUMONIA") return "Cao";
+      if (lastDiag.result === "NORMAL") return "Thấp";
+      return lastDiag.result;
+    }
     return "Thấp";
   }, []);
 
   const getBadgeStyles = useCallback((risk: string) => {
-    if (risk === "Cao") return "bg-rose-100 text-rose-700";
-    if (risk === "Trung bình") return "bg-amber-100 text-amber-700";
-    return "bg-emerald-100 text-emerald-700";
+    const riskLower = risk.toLowerCase();
+    if (riskLower === "cao" || riskLower === "high") return "bg-red-500/10 text-red-500 border-red-500/20";
+    if (riskLower === "trung bình" || riskLower === "medium") return "bg-amber-500/10 text-amber-500 border-amber-500/20 font-bold";
+    return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-bold";
   }, []);
 
   const columns: ColumnDef<Visit>[] = useMemo(() => [
@@ -57,7 +56,7 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
       accessorFn: (row) => getPatientCode(row.patientId),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Mã BN" />,
       cell: ({ row }) => (
-        <span className="font-medium text-slate-800">
+        <span className="font-bold text-foreground">
           {row.getValue("patientCode")}
         </span>
       ),
@@ -67,7 +66,7 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
       accessorFn: (row) => getPatientName(row.patientId),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Họ tên bệnh nhân" />,
       cell: ({ row }) => (
-        <span className="font-medium text-slate-800 text-sm">
+        <span className="font-bold text-foreground text-[13px]">
           {row.getValue("patientName")}
         </span>
       ),
@@ -76,9 +75,9 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
       accessorKey: "visitDate",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày khám" />,
       cell: ({ row }) => (
-        <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+        <div className="flex items-center gap-2 text-muted-foreground text-[13px] font-semibold">
           <Calendar className="h-4 w-4" />
-          {formatDate(row.getValue("visitDate"), "DD/MM/YYYY")}
+          {formatDate(row.getValue("visitDate"), "HH:mm:ss DD/MM/YYYY")}
         </div>
       ),
     },
@@ -103,7 +102,7 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
       id: "status",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Trạng thái" />,
       cell: () => (
-        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0 pointer-events-none shadow-none font-normal">
+        <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 pointer-events-none shadow-none font-bold text-[11px] px-3 py-1">
           Đã chẩn đoán
         </Badge>
       ),
@@ -113,11 +112,11 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
       header: "",
       cell: ({ row }) => (
         <div className="text-right">
-          <Link href={`/results/${row.original.id}`}>
+          <Link href={`/results/${row.original.id}?patientId=${row.original.patientId}`}>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg"
               title="Xem chi tiết"
             >
               <Eye className="h-4 w-4" />

@@ -9,7 +9,8 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   error: null,
-  user: null
+  user: null,
+  hasFetchedUser: false
 }
 
 export const login = createAsyncThunk<
@@ -47,8 +48,17 @@ export const activateAccount = createAsyncThunk<
 export const restoreSession = createAsyncThunk<string | null>(
   "auth/restoreSession",
   async () => {
-    if (typeof window === "undefined") return null
-    return localStorage.getItem("token")
+    if (typeof globalThis === "undefined" || !globalThis.localStorage) return null;
+    let token = globalThis.localStorage.getItem("token");
+    if (!token) {
+      // Fallback: Check cookie if localStorage is empty to sync state with middleware
+      const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+      if (match) {
+        token = match[2];
+        localStorage.setItem("token", token);
+      }
+    }
+    return token;
   }
 )
 
@@ -82,8 +92,8 @@ const authSlice = createSlice({
       state.token = action.payload
       state.isAuthenticated = true
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem("token", action.payload)
+      if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+        globalThis.localStorage.setItem("token", action.payload)
         document.cookie = `token=${action.payload}; path=/; max-age=86400; SameSite=Lax`
       }
     },
@@ -91,9 +101,11 @@ const authSlice = createSlice({
     logout(state) {
       state.token = null
       state.isAuthenticated = false
+      state.user = null
+      state.hasFetchedUser = false
 
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("token")
+      if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+        globalThis.localStorage.removeItem("token")
         document.cookie = "token=; Max-Age=0; path=/"
       }
     }
@@ -109,8 +121,8 @@ const authSlice = createSlice({
         state.isLoading = false
         state.token = action.payload.token
         state.isAuthenticated = true
-        if (typeof window !== "undefined") {
-          localStorage.setItem("token", action.payload.token)
+        if (typeof globalThis !== "undefined" && globalThis.localStorage) {
+          globalThis.localStorage.setItem("token", action.payload.token)
           document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`
         }
       })
@@ -141,6 +153,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchMyInfo.pending, (state) => {
         state.isLoading = true
+        state.hasFetchedUser = true
         state.error = null
       })
       .addCase(fetchMyInfo.fulfilled, (state, action) => {

@@ -36,18 +36,18 @@
 }
 
 :root {
-  /* Premium Medical Palette - Deep Teal & Clean Blue */
-  --background: 210 40% 98%; /* Cool gray-blue tint, not plain white */
+  /* Premium Medical Palette - Clean UI matching Care DR style */
+  --background: 220 33% 98%; /* Very light gray/blue background */
   --foreground: 222.2 47.4% 11.2%;
 
-  --card: 0 0% 100%;
+  --card: 0 0% 100%; /* White cards */
   --card-foreground: 222.2 47.4% 11.2%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 47.4% 11.2%;
 
-  /* Sophisticated Medical Blue/Teal */
-  --primary: 199 89% 48%; /* Cerulean/Action Blue */
+  /* Bright Action Blue */
+  --primary: 221 83% 53%; /* Tailwind blue-600 */
   --primary-foreground: 210 40% 98%;
 
   --secondary: 210 40% 96.1%;
@@ -64,21 +64,21 @@
 
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 199 89% 48%;
+  --ring: 221 83% 53%;
 
-  --radius: 0.75rem; /* Softer, more modern corners */
+  --radius: 1rem; /* More rounded corners */
 
   /* Medical Chart Colors */
-  --chart-1: 199 89% 48%; /* Primary Blue */
+  --chart-1: 221 83% 53%; /* Primary Blue */
   --chart-2: 160 84% 39%; /* Medical Green */
   --chart-3: 30 100% 50%; /* Amber */
   --chart-4: 340 75% 55%; /* Rose/Pink */
   --chart-5: 260 60% 60%; /* Indigo */
 
   /* Status Colors */
-  --info: 199 89% 48%;
-  --sidebar: 221.2 83.2% 53.3%;
-  --sidebar-foreground: 210 40% 98%;
+  --info: 221 83% 53%;
+  --sidebar: 0 0% 100%; /* White Sidebar */
+  --sidebar-foreground: 222.2 47.4% 11.2%; /* Dark Text */
 }
 
 .dark {
@@ -122,8 +122,8 @@
 
 @layer base {
   :root {
-    /* System font stacks for maximum performance and native feel across OSs */
-    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    /* Inter — premium UI font used by Linear, Vercel, Notion */
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 

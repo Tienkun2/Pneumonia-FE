@@ -23,7 +23,7 @@ export function DataTableColumnHeader<TData, TValue>({
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
-    return <div className={cn("font-semibold text-xs uppercase tracking-wider text-slate-500", className)}>{title}</div>
+    return <div className={cn("font-semibold text-xs uppercase tracking-wider text-muted-foreground", className)}>{title}</div>
   }
 
   return (
@@ -33,15 +33,15 @@ export function DataTableColumnHeader<TData, TValue>({
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent hover:bg-slate-100 group transition-colors"
+            className="-ml-3 h-8 data-[state=open]:bg-accent hover:bg-muted/60 group transition-colors"
           >
-            <span className="font-semibold text-xs uppercase tracking-wider text-slate-500">{title}</span>
+            <span className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">{title}</span>
             {column.getIsSorted() === "desc" ? (
-              <ArrowDown className="ml-2 h-3.5 w-3.5 text-slate-800" />
+              <ArrowDown className="ml-2 h-3.5 w-3.5 text-foreground" />
             ) : column.getIsSorted() === "asc" ? (
-              <ArrowUp className="ml-2 h-3.5 w-3.5 text-slate-800" />
+              <ArrowUp className="ml-2 h-3.5 w-3.5 text-foreground" />
             ) : (
-              <ArrowUpDown className="ml-2 h-3.5 w-3.5 opacity-0 group-hover:opacity-50 transition-opacity text-slate-400" />
+              <ArrowUpDown className="ml-2 h-3.5 w-3.5 opacity-0 group-hover:opacity-50 transition-opacity text-muted-foreground" />
             )}
           </Button>
         </DropdownMenuTrigger>

@@ -84,12 +84,12 @@ export function useUserTable({
       cell: ({ row }) => {
         const status = row.original.status;
         if (status === USER_STATUS.ACTIVE) {
-          return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-0 pointer-events-none shadow-none font-normal">Đang hoạt động</Badge>;
+          return <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0 pointer-events-none shadow-none font-bold">Đang hoạt động</Badge>;
         }
         if (status === USER_STATUS.INACTIVE) {
-          return <Badge className="bg-rose-100 text-rose-700 hover:bg-rose-200 border-0 pointer-events-none shadow-none font-normal">Ngừng hoạt động</Badge>;
+          return <Badge className="bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-0 pointer-events-none shadow-none font-bold">Ngừng hoạt động</Badge>;
         }
-        return <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-200 border-0 pointer-events-none shadow-none font-normal">Chờ kích hoạt</Badge>;
+        return <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-0 pointer-events-none shadow-none font-bold">Chờ kích hoạt</Badge>;
       },
     },
     {
@@ -145,31 +145,31 @@ export function useUserTable({
           <div className="text-right">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg">
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted/60 rounded-lg">
                   <span className="sr-only">Mở menu thao tác</span>
-                  <MoreVertical className="h-4 w-4 text-slate-400" />
+                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border">
                 <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onRoleClick(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
-                  <Settings className="h-4 w-4 text-slate-400" />
+                 <DropdownMenuItem onClick={() => onRoleClick(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
                   <span>Sửa vai trò</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onEdit(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
-                  <Edit className="h-4 w-4 text-slate-400" />
+                  <Edit className="h-4 w-4 text-muted-foreground" />
                   <span>Cập nhật</span>
                 </DropdownMenuItem>
                 {user.status !== USER_STATUS.PENDING && (
                   <DropdownMenuItem onClick={() => onToggleStatusClick(user)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
-                    <Power className="h-4 w-4 text-slate-400" />
+                    <Power className="h-4 w-4 text-muted-foreground" />
                     <span>{user.status === USER_STATUS.ACTIVE ? "Khóa tài khoản" : "Kích hoạt tài khoản"}</span>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem 
                   onClick={() => onDeleteClick(user.id, user.username)}
-                  className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-red-50 focus:text-red-700 text-slate-400 hover:text-red-600 transition-colors"
+                  className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-destructive/10 focus:text-destructive text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                   <span>Xóa tài khoản</span>

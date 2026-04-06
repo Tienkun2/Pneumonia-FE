@@ -54,7 +54,6 @@ export function LoginForm() {
 
         toast.success("Đăng nhập thành công!")
         router.push("/dashboard")
-        router.refresh()
 
     } catch (err) {
         toast.error(err as string)

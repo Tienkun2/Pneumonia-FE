@@ -71,19 +71,19 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b bg-background/80 px-4 sm:px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-40 flex h-20 w-full shrink-0 items-center justify-between border-b border-border/40 bg-background/80 px-4 sm:px-8 backdrop-blur-md">
       {/* Mobile Menu Spacer (Reserved space for Sidebar trigger - 64px width) */}
       <div className="w-16 lg:hidden shrink-0" />
 
       {/* Search Bar (Left - Desktop only) */}
-      <div className="relative w-full max-w-sm hidden lg:block group">
-        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+      <div className="relative w-full max-w-md hidden lg:block group">
+        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
           <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
         </div>
         <input
           type="text"
-          placeholder={`Nhấn ${typeof navigator !== 'undefined' && navigator.platform.indexOf('Mac') !== -1 ? '⌘K' : 'Ctrl + K'} để tìm kiếm nhanh...`}
-          className="h-10 w-full rounded-xl border border-input bg-muted/30 pl-10 pr-4 text-sm focus:border-primary focus:bg-background focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-medium cursor-pointer placeholder:text-muted-foreground/60"
+          placeholder="Search anything here..."
+          className="h-11 w-full rounded-full border border-border/50 bg-card pl-11 pr-4 text-sm focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium cursor-pointer placeholder:text-muted-foreground/50"
           readOnly
           onClick={() => {
              const event = new KeyboardEvent('keydown', {
@@ -97,21 +97,21 @@ export function Header() {
       </div>
 
       {/* Actions (Right) */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         {/* Help Center */}
-        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full hidden sm:flex">
+        <Button variant="ghost" size="icon" className="h-11 w-11 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full hidden sm:flex">
           <HelpCircle className="h-5 w-5" />
         </Button>
 
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full">
+            <Button variant="ghost" size="icon" className="relative h-11 w-11 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full border border-border/50 bg-card shadow-sm">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
+                <span className="absolute top-2.5 right-2.5 flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 border-2 border-background"></span>
                 </span>
               )}
             </Button>
@@ -177,23 +177,23 @@ export function Header() {
           </PopoverContent>
         </Popover>
 
-        {/* Vertical Divider */}
-        <div className="h-6 w-px bg-border mx-1 hidden sm:block" />
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="group flex items-center gap-3 rounded-2xl px-2 py-6 hover:bg-primary/5 transition-all border border-transparent hover:border-border shadow-none"
+              className="group flex flex-row-reverse items-center gap-3 rounded-full pl-3 pr-4 py-6 hover:bg-muted/50 transition-all border border-border/50 bg-card shadow-sm"
             >
-              <div className="flex flex-col items-end text-right hidden sm:flex">
-                <span className="text-sm font-bold text-foreground leading-none group-hover:text-primary transition-colors">
+              <div className="flex flex-col items-start text-left hidden sm:flex">
+                <span className="text-[13px] font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
                   {user?.displayName || user?.username || "Bác sĩ"}
                 </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {user?.email || "Admin"}
+                </span>
               </div>
-              <Avatar className="h-10 w-10 border-2 border-background shadow-md transition-transform group-hover:scale-105 ring-2 ring-transparent group-hover:ring-primary/20">
+              <Avatar className="h-9 w-9 border border-border shadow-sm">
                 <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
-                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
+                <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {user?.username?.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -233,7 +233,7 @@ export function Header() {
             <DropdownMenuSeparator className="bg-border mx-2 my-1" />
             
             <DropdownMenuItem
-              className="gap-3 rounded-xl p-3 text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer transition-colors"
+              className="gap-3 rounded-xl p-3 text-red-500 focus:bg-red-500/10 focus:text-red-600 cursor-pointer transition-colors font-bold"
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />

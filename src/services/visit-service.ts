@@ -69,4 +69,40 @@ export const VisitService = {
 
     return true;
   },
+
+  async createMultimodalVisit(payload: {
+    patientId: string;
+    symptoms: string;
+    note?: string;
+    imageUrl: string;
+    imageType: string;
+    result: string;
+    confidenceScore: number;
+    modelVersion: string;
+  }): Promise<Visit> {
+    const res = await apiClient("/visits/multimodal", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    const data: ApiResponse<Visit> = await res.json();
+    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+      throw new Error(data.message || "Failed to save multimodal diagnosis");
+    }
+
+    return data.result;
+  },
+
+  async getVisitById(id: string): Promise<Visit> {
+    const res = await apiClient(`/visits/${id}`, {
+      method: "GET",
+    });
+
+    const data: ApiResponse<Visit> = await res.json();
+    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
+      throw new Error(data.message || "Failed to fetch visit details");
+    }
+
+    return data.result;
+  },
 };
