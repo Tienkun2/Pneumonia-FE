@@ -63,10 +63,10 @@ export function Sidebar() {
               </div>
               <div>
                 <h2 className="text-base font-semibold text-sidebar-foreground">
-                  Phổi Nhi Đồng
+                  Chẩn đoán Phổi
                 </h2>
                 <span className="text-xs text-sidebar-foreground/70">
-                  1 - 5 Tuổi
+                  Đa độ tuổi
                 </span>
               </div>
             </div>

@@ -20,6 +20,7 @@ import {
   Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/layout/page-header";
 
 type Article = typeof mockArticles[0];
 
@@ -33,10 +34,10 @@ const categories = [
 const mockArticles = [
   {
     id: "1",
-    title: "Phân loại mức độ nặng của viêm phổi ở trẻ em",
+    title: "Phân loại mức độ nặng của viêm phổi",
     category: "diagnosis",
     categoryLabel: "Chẩn đoán",
-    description: "Tiêu chuẩn đánh giá từ WHO và Bộ Y tế cho trẻ từ 2 tháng đến 5 tuổi, bao gồm các dấu hiệu rút lõm lồng ngực và thở nhanh.",
+    description: "Tiêu chuẩn đánh giá từ WHO và Bộ Y tế cho mọi lứa tuổi, bao gồm các dấu hiệu rút lõm lồng ngực và thở nhanh.",
     content: "Nội dung chi tiết...",
     author: "BS. TS. Nguyễn Thu Hà",
     readTime: "8 phút",
@@ -63,7 +64,7 @@ const mockArticles = [
     title: "Chỉ số CRP và Procalcitonin: Khi nào cần xét nghiệm?",
     category: "lab",
     categoryLabel: "Xét nghiệm",
-    description: "Sự khác biệt giữa CRP và Procalcitonin trong việc phân biệt viêm phổi do vi khuẩn và do virus ở trẻ em.",
+    description: "Sự khác biệt giữa CRP và Procalcitonin trong việc phân biệt viêm phổi do vi khuẩn và do virus.",
     author: "BS. Phạm Minh Quân",
     readTime: "6 phút",
     date: "2024-03-10",
@@ -76,7 +77,7 @@ const mockArticles = [
     title: "Hướng dẫn sử dụng kháng sinh ban đầu",
     category: "diagnosis",
     categoryLabel: "Điều trị",
-    description: "Phác đồ lựa chọn kháng sinh kinh nghiệm cho trẻ bị viêm phổi cộng đồng mức độ trung bình.",
+    description: "Phác đồ lựa chọn kháng sinh kinh nghiệm cho người bị viêm phổi cộng đồng mức độ trung bình.",
     author: "Bộ Y Tế",
     readTime: "15 phút",
     date: "2024-02-28",
@@ -151,18 +152,11 @@ export function KnowledgeView() {
   return (
     <div className="space-y-10 pb-20">
       {/* Header Section */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border pb-6">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0 mt-1 sm:mt-0">
-            <BookOpen className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Thư viện Kiến thức</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-               Cập nhật phác đồ chẩn đoán và điều trị viêm phổi nhi khoa từ WHO và Bộ Y tế
-            </p>
-          </div>
-        </div>
+      <PageHeader 
+        title="Thư viện Kiến thức"
+        icon={BookOpen}
+        description="Cập nhật phác đồ chẩn đoán và điều trị viêm phổi tổng quát từ WHO và Bộ Y tế"
+      >
         <div className="relative w-full lg:w-[320px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
@@ -172,7 +166,7 @@ export function KnowledgeView() {
             className="pl-9 h-9 border-border bg-background rounded-lg shadow-sm focus-visible:ring-primary text-sm"
           />
         </div>
-      </div>
+      </PageHeader>
 
       {/* Featured Section - Clinical Layout */}
       {featuredArticle && !searchQuery && activeTab === "all" && (
@@ -308,7 +302,7 @@ export function KnowledgeView() {
           <div className="space-y-3 max-w-2xl">
              <h2 className="text-xl font-bold text-primary">Chia sẻ phác đồ & kinh nghiệm lâm sàng?</h2>
              <p className="text-muted-foreground text-sm leading-relaxed">
-                Gửi các bài báo cáo ca bệnh hoặc cập nhật nghiên cứu mới trong khoang Nhi khoa để cùng xây dựng cộng đồng y khoa phát triển.
+                Gửi các bài báo cáo ca bệnh hoặc cập nhật nghiên cứu mới trong lĩnh vực Phổi để cùng xây dựng cộng đồng y khoa phát triển.
              </p>
           </div>
           <div className="flex gap-3 shrink-0">

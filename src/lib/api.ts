@@ -1,9 +1,7 @@
 import axios, { type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const api = axios.create({
-  baseURL: typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api")
-    : "http://localhost:8000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
@@ -13,7 +11,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Add auth token if available
-    if (typeof window !== "undefined" && config.headers) {
+    if (typeof globalThis.window !== "undefined" && config.headers) {
       const token = localStorage.getItem("token");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -32,9 +30,9 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Handle unauthorized
-      if (typeof window !== "undefined") {
+      if (typeof globalThis.window !== "undefined") {
         localStorage.removeItem("token");
-        window.location.href = "/auth/login";
+        globalThis.location.href = "/auth/login";
       }
     }
     return Promise.reject(error);
@@ -42,12 +40,10 @@ api.interceptors.response.use(
 );
 
 export const aiApi = axios.create({
-  baseURL: typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_AI_API_URL || "http://127.0.0.1:8000")
-    : "http://127.0.0.1:8000",
+  baseURL: process.env.NEXT_PUBLIC_AI_API_URL || "http://127.0.0.1:8000/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-export default api;
+export default api

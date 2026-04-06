@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { Patient } from "@/types/patient";
 import { Button } from "@/components/ui/button";
 import { Eye, Edit, Trash2, MoreVertical } from "lucide-react";
@@ -13,15 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   ColumnDef,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useReactTable,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
 } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { useDataTable } from "@/hooks/use-data-table";
 
 interface UsePatientTableProps {
   data: Patient[];
@@ -45,11 +39,6 @@ export function usePatientTable({
   onEditClick,
   onDeleteClick,
 }: UsePatientTableProps) {
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [sorting, setSorting] = useState<SortingState>([]);
-
   const calculateAge = useCallback((dateOfBirth?: string) => {
     if (!dateOfBirth) return "N/A";
     const birthDate = new Date(dateOfBirth);
@@ -147,34 +136,14 @@ export function usePatientTable({
     },
   ], [calculateAge, translateGender, onDeleteClick, onEditClick]);
 
-  const table = useReactTable({
+  const { table, globalFilter, setGlobalFilter, columnFilters, setColumnFilters, columnVisibility, setColumnVisibility } = useDataTable({
     data,
     columns,
     rowCount,
     pageCount,
+    pagination,
+    onPaginationChange,
     manualPagination: true,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    state: {
-      globalFilter,
-      columnFilters,
-      columnVisibility,
-      sorting,
-      pagination: pagination || undefined,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onSortingChange: setSorting,
-    onPaginationChange: (paginationOrUpdater) => {
-      if (onPaginationChange) {
-        const nextPagination = typeof paginationOrUpdater === 'function' 
-          ? paginationOrUpdater(pagination || { pageIndex: 0, pageSize: 10 }) 
-          : paginationOrUpdater;
-        onPaginationChange(nextPagination);
-      }
-    },
   });
 
   return {

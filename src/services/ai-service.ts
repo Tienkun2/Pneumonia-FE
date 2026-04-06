@@ -4,7 +4,9 @@ import {
     ClinicalDiagnosisRequest,
     ClinicalDiagnosisResponse,
     FusionPredictionRequest,
-    FusionPredictionResponse
+    FusionPredictionResponse,
+    MultimodalPredictionResponse,
+    AIHealthStatus
 } from "@/types";
 
 export const AiService = {
@@ -17,7 +19,7 @@ export const AiService = {
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await aiApi.post<PneumoniaPredictionResponse>("/api/v1/pneumonia/predict", formData, {
+        const response = await aiApi.post<PneumoniaPredictionResponse>("/pneumonia/predict", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
@@ -33,7 +35,7 @@ export const AiService = {
      * @returns Prediction results
      */
     async predictClinical(data: ClinicalDiagnosisRequest): Promise<ClinicalDiagnosisResponse> {
-        const response = await aiApi.post<ClinicalDiagnosisResponse>("/api/v1/clinical/predict", data);
+        const response = await aiApi.post<ClinicalDiagnosisResponse>("/clinical/predict", data);
         return response.data;
     },
 
@@ -43,7 +45,46 @@ export const AiService = {
      * @returns Fusion prediction results
      */
     async predictFusion(data: FusionPredictionRequest): Promise<FusionPredictionResponse> {
-        const response = await aiApi.post<FusionPredictionResponse>("/api/v1/fusion/predict", data);
+        const response = await aiApi.post<FusionPredictionResponse>("/fusion/predict", data);
+        return response.data;
+    },
+
+    /**
+     * Send both image and symptoms to AI model for multimodal diagnosis
+     * @param file The image file to analyze
+     * @param symptoms Comma-separated symptoms string
+     * @returns Consolidated prediction results including risk level and heatmap
+     */
+    async predictMultimodal(file: File, symptoms: string): Promise<MultimodalPredictionResponse> {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("symptoms", symptoms);
+
+        const response = await aiApi.post<MultimodalPredictionResponse>("/predict", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+            timeout: 60000, // Analysis might take longer
+        });
+
+        return response.data;
+    },
+
+    /**
+     * Get list of symptoms supported by the AI model
+     * @returns Array of symptom strings
+     */
+    async getSymptoms(): Promise<string[]> {
+        const response = await aiApi.get<string[]>("/symptoms");
+        return response.data;
+    },
+
+    /**
+     * Check AI system health and model loading status
+     * @returns Health status object
+     */
+    async getHealth(): Promise<AIHealthStatus> {
+        const response = await aiApi.get<AIHealthStatus>("/health");
         return response.data;
     },
 };

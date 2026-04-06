@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchAllVisits } from "@/store/slices/visitSlice";
 import { fetchPatients } from "@/store/slices/patientSlice";
@@ -8,145 +8,77 @@ import { fetchPatients } from "@/store/slices/patientSlice";
 import { ResultTable } from "./result-table/result-table";
 import { useResultTable } from "./result-table/use-result-table";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { 
-  Search, 
-  Loader2, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
-  ChevronsRight,
-  History
-} from "lucide-react";
+import { Loader2, History } from "lucide-react";
+import { PageHeader } from "@/components/layout/page-header";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+
+const RESULT_COLUMN_LABELS = {
+  patientCode: "Mã BN",
+  patientName: "Họ tên bệnh nhân",
+  visitDate: "Ngày khám",
+  riskLevel: "Mức độ nguy cơ",
+  status: "Trạng thái",
+};
 
 export function ResultsList() {
   const dispatch = useAppDispatch();
   const { visits, isLoading } = useAppSelector((state) => state.visit);
   const { patients } = useAppSelector((state) => state.patient);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAllVisits({ page: 1, size: 100 }));
-    dispatch(fetchPatients({ page: 1, size: 500 })); 
-  }, [dispatch]);
+    setIsMounted(true);
+  }, []);
 
-  const { table, columns, globalFilter, setGlobalFilter } = useResultTable({
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const visitsPromise = dispatch(fetchAllVisits({ page: 1, size: 100 }));
+    const patientsPromise = dispatch(fetchPatients({ page: 1, size: 500 }));
+
+    return () => {
+      visitsPromise.abort();
+      patientsPromise.abort();
+    };
+  }, [dispatch, isMounted]);
+
+  const { table, globalFilter, setGlobalFilter } = useResultTable({
     data: visits,
     patients,
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0 mt-1 sm:mt-0">
-            <History className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Lịch sử chẩn đoán</h1>
-          </div>
-        </div>
-      </div>
+    <div className="space-y-6 px-2 pb-4 w-full overflow-x-hidden">
+      <PageHeader
+        title="Lịch sử chẩn đoán"
+        icon={History}
+      />
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full max-w-[280px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Tìm theo tên hoặc mã bệnh nhân..."
-            className="pl-9 h-9 rounded-lg border-border bg-background shadow-sm"
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+      <TableToolbar
+        placeholder="Tìm theo tên hoặc mã bệnh nhân..."
+        value={globalFilter}
+        onChange={setGlobalFilter}
+      >
+        <div className="ml-auto">
+          <DataTableViewOptions
+            table={table}
+            columnLabels={RESULT_COLUMN_LABELS}
           />
         </div>
-      </div>
+      </TableToolbar>
 
       {isLoading && visits.length === 0 ? (
         <div className="flex justify-center p-12">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
         </div>
       ) : (
-        <ResultTable table={table} columns={columns} globalFilter={globalFilter} />
+        <>
+          <ResultTable table={table} columns={table.getAllColumns()} globalFilter={globalFilter} />
+          <DataTablePagination table={table} itemName="lượt khám" />
+        </>
       )}
-
-      {/* Footer / Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-sm text-muted-foreground">
-        <div>
-          Tổng cộng: <span className="font-medium text-foreground">{visits.length}</span> lượt khám
-        </div>
-        
-        <div className="flex items-center gap-6 flex-wrap justify-center">
-          <div className="flex items-center space-x-2">
-            <p className="font-medium text-foreground">Hiển thị</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value));
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px] bg-background border-border rounded-lg">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
-              </SelectTrigger>
-              <SelectContent side="top" className="rounded-xl">
-                {[10, 20, 30, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center justify-center font-medium text-foreground">
-            Trang {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
-          </div>
-          
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex rounded-lg border-border text-muted-foreground hover:text-foreground"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Trang đầu</span>
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0 rounded-lg border-border text-muted-foreground hover:text-foreground"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Trang trước</span>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0 rounded-lg border-border text-muted-foreground hover:text-foreground"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Trang sau</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex rounded-lg border-border text-muted-foreground hover:text-foreground"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Trang cuối</span>
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

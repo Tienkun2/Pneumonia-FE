@@ -1,22 +1,15 @@
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { Visit } from "@/types/visit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Eye } from "lucide-react";
 import {
   ColumnDef,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
-  useReactTable,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
 } from "@tanstack/react-table";
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { useDataTable } from "@/hooks/use-data-table";
 
 interface PatientInfo {
   id: string;
@@ -30,11 +23,6 @@ interface UseResultTableProps {
 }
 
 export function useResultTable({ data, patients }: UseResultTableProps) {
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [sorting, setSorting] = useState<SortingState>([]);
-
   const getPatientName = useCallback((patientId: string) => {
     const p = patients.find(p => p.id === patientId);
     return p ? p.fullName : "N/A";
@@ -141,34 +129,9 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
     },
   ], [getPatientCode, getPatientName, getRiskStatus, getBadgeStyles]);
 
-  const table = useReactTable({
+  const { table, globalFilter, setGlobalFilter, columnFilters, setColumnFilters, columnVisibility, setColumnVisibility } = useDataTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    globalFilterFn: (row, columnId, filterValue) => {
-      const searchValue = filterValue.toLowerCase();
-      const name = String(row.getValue("patientName")).toLowerCase();
-      const code = String(row.getValue("patientCode")).toLowerCase();
-      return name.includes(searchValue) || code.includes(searchValue);
-    },
-    state: {
-      globalFilter,
-      columnFilters,
-      columnVisibility,
-      sorting,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onSortingChange: setSorting,
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
 
   return {

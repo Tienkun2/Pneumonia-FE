@@ -17,8 +17,8 @@ interface PatientTableProps {
 
 export function PatientTable({ table, columns, globalFilter }: PatientTableProps) {
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-      <Table>
+    <div className="rounded-2xl border border-border bg-card overflow-x-auto shadow-sm scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+      <Table className="min-w-[1200px]">
         <TableHeader className="bg-muted/50 border-b border-border">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent border-none">
@@ -48,7 +48,7 @@ export function PatientTable({ table, columns, globalFilter }: PatientTableProps
                 className="hover:bg-muted/50 transition-colors border-b border-border"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-4 text-foreground/80 font-medium text-sm align-middle">
+                  <TableCell key={cell.id} className="py-4 text-foreground/80 font-medium text-sm align-middle whitespace-nowrap">
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext()

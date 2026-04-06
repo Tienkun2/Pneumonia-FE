@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 
@@ -71,7 +71,7 @@ export function LoginForm() {
         <p className="mt-2 text-sm text-muted-foreground">
           Đăng nhập để truy cập hệ thống{" "}
           <span className="font-semibold text-primary">
-            Phổi Nhi Đồng
+            Chẩn đoán Phổi
           </span>
         </p>
       </div>
@@ -92,7 +92,7 @@ export function LoginForm() {
                   <FormLabel>Tài khoản</FormLabel>
                   <FormControl>
                     <div className="relative group">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       <Input
                         placeholder="admin"
                         className="pl-10 h-11 bg-muted/50 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"

@@ -2,34 +2,44 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   setImagePreview,
   setPredictionResult,
-  setClinicalData,
-  setClinicalPredictionResult,
-  setFusionResult,
+  setMultimodalResult,
 } from "@/store/slices/diagnosisSlice";
 import { AiService } from "@/services/ai-service";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone } from "react-dropzone";
 import { Upload, Loader2, Activity, FileImage, Stethoscope, AlertTriangle, Check, BrainCircuit } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import { PageHeader } from "@/components/layout/page-header";
 
 const RISKS_MAP: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  Low: { label: "NGUY CƠ THẤP", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800" },
-  Moderate: { label: "NGUY CƠ TRUNG BÌNH", color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-950/30", border: "border-yellow-200 dark:border-yellow-800" },
-  Severe: { label: "NGUY CƠ CAO", color: "text-red-700 dark:text-red-400", bg: "bg-red-100 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" },
+  LOW: { label: "NGUY CƠ THẤP", color: "text-emerald-700 dark:text-emerald-400", bg: "bg-emerald-100 dark:bg-emerald-950/30", border: "border-emerald-200 dark:border-emerald-800" },
+  MEDIUM: { label: "NGUY CƠ TRUNG BÌNH", color: "text-yellow-700 dark:text-yellow-400", bg: "bg-yellow-100 dark:bg-yellow-950/30", border: "border-yellow-200 dark:border-yellow-800" },
+  HIGH: { label: "NGUY CƠ CAO", color: "text-red-700 dark:text-red-400", bg: "bg-red-100 dark:bg-red-950/30", border: "border-red-200 dark:border-red-800" },
+  Unknown: { label: "CHƯA XÁC ĐỊNH", color: "text-gray-700", bg: "bg-gray-100", border: "border-gray-200" }
 };
+
+const SYMPTOM_LABELS: Record<string, string> = {
+  chills: "Rét run",
+  fatigue: "Mệt mỏi",
+  cough: "Ho",
+  high_fever: "Sốt cao",
+  breathlessness: "Khó thở",
+  phlegm: "Đờm",
+  chest_pain: "Đau ngực",
+  fast_heart_rate: "Nhịp tim nhanh",
+  rusty_sputum: "Đờm màu gỉ sắt",
+  malaise: "Uể oải"
+};
+
 
 const PREDICTION_MAP: Record<string, string> = {
   PNEUMONIA: "VIÊM PHỔI",
@@ -37,24 +47,34 @@ const PREDICTION_MAP: Record<string, string> = {
   NORMAL: "BÌNH THƯỜNG",
 };
 
-const clinicalSchema = z.object({
-  age_months: z.coerce.number().min(1, "Tuổi (tháng) phải từ 1 trở lên").max(59, "Tuổi phải dưới 60 tháng (5 tuổi)"),
-  respiratory_rate: z.coerce.number().min(0, "Nhịp thở không hợp lệ"),
-  spO2: z.coerce.number().min(0).max(100, "SpO2 phải từ 0-100"),
-  cough: z.boolean().default(false),
-  fever: z.boolean().default(false),
-  chest_indrawing: z.boolean().default(false),
-  danger_sign: z.boolean().default(false),
-  feeding_difficulty: z.boolean().default(false),
-});
+const getScoreColor = (score: number) => {
+  if (score > 0.7) return "bg-red-500";
+  if (score > 0.4) return "bg-amber-500";
+  return "bg-emerald-500";
+};
+
 
 export function DiagnosisForm() {
   const dispatch = useAppDispatch();
   const diagnosisData = useAppSelector((state) => state.diagnosis);
-  const [isSubmittingImage, setIsSubmittingImage] = useState(false);
-  const [isSubmittingClinical, setIsSubmittingClinical] = useState(false);
   const [isSubmittingFusion, setIsSubmittingFusion] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchSymptoms = async () => {
+      try {
+        const symptoms = await AiService.getSymptoms();
+        setAvailableSymptoms(symptoms);
+      } catch (error) {
+        console.error("Failed to fetch symptoms", error);
+        toast.error("Không thể tải danh sách triệu chứng từ AI");
+      }
+    };
+    fetchSymptoms();
+  }, []);
+
 
   // Image Upload Logic
   const onDrop = (acceptedFiles: File[]) => {
@@ -74,92 +94,35 @@ export function DiagnosisForm() {
     maxFiles: 1,
   });
 
-  const handleImageSubmit = async () => {
+  const handleMultimodalSubmit = async () => {
     if (!selectedFile) {
       toast.error("Vui lòng tải lên ảnh X-quang để phân tích");
       return;
     }
 
     try {
-      setIsSubmittingImage(true);
-      const result = await AiService.predictPneumonia(selectedFile);
-      console.log("Image AI Result:", result);
-      toast.success("Phân tích hình ảnh thành công!");
-      dispatch(setPredictionResult(result));
-    } catch (error) {
-      console.error(error);
-      toast.error("Có lỗi xảy ra khi phân tích hình ảnh");
-    } finally {
-      setIsSubmittingImage(false);
-    }
-  };
-
-  // Clinical Form Logic
-  const form = useForm<z.infer<typeof clinicalSchema>>({
-    resolver: zodResolver(clinicalSchema),
-    defaultValues: diagnosisData.clinicalData || {
-      age_months: 12,
-      respiratory_rate: 30,
-      spO2: 98,
-      cough: false,
-      fever: false,
-      chest_indrawing: false,
-      danger_sign: false,
-      feeding_difficulty: false,
-    },
-  });
-
-  const onClinicalSubmit = async (values: z.infer<typeof clinicalSchema>) => {
-    try {
-      setIsSubmittingClinical(true);
-      dispatch(setClinicalData(values));
-      const result = await AiService.predictClinical(values);
-      console.log("Clinical AI Result:", result);
-      toast.success("Chẩn đoán lâm sàng thành công!");
-      dispatch(setClinicalPredictionResult(result));
-    } catch (error) {
-      console.error(error);
-      toast.error("Có lỗi xảy ra khi chẩn đoán lâm sàng");
-    } finally {
-      setIsSubmittingClinical(false);
-    }
-  };
-
-  const handleFusionSubmit = async () => {
-    if (!diagnosisData.predictionResult || !diagnosisData.clinicalPredictionResult) {
-      toast.error("Cần có kết quả từ cả Hình ảnh và Lâm sàng để tổng hợp!");
-      return;
-    }
-
-    try {
       setIsSubmittingFusion(true);
-      const result = await AiService.predictFusion({
-        xray_result: diagnosisData.predictionResult,
-        clinical_result: diagnosisData.clinicalPredictionResult,
-      });
-      console.log("Fusion Result:", result);
-      toast.success("Tổng hợp kết quả thành công!");
-      dispatch(setFusionResult(result));
+      const symptomsStr = selectedSymptoms.join(",");
+      const result = await AiService.predictMultimodal(selectedFile, symptomsStr);
+      console.log("Multimodal AI Result:", result);
+      toast.success("Phân tích đa phương thức thành công!");
+      dispatch(setMultimodalResult(result));
     } catch (error) {
       console.error(error);
-      toast.error("Có lỗi xảy ra khi tổng hợp kết quả");
+      toast.error("Có lỗi xảy ra khi phân tích đa phương thức");
     } finally {
       setIsSubmittingFusion(false);
     }
   };
 
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0 mt-1 sm:mt-0">
-            <Activity className="h-6 w-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Chẩn đoán đa phương thức</h1>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Chẩn đoán đa phương thức"
+        icon={Activity}
+        description="Kết hợp hình ảnh X-quang và triệu chứng lâm sàng để chẩn đoán chính xác"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         {/* Left Column: Image Diagnosis */}
@@ -230,92 +193,11 @@ export function DiagnosisForm() {
                   </div>
                 )}
               </div>
-              <div className="mt-auto pt-6">
-                <Button
-                  onClick={handleImageSubmit}
-                  className="w-full bg-primary hover:opacity-90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium py-6"
-                  disabled={isSubmittingImage || !selectedFile}
-                >
-                  {isSubmittingImage ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Đang phân tích...
-                    </>
-                  ) : (
-                    <>
-                      <Stethoscope className="mr-2 h-5 w-5" />
-                      Chẩn đoán hình ảnh
-                    </>
-                  )}
-                </Button>
-              </div>
             </div>
-
-            {/* Image Diagnosis Results Display */}
-            {diagnosisData.predictionResult && (
-              <div className="mt-6 pt-6 border-t border-slate-100 animate-in slide-in-from-bottom-5 duration-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-900">Kết quả phân tích</h3>
-                    <Badge
-                      variant={
-                        diagnosisData.predictionResult.imaging_assessment.toLowerCase().includes("pneumonia") ? "destructive" : "default"
-                      }
-                      className={`px-3 py-1 text-sm ${diagnosisData.predictionResult.imaging_assessment.toLowerCase().includes("pneumonia")
-                        ? "bg-red-100 text-red-700 hover:bg-red-100 border-red-200"
-                        : "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200"
-                        }`}
-                    >
-                      {PREDICTION_MAP[diagnosisData.predictionResult.imaging_assessment] || diagnosisData.predictionResult.imaging_assessment}
-                    </Badge>
-                  </div>
-
-
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-600">Độ tin cậy (Confidence)</span>
-                      <span className="text-lg font-bold text-slate-900">
-                        {diagnosisData.predictionResult.confidence_level}
-                      </span>
-                    </div>
-                    {/* Progress bar using probability_score */}
-                    <div className="w-full bg-slate-200 rounded-full h-2.5">
-                      <div
-                        className={`h-2.5 rounded-full ${diagnosisData.predictionResult.imaging_assessment.toLowerCase().includes("pneumonia")
-                          ? "bg-red-600"
-                          : "bg-emerald-600"
-                          }`}
-                        style={{ width: `${diagnosisData.predictionResult.probability_score * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-blue-50/50 rounded-lg border border-blue-100">
-                    <div className="p-1 bg-blue-100 rounded-full mt-0.5">
-                      <Stethoscope className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-blue-900 mb-1">Kết luận AI</p>
-                      <p className="text-sm text-blue-700 leading-relaxed">
-                        {diagnosisData.predictionResult.explanation_vi || diagnosisData.predictionResult.explanation_en}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Disclaimer for Image */}
-                  <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
-                    <p className="text-xs text-yellow-800 italic">
-                      {diagnosisData.predictionResult.disclaimer_vi || diagnosisData.predictionResult.disclaimer_en}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Right Column: Clinical Diagnosis */}
+        {/* Right Column: Symptoms and Multimodal Action */}
         <Card className="border-border shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
           <CardHeader className="bg-muted/30 border-b border-border pb-4">
             <div className="flex items-center gap-2">
@@ -323,290 +205,207 @@ export function DiagnosisForm() {
                 <Activity className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <CardTitle className="text-lg text-foreground">Chẩn đoán lâm sàng</CardTitle>
-                <CardDescription>Dựa trên triệu chứng & chỉ số sinh tồn</CardDescription>
+                <CardTitle className="text-lg text-foreground">Triệu chứng & Lâm sàng</CardTitle>
+                <CardDescription>Chọn các triệu chứng để phân tích tổng hợp</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-6 flex-1 flex flex-col">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onClinicalSubmit)} className="space-y-6 flex-1 flex flex-col">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="age_months"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Tuổi (tháng)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="focus-visible:ring-emerald-500" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="respiratory_rate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nhịp thở (lần/phút)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="focus-visible:ring-emerald-500" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="spO2"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>SpO2 (%)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} className="focus-visible:ring-emerald-500" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-sm font-semibold text-foreground/80">Triệu chứng & Dấu hiệu</Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/20 p-4 rounded-xl border border-border">
-                    {[
-                      { name: "cough", label: "Ho (Cough)" },
-                      { name: "fever", label: "Sốt (Fever)" },
-                      { name: "chest_indrawing", label: "Rút lõm lồng ngực" },
-                      { name: "danger_sign", label: "Dấu hiệu nguy hiểm" },
-                      { name: "feeding_difficulty", label: "Bú kém / bỏ bú" },
-                    ].map((item) => (
-                      <FormField
-                        key={item.name}
-                        control={form.control}
-                        name={item.name as keyof typeof clinicalSchema.shape}
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50 transition-colors">
-                            <FormControl>
-                              <Checkbox
-                                checked={Boolean(field.value)}
-                                onCheckedChange={field.onChange}
-                                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel className="cursor-pointer">
-                                {item.label}
-                              </FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
+            <div className="space-y-6 flex-1 flex flex-col">
+              <div className="bg-muted/20 p-4 rounded-xl border border-border">
+                <Label className="text-sm font-semibold text-foreground/80 mb-3 block">Chọn các triệu chứng hiện tại</Label>
+                {availableSymptoms.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {availableSymptoms.map((symptom) => (
+                      <div key={symptom} className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-2 hover:bg-muted/50 transition-colors">
+                        <Checkbox
+                          id={`symptom-${symptom}`}
+                          checked={selectedSymptoms.includes(symptom)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedSymptoms([...selectedSymptoms, symptom]);
+                            } else {
+                              setSelectedSymptoms(selectedSymptoms.filter((s) => s !== symptom));
+                            }
+                          }}
+                          className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                        />
+                        <div className="space-y-1 leading-none">
+                          <label htmlFor={`symptom-${symptom}`} className="text-sm font-medium cursor-pointer">
+                            {SYMPTOM_LABELS[symptom] || symptom}
+                          </label>
+                        </div>
+                      </div>
                     ))}
                   </div>
-                </div>
-
-                <div className="mt-auto pt-6">
-                  <Button
-                    type="submit"
-                    className="bg-gradient-to-r from-primary to-indigo-600 hover:opacity-90 h-11 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
-                    disabled={isSubmittingClinical}
-                  >
-                    {isSubmittingClinical ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Đang chẩn đoán...
-                      </>
-                    ) : (
-                      <>
-                        <Activity className="mr-2 h-5 w-5" />
-                        Chẩn đoán lâm sàng
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-
-            {/* Clinical Results Display */}
-            {diagnosisData.clinicalPredictionResult && (
-              <div className="mt-6 pt-6 border-t border-slate-100 animate-in slide-in-from-bottom-5 duration-500">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-900">Kết quả phân tích</h3>
-                    <Badge
-                      variant="outline"
-                      className={`px-3 py-1 text-sm ${diagnosisData.clinicalPredictionResult.severity_level ? (RISKS_MAP[diagnosisData.clinicalPredictionResult.severity_level]?.bg || "bg-gray-100") : "bg-gray-100"} ${diagnosisData.clinicalPredictionResult.severity_level ? (RISKS_MAP[diagnosisData.clinicalPredictionResult.severity_level]?.color || "text-gray-700") : "text-gray-700"} ${diagnosisData.clinicalPredictionResult.severity_level ? (RISKS_MAP[diagnosisData.clinicalPredictionResult.severity_level]?.border || "border-gray-200") : "border-gray-200"}`}
-                    >
-                      {diagnosisData.clinicalPredictionResult.severity_level
-                        ? (RISKS_MAP[diagnosisData.clinicalPredictionResult.severity_level]?.label || diagnosisData.clinicalPredictionResult.severity_level.toUpperCase())
-                        : "CHƯA XÁC ĐỊNH"}
-                    </Badge>
+                ) : (
+                  <div className="flex items-center justify-center py-4 text-muted-foreground text-sm">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Đang tải danh sách triệu chứng...
                   </div>
-
-                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 space-y-3">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      {diagnosisData.clinicalPredictionResult.probability_distribution ? (
-                        Object.entries(diagnosisData.clinicalPredictionResult.probability_distribution).map(([level, prob]) => {
-                          const vietnameseLabel = level === "Low" ? "Thấp" : level === "Moderate" ? "Trung bình" : "Cao";
-                          return (
-                            <div key={level} className="flex flex-col">
-                              <span className="text-xs text-slate-500 uppercase font-medium">{vietnameseLabel}</span>
-                              <span className={`text-sm font-bold ${level === "Severe" ? "text-red-600" :
-                                level === "Moderate" ? "text-yellow-600" : "text-emerald-600"
-                                }`}>
-                                {(prob * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="col-span-3 text-sm text-slate-500 italic">Không có dữ liệu xác suất</div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-blue-50/50 rounded-lg border border-blue-100">
-                    <div className="p-1 bg-blue-100 rounded-full mt-0.5">
-                      <Stethoscope className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-blue-900 mb-1">Khuyến nghị điều trị</p>
-                      <p className="text-sm text-blue-700 leading-relaxed">
-                        {diagnosisData.clinicalPredictionResult.guidance_vi || diagnosisData.clinicalPredictionResult.guidance_en}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="p-1 bg-slate-100 rounded-full mt-0.5">
-                      <Activity className="w-4 h-4 text-slate-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900 mb-1">Giải thích & Lý do</p>
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {diagnosisData.clinicalPredictionResult.reasoning_vi || diagnosisData.clinicalPredictionResult.reasoning_en}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Disclaimer for Clinical */}
-                  <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-3 flex items-start gap-2">
-                    <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5 shrink-0" />
-                    <p className="text-xs text-yellow-800 italic">
-                      {diagnosisData.clinicalPredictionResult.disclaimer_vi || diagnosisData.clinicalPredictionResult.disclaimer_en}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
-            )}
 
+              <div className="mt-auto pt-6">
+                <Button
+                  onClick={handleMultimodalSubmit}
+                  className="w-full bg-gradient-to-r from-primary to-indigo-600 hover:opacity-90 h-12 rounded-xl shadow-lg shadow-primary/20 transition-all font-semibold"
+                  disabled={isSubmittingFusion || !selectedFile}
+                >
+                  {isSubmittingFusion ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Đang phân tích tổng hợp...
+                    </>
+                  ) : (
+                    <>
+                      <BrainCircuit className="mr-2 h-5 w-5" />
+                      Chẩn đoán đa phương thức
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Fusion Diagnosis Section - Full Width */}
-      {diagnosisData.predictionResult && diagnosisData.clinicalPredictionResult && (
+      {/* Multimodal Results Section - Heatmap and Probabilities */}
+      {diagnosisData.multimodalResult && (
         <div className="animate-in fade-in slide-in-from-bottom-5 duration-700">
-          <Card className="border-primary/20 shadow-md bg-primary/5">
-            <CardHeader className="bg-primary/10 border-b border-primary/20 pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <BrainCircuit className="w-6 h-6 text-primary" />
+          <Card className="border-primary/20 shadow-md">
+            <CardHeader className="bg-primary/5 border-b border-primary/10">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <BrainCircuit className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl text-foreground">Kết quả Chẩn đoán Đa phương thức</CardTitle>
+                    <CardDescription>Phân tích kết hợp Hình ảnh & Triệu chứng</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-xl text-foreground">Tổng hợp Kết quả & Chẩn đoán</CardTitle>
-                  <CardDescription className="text-muted-foreground">
-                    Kết hợp phân tích từ cả Hình ảnh và Lâm sàng để đưa ra kết luận cuối cùng
-                  </CardDescription>
-                </div>
+                <Badge
+                  className={`px-4 py-1.5 text-base font-bold shadow-sm ${(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).bg
+                    } ${(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).color
+                    } ${(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).border
+                    }`}
+                >
+                  {(RISKS_MAP[diagnosisData.multimodalResult.risk_level] || RISKS_MAP.Unknown).label}
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="pt-8">
-              {!diagnosisData.fusionResult ? (
-                <div className="text-center py-8">
-                  <p className="text-slate-600 mb-6 max-w-2xl mx-auto">
-                    Hệ thống đã có đủ dữ liệu từ cả hai nguồn. Nhấn nút bên dưới để tổng hợp và đưa ra đánh giá toàn diện.
-                  </p>
-                  <Button
-                    onClick={handleFusionSubmit}
-                    size="lg"
-                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-200 px-8 py-6 text-lg font-medium"
-                    disabled={isSubmittingFusion}
-                  >
-                    {isSubmittingFusion ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Heatmap Visualization */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-foreground flex items-center gap-2">
+                    <FileImage className="w-4 h-4 text-primary" /> Hình ảnh Heatmap (Grad-CAM)
+                  </h4>
+                  <div className="relative aspect-square w-full max-w-md mx-auto overflow-hidden rounded-2xl border border-border shadow-inner bg-slate-100 flex items-center justify-center">
+                    {(diagnosisData.multimodalResult?.heatmap || diagnosisData.imagePreview) ? (
                       <>
-                        <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                        Đang tổng hợp & phân tích...
+                        <img
+                          src={diagnosisData.multimodalResult?.heatmap
+                            ? (diagnosisData.multimodalResult.heatmap.startsWith('data:')
+                              ? diagnosisData.multimodalResult.heatmap
+                              : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`)
+                            : diagnosisData.imagePreview}
+                          alt="AI Heatmap Analysis"
+                          className="object-contain w-full h-full"
+                        />
+                        {diagnosisData.multimodalResult?.heatmap && (
+                          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full border border-white/20">
+                            Vùng tổn thương được AI nhận diện
+                          </div>
+                        )}
                       </>
                     ) : (
-                      <>
-                        <BrainCircuit className="mr-2 h-6 w-6" />
-                        Tổng hợp kết quả
-                      </>
+                      <div className="text-center p-6 space-y-2">
+                        <FileImage className="w-12 h-12 text-muted-foreground/30 mx-auto" />
+                        <p className="text-sm text-muted-foreground">Không có dữ liệu hình ảnh</p>
+                      </div>
                     )}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-8 animate-in zoom-in-95 duration-500">
-                  <div className="flex flex-col md:flex-row gap-6">
-                    {/* Key Findings */}
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <span className="text-muted-foreground font-medium">Đánh giá chung:</span>
-                        <span className="text-lg font-bold text-primary">{diagnosisData.fusionResult.condition_assessment}</span>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <span className="text-muted-foreground font-medium">Mức độ nghiêm trọng:</span>
-                        <Badge className="bg-destructive hover:bg-destructive/90 text-destructive-foreground px-3 py-1 text-base">
-                          {diagnosisData.fusionResult.severity_level}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center justify-between bg-card p-4 rounded-xl border border-border shadow-sm">
-                        <span className="text-muted-foreground font-medium">Độ tin cậy hệ thống:</span>
-                        <span className="text-primary font-semibold">{diagnosisData.fusionResult.confidence_level}</span>
-                      </div>
-                    </div>
-
-                    {/* Reasoning */}
-                    <div className="flex-1 bg-card p-6 rounded-xl border border-border shadow-sm">
-                      <h4 className="font-semibold text-primary mb-4 flex items-center gap-2">
-                        <Activity className="w-4 h-4" /> Cơ sở lập luận
-                      </h4>
-                      <ul className="space-y-3">
-                        {diagnosisData.fusionResult.fusion_reasoning.map((reason, index) => (
-                          <li key={index} className="flex items-start gap-2 text-sm text-foreground/80">
-                            <Check className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                            <span>{reason}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground text-center italic">
+                    Vùng màu đỏ/vàng biểu thị xác suất tổn thương cao được AI nhận diện
+                  </p>
+                </div>
 
-                  {/* Recommendation */}
-                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-                    <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                      <Stethoscope className="w-5 h-5" /> Khuyến nghị y tế (WHO Guidelines)
+                {/* Probabilities and Insights */}
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-primary" /> Phân bổ xác suất
                     </h4>
-                    <p className="text-blue-800 leading-relaxed">
-                      {diagnosisData.fusionResult.recommendation_vi || diagnosisData.fusionResult.recommendation_en}
-                    </p>
+                    <div className="grid grid-cols-1 gap-4">
+                      {/* Vision Probability */}
+                      <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-foreground">Xác suất Hình ảnh (Vision AI)</span>
+                          <span className="text-sm font-bold text-primary">{(diagnosisData.multimodalResult.vision_probability * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden shadow-inner">
+                          <div
+                            className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreColor(diagnosisData.multimodalResult.vision_probability)}`}
+                            style={{ width: `${diagnosisData.multimodalResult.vision_probability * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Clinical Probability */}
+                      <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-medium text-foreground">Xác suất Lâm sàng (Clinical AI)</span>
+                          <span className="text-sm font-bold text-primary">{(diagnosisData.multimodalResult.clinical_probability * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden shadow-inner">
+                          <div
+                            className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreColor(diagnosisData.multimodalResult.clinical_probability)}`}
+                            style={{ width: `${diagnosisData.multimodalResult.clinical_probability * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Final Combined Score */}
+                      <div className="bg-primary/5 p-4 rounded-xl border border-primary/20 shadow-sm ring-1 ring-primary/10">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-sm font-bold text-primary">Điểm số Tổng hợp (Multimodal)</span>
+                          <span className="text-sm font-extrabold text-primary">{(diagnosisData.multimodalResult.final_score * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden shadow-inner">
+                          <div
+                            className={`h-full rounded-full transition-all duration-1000 ease-out ${getScoreColor(diagnosisData.multimodalResult.final_score)}`}
+                            style={{ width: `${diagnosisData.multimodalResult.final_score * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Disclaimer */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
-                    <p className="text-sm text-yellow-800 italic">
-                      {diagnosisData.fusionResult.disclaimer_vi || diagnosisData.fusionResult.disclaimer_en}
+                  <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800 rounded-xl p-5 space-y-3 shadow-sm">
+                    <h5 className="text-blue-900 dark:text-blue-300 font-semibold flex items-center gap-2 text-sm">
+                      <Stethoscope className="w-4 h-4 text-blue-500" /> Nhận định lâm sàng
+                    </h5>
+                    <p className="text-sm text-blue-800 dark:text-blue-400 leading-relaxed">
+                      Dựa trên phân tích kết hợp giữa hình ảnh X-quang và bộ {selectedSymptoms.length} triệu chứng được chọn,
+                      hệ thống đánh giá mức độ rủi ro viêm phổi là <strong className="uppercase">{RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.label}</strong>.
+                    </p>
+                    <div className="pt-2">
+                      <p className="text-xs text-blue-700 dark:text-blue-500 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Triệu chứng ghi nhận: {selectedSymptoms.map(s => SYMPTOM_LABELS[s] || s).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-900/50 rounded-xl p-4 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-yellow-800 dark:text-yellow-500 italic">
+                      Đây là kết quả phân tích tham khảo từ AI. Bác sĩ cần đối chiếu với các kết quả xét nghiệm khác và tình trạng thực tế của bệnh nhân để đưa ra quyết định cuối cùng.
                     </p>
                   </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -17,8 +17,8 @@ interface ResultTableProps {
 
 export function ResultTable({ table, columns, globalFilter }: ResultTableProps) {
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-      <Table>
+    <div className="rounded-2xl border border-border bg-card overflow-x-auto shadow-sm scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+      <Table className="min-w-[1000px]">
         <TableHeader className="bg-muted/50 border-b border-border">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id} className="hover:bg-transparent border-none">
@@ -48,7 +48,7 @@ export function ResultTable({ table, columns, globalFilter }: ResultTableProps) 
                 className="hover:bg-slate-50/60 transition-colors border-b-slate-100 group"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="py-4 font-medium text-sm align-middle">
+                  <TableCell key={cell.id} className="py-4 font-medium text-sm align-middle whitespace-nowrap">
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext()

@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { PneumoniaPredictionResponse, ClinicalDiagnosisResponse, FusionPredictionResponse } from "@/types";
+import { PneumoniaPredictionResponse, ClinicalDiagnosisResponse, FusionPredictionResponse, MultimodalPredictionResponse } from "@/types";
 
 export interface DiagnosisFormData {
   patientId?: string;
@@ -43,6 +43,7 @@ export interface DiagnosisFormData {
   };
   clinicalPredictionResult?: ClinicalDiagnosisResponse | null;
   fusionResult?: FusionPredictionResponse | null;
+  multimodalResult?: MultimodalPredictionResponse | null;
 }
 
 const initialState: DiagnosisFormData = {
@@ -71,6 +72,7 @@ const initialState: DiagnosisFormData = {
   },
   clinicalPredictionResult: null,
   fusionResult: null,
+  multimodalResult: null,
 };
 
 const diagnosisSlice = createSlice({
@@ -118,6 +120,9 @@ const diagnosisSlice = createSlice({
     setFusionResult: (state, action: PayloadAction<FusionPredictionResponse | null>) => {
       state.fusionResult = action.payload;
     },
+    setMultimodalResult: (state, action: PayloadAction<MultimodalPredictionResponse | null>) => {
+      state.multimodalResult = action.payload;
+    },
     resetForm: () => initialState,
   },
 });
@@ -134,6 +139,7 @@ export const {
   setClinicalData,
   setClinicalPredictionResult,
   setFusionResult,
+  setMultimodalResult,
   resetForm,
 } = diagnosisSlice.actions;
 

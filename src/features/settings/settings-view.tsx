@@ -108,11 +108,11 @@ export default function SettingsView() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Tên đơn vị/Phòng khám</Label>
-                  <Input placeholder="Phòng khám Nhi Đồng" defaultValue="Bệnh Viện Nhi Trung Ương" />
+                  <Input placeholder="Phòng khám Phổi" defaultValue="Bệnh Viện Phổi Trung Ương" />
                 </div>
                 <div className="space-y-2">
                   <Label>Mã định danh hệ thống</Label>
-                  <Input placeholder="Clinic ID" defaultValue="VH-CHILD-001" disabled />
+                  <Input placeholder="Clinic ID" defaultValue="VH-LUNG-001" disabled />
                 </div>
               </div>
             </CardContent>
@@ -129,7 +129,7 @@ export default function SettingsView() {
               {[
                 { title: "Thông báo chẩn đoán mới", desc: "Nhận thông báo khi AI hoàn tất phân tích X-quang.", icon: Stethoscope },
                 { title: "Thông báo hệ thống", desc: "Cập nhật về các bảo trì hoặc thay đổi lớn của hệ thống.", icon: RefreshCcw },
-                { title: "Thông báo bệnh nhân", desc: "Cập nhật khi có dữ liệu bệnh nhi mới được thêm vào.", icon: User },
+                { title: "Thông báo bệnh nhân", desc: "Nhận thông báo khi có dữ liệu bệnh nhân mới được thêm vào.", icon: User },
               ].map((item, index) => (
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex gap-4 items-center">

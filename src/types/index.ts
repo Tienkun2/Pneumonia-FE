@@ -92,3 +92,19 @@ export interface FusionPredictionResponse {
   disclaimer_en: string;
   disclaimer_vi: string;
 }
+
+export interface MultimodalPredictionResponse {
+  vision_probability: number;
+  clinical_probability: number;
+  final_score: number;
+  risk_level: "LOW" | "MEDIUM" | "HIGH";
+  heatmap: string; // Base64 string or full data URI
+  message?: string;
+}
+
+export interface AIHealthStatus {
+  status: string;
+  models_loaded: boolean;
+  device: string;
+}
+

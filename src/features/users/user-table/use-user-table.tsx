@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { User } from "@/types/user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,17 +13,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   ColumnDef,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  useReactTable,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
 } from "@tanstack/react-table";
 
 import { USER_STATUS } from "@/constants/user";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { useDataTable } from "@/hooks/use-data-table";
 
 interface UseUserTableProps {
   data: User[];
@@ -51,11 +45,6 @@ export function useUserTable({
   onToggleStatusClick, 
   onDeleteClick 
 }: UseUserTableProps) {
-  const [globalFilter, setGlobalFilter] = useState("");
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [sorting, setSorting] = useState<SortingState>([]);
-
   const columns: ColumnDef<User>[] = useMemo(() => [
     {
       id: "STT",
@@ -193,35 +182,14 @@ export function useUserTable({
     },
   ], [onEdit, onRoleClick, onToggleStatusClick, onDeleteClick]);
 
-  const table = useReactTable({
+  const { table, globalFilter, setGlobalFilter, columnFilters, setColumnFilters, columnVisibility, setColumnVisibility } = useDataTable({
     data,
     columns,
     rowCount,
     pageCount,
+    pagination,
+    onPaginationChange,
     manualPagination: true,
-    getCoreRowModel: getCoreRowModel(),
-    // getPaginationRowModel: getPaginationRowModel(), // Removed for manual pagination
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    state: {
-      globalFilter,
-      columnFilters,
-      columnVisibility,
-      sorting,
-      pagination: pagination || undefined,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
-    onSortingChange: setSorting,
-    onPaginationChange: (paginationOrUpdater) => {
-      if (onPaginationChange) {
-        const nextPagination = typeof paginationOrUpdater === 'function' 
-          ? paginationOrUpdater(pagination || { pageIndex: 0, pageSize: 10 }) 
-          : paginationOrUpdater;
-        onPaginationChange(nextPagination);
-      }
-    },
   });
 
   return {

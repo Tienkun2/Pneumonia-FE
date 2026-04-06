@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
+import { Client, StompSubscription } from "@stomp/stompjs";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { pushNotification, fetchUnreadCount } from "@/store/slices/notification-slice";
 import { NotificationDto } from "@/services/notification-service";
@@ -13,19 +13,23 @@ export function useWebSockets() {
   const dispatch = useAppDispatch();
   const { token, user, isAuthenticated } = useAppSelector((state) => state.auth);
   const stompClientRef = useRef<Client | null>(null);
+  const subscriptionsRef = useRef<StompSubscription[]>([]);
 
-  const connect = useCallback(() => {
-    if (!token || !isAuthenticated) return;
+  // Stable Client Initialization
+  useEffect(() => {
+    if (!token || !isAuthenticated) {
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
+        stompClientRef.current = null;
+      }
+      return;
+    }
 
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_URL),
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
+      connectHeaders: { Authorization: `Bearer ${token}` },
       debug: (msg) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log("[WS Debug]", msg);
-        }
+        if (process.env.NODE_ENV === "development") console.log("[WS Debug]", msg);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
@@ -33,42 +37,7 @@ export function useWebSockets() {
     });
 
     client.onConnect = () => {
-      // Helper: parse JSON if possible, otherwise treat as plain string
-      const parseMessage = (body: string): NotificationDto => {
-        try {
-          const parsed = JSON.parse(body);
-          // Validate it's actually a NotificationDto object
-          if (parsed && typeof parsed === 'object' && parsed.content) {
-            return parsed as NotificationDto;
-          }
-        } catch {
-          // Not JSON - backend sent plain text
-        }
-        // Fallback: wrap plain text into a NotificationDto shape
-        return {
-          id: Date.now().toString(),
-          content: body,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-        };
-      };
-
-      // 1. Private User Notifications (all logged-in users)
-      client.subscribe("/user/queue/notifications", (message) => {
-        const notification = parseMessage(message.body);
-        dispatch(pushNotification(notification));
-        dispatch(fetchUnreadCount());
-      });
-
-      // 2. Admin Global Notifications
-      const isAdmin = user?.roles?.some(role => role.name === 'ROLE_ADMIN');
-      if (isAdmin) {
-        client.subscribe("/topic/admin/notifications", (message) => {
-          const notification = parseMessage(message.body);
-          dispatch(pushNotification(notification));
-          dispatch(fetchUnreadCount());
-        });
-      }
+      console.log("[WS] Connected");
     };
 
     client.onStompError = (frame) => {
@@ -78,17 +47,76 @@ export function useWebSockets() {
     client.activate();
     stompClientRef.current = client;
 
-  }, [token, isAuthenticated, dispatch, user]); // Added 'user' to ensure role-based subscriptions are accurate
+    return () => {
+      client.deactivate();
+      stompClientRef.current = null;
+    };
+  }, [token, isAuthenticated]); // Only reconnect if token or auth state changes
 
+  // Subscription Management (Decoupled from connection lifecycle)
   useEffect(() => {
-    connect();
+    const client = stompClientRef.current;
+    if (!client || !isAuthenticated) return;
+
+    // Local subscription logic
+    const subscribe = () => {
+      // Helper: parse JSON if possible, otherwise treat as plain string
+      const parseMessage = (body: string): NotificationDto => {
+        try {
+          const parsed = JSON.parse(body);
+          if (parsed && typeof parsed === 'object' && parsed.content) return parsed as NotificationDto;
+        } catch {}
+        return {
+          id: Date.now().toString(),
+          content: body,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+        };
+      };
+
+      // Clear previous subscriptions
+      subscriptionsRef.current.forEach(sub => sub.unsubscribe());
+      subscriptionsRef.current = [];
+
+      const subs: StompSubscription[] = [];
+
+      // 1. Private User Notifications
+      subs.push(client.subscribe("/user/queue/notifications", (message) => {
+        dispatch(pushNotification(parseMessage(message.body)));
+        dispatch(fetchUnreadCount());
+      }));
+
+      // 2. Admin Global Notifications
+      const isAdmin = user?.roles?.some(role => role.name === 'ROLE_ADMIN');
+      if (isAdmin) {
+        subs.push(client.subscribe("/topic/admin/notifications", (message) => {
+          dispatch(pushNotification(parseMessage(message.body)));
+          dispatch(fetchUnreadCount());
+        }));
+      }
+
+      subscriptionsRef.current = subs;
+    };
+
+    // If already connected, subscribe immediately
+    if (client.connected) {
+      subscribe();
+    } else {
+      // Otherwise wait for connection
+      const originalOnConnect = client.onConnect;
+      client.onConnect = (frame) => {
+        if (originalOnConnect) originalOnConnect(frame);
+        subscribe();
+      };
+    }
 
     return () => {
-      if (stompClientRef.current) {
-        stompClientRef.current.deactivate();
-      }
+      // No need to clear subscriptions if the client is deactivating anyway,
+      // but clean up references to be safe
+      subscriptionsRef.current.forEach(sub => sub.unsubscribe());
+      subscriptionsRef.current = [];
     };
-  }, [connect]);
+  }, [isAuthenticated, user, dispatch]); // Role changes will refresh subscriptions without killing the connection
 
-  return { isConnected: stompClientRef.current?.active };
+  return { isConnected: stompClientRef.current?.connected };
 }

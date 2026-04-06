@@ -14,18 +14,20 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { 
-  Users, 
-  AlertTriangle, 
-  Clock, 
-  Activity, 
-  UserPlus, 
-  FileHeart, 
-  Stethoscope, 
+import {
+  Users,
+  AlertTriangle,
+  Clock,
+  Activity,
+  UserPlus,
+  FileHeart,
+  Stethoscope,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/layout/page-header";
 
 // Dữ liệu tạm thời để hiển thị khi chưa có API
 const statsData = [
@@ -90,27 +92,27 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Tổng quan</h1>
-        <div className="flex flex-wrap gap-2">
-           <Link href="/diagnosis">
-              <Button className="rounded-lg px-4 h-9 gap-2">
-                 <Stethoscope className="h-4 w-4" /> <span className="font-medium">Chẩn đoán mới</span>
-              </Button>
-           </Link>
-           <Link href="/patients">
-              <Button variant="outline" className="rounded-lg px-4 h-9 gap-2">
-                 <UserPlus className="h-4 w-4 text-muted-foreground" /> <span className="font-medium">Thêm bệnh nhân</span>
-              </Button>
-           </Link>
-        </div>
-      </div>
+      <PageHeader
+        title="Tổng quan"
+        icon={LayoutDashboard}
+      >
+        <Link href="/diagnosis">
+          <Button className="rounded-lg px-4 h-9 gap-2">
+            <Stethoscope className="h-4 w-4" /> <span className="font-medium">Chẩn đoán mới</span>
+          </Button>
+        </Link>
+        <Link href="/patients">
+          <Button variant="outline" className="rounded-lg px-4 h-9 gap-2">
+            <UserPlus className="h-4 w-4 text-muted-foreground" /> <span className="font-medium">Thêm bệnh nhân</span>
+          </Button>
+        </Link>
+      </PageHeader>
 
       {/* Stats Cards - Skeleton Support */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {isLoading 
-          ? Array(4).fill(0).map((_, i) => (
-            <Card key={i} className="overflow-hidden border border-border shadow-sm rounded-2xl">
+        {isLoading
+          ? new Array(4).fill(0).map((_, i) => (
+            <Card key={`skeleton-stat-${i}`} className="overflow-hidden border border-border shadow-sm rounded-2xl">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-muted/30">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-4 w-4 rounded-full" />
@@ -151,11 +153,11 @@ export function DashboardView() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5 text-primary" />
-              {isLoading ? <Skeleton className="h-6 w-40" /> : "Bệnh nhi mới theo ngày"}
+              {isLoading ? <Skeleton className="h-6 w-40" /> : "Bệnh nhân mới theo ngày"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading 
+            {isLoading
               ? <Skeleton className="h-[240px] w-full rounded-xl" />
               : (
                 <ResponsiveContainer width="100%" height={240}>
@@ -196,7 +198,7 @@ export function DashboardView() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading 
+            {isLoading
               ? <Skeleton className="h-[240px] w-full rounded-xl" />
               : (
                 <ResponsiveContainer width="100%" height={240}>

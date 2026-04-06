@@ -125,7 +125,7 @@ export function ResultView({ resultId }: { resultId: string }) {
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Medical Imaging System v2.0</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-bold text-slate-900 uppercase">Bệnh nhi: {result.patientName}</p>
+            <p className="text-sm font-bold text-slate-900 uppercase">Bệnh nhân: {result.patientName}</p>
             <p className="text-xs text-slate-500 font-medium">Ngày chẩn đoán: {result.date}</p>
             <p className="text-xs text-slate-500 font-medium">Mã kết quả: #{result.id}</p>
           </div>

@@ -10,22 +10,6 @@ import { PatientTable } from "./patient-table/patient-table";
 import { QuickAddPatientDialog } from "@/components/patients/quick-add-patient-dialog";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -35,32 +19,38 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-import { 
-  Search, 
-  Loader2, 
-  Upload, 
-  Download, 
-  Settings2, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
-  ChevronsRight, 
+import {
+  Loader2,
+  Upload,
+  Download,
   Users,
-  CalendarIcon,
-  X 
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import { Patient } from "@/types/patient";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+
+import { PageHeader } from "@/components/layout/page-header";
+import { TableToolbar } from "@/components/ui/table-toolbar";
+import { DataTablePagination } from "@/components/ui/data-table-pagination";
+import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
+import { format } from "date-fns";
+
+const PATIENT_COLUMN_LABELS = {
+  code: "Mã BN",
+  fullName: "Họ tên",
+  age: "Tuổi",
+  gender: "Giới tính",
+  phone: "Số điện thoại",
+  address: "Địa chỉ",
+  STT: "STT",
+};
 
 export function PatientList() {
   const dispatch = useDispatch<AppDispatch>();
   const [isMounted, setIsMounted] = useState(false);
-  
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -68,7 +58,7 @@ export function PatientList() {
   const { patients, isLoading, error, totalElements, totalPages, currentPage, pageSize } = useSelector((state: RootState) => state.patient);
 
   const [pagination, setPagination] = useState({
-    pageIndex: currentPage - 1, // table uses 0-based
+    pageIndex: currentPage - 1,
     pageSize: pageSize,
   });
 
@@ -78,17 +68,7 @@ export function PatientList() {
   const [patientToDelete, setPatientToDelete] = useState<Patient | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Advanced Filters
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-
-  const handleEdit = (patient: Patient) => {
-    setEditingPatient(patient);
-    setShowFormDialog(true);
-  };
-
-  const handleDeleteClick = (patient: Patient) => {
-    setPatientToDelete(patient);
-  };
 
   const { table, columns, globalFilter, setGlobalFilter, columnFilters } = usePatientTable({
     data: patients,
@@ -100,30 +80,37 @@ export function PatientList() {
     onDeleteClick: handleDeleteClick,
   });
 
-  useEffect(() => {
-    const filters = {
-       search: globalFilter,
-       gender: columnFilters.find(f => f.id === 'gender')?.value as string[],
-       startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
-       endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
-    };
+  function handleEdit(patient: Patient) {
+    setEditingPatient(patient);
+    setShowFormDialog(true);
+  }
 
-    dispatch(fetchPatients({ 
-      page: pagination.pageIndex + 1, 
-      size: pagination.pageSize,
-      filters
-    }));
-  }, [dispatch, pagination.pageIndex, pagination.pageSize, globalFilter, columnFilters, dateRange]);
+  function handleDeleteClick(patient: Patient) {
+    setPatientToDelete(patient);
+  }
 
-  // Reset page on filter change
   useEffect(() => {
     setPagination(prev => prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 });
   }, [globalFilter, columnFilters, dateRange]);
 
-  const handleCreateNew = () => {
-    setEditingPatient(null);
-    setShowFormDialog(true);
-  };
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const filters = {
+      search: globalFilter,
+      gender: columnFilters.find(f => f.id === 'gender')?.value as string[],
+      startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+      endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+    };
+
+    const promise = dispatch(fetchPatients({
+      page: pagination.pageIndex + 1,
+      size: pagination.pageSize,
+      filters
+    }));
+
+    return () => promise.abort();
+  }, [dispatch, pagination, globalFilter, columnFilters, dateRange, isMounted]);
 
   const confirmDelete = async () => {
     if (!patientToDelete) return;
@@ -139,94 +126,42 @@ export function PatientList() {
     }
   };
 
-  const handleExport = () => {
-    toast.success("Đang xuất dữ liệu...");
-    setTimeout(() => {
-      toast.success("Xuất dữ liệu thành công!");
-    }, 1000);
-  };
-
   return (
-    <div className="space-y-4 px-2 pb-4">
-      {/* Page Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-slate-100 rounded-xl text-slate-600">
-          <Users className="h-6 w-6" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Hồ sơ bệnh nhân</h1>
-      </div>
+    <div className="space-y-4 px-2 pb-4 w-full overflow-x-hidden">
+      <PageHeader
+        title="Hồ sơ bệnh nhân"
+        icon={Users}
+      />
 
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Search & Filters (Left) */}
-        <div className="flex items-center gap-2 flex-1 w-full flex-wrap">
-          <div className="relative w-full max-w-[280px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Tìm mã BN, tên, SĐT..."
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-9 h-9 bg-background border-border text-sm"
-            />
-          </div>
+      <TableToolbar
+        placeholder="Tìm mã BN, tên, SĐT..."
+        value={globalFilter}
+        onChange={setGlobalFilter}
+      >
+        <DataTableDateRangePicker
+          date={dateRange}
+          onDateChange={setDateRange}
+          placeholder="Ngày tiếp nhận"
+        />
 
-          {/* Lọc Ngày tiếp nhận (giả lập createdAt) - Render only after mount to prevent hydration mismatch */}
-          {isMounted && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 border-dashed hidden lg:flex"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "dd/MM/yy", { locale: vi })} -{" "}
-                        {format(dateRange.to, "dd/MM/yy", { locale: vi })}
-                      </>
-                    ) : (
-                      format(dateRange.from, "dd/MM/yy", { locale: vi })
-                    )
-                  ) : (
-                    <span>Ngày tiếp nhận</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={dateRange?.from}
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  numberOfMonths={1}
-                />
-              </PopoverContent>
-            </Popover>
-          )}
+        {(table.getState().columnFilters.length > 0 || globalFilter || dateRange) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              table.resetColumnFilters();
+              setGlobalFilter("");
+              setDateRange(undefined);
+            }}
+            className="h-9 px-2 lg:px-3 text-muted-foreground border-dashed"
+          >
+            <X className="mr-2 h-4 w-4" />
+            Đặt lại
+          </Button>
+        )}
 
-          {(table.getState().columnFilters.length > 0 || globalFilter || dateRange) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                table.resetColumnFilters();
-                setGlobalFilter("");
-                setDateRange(undefined);
-              }}
-              className="h-9 px-2 lg:px-3 text-muted-foreground border-dashed"
-            >
-              <X className="mr-2 h-4 w-4" />
-              Đặt lại
-            </Button>
-          )}
-        </div>
-
-        {/* Actions (Right) */}
-        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-          <Button variant="outline" size="sm" className="h-9 shrink-0 gap-2" onClick={handleExport}>
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="outline" size="sm" className="h-9 shrink-0 gap-2">
             <Upload className="h-4 w-4" />
             Xuất
           </Button>
@@ -234,49 +169,16 @@ export function PatientList() {
             <Download className="h-4 w-4" />
             Nhập
           </Button>
-          <Button size="sm" className="h-9 shrink-0" onClick={handleCreateNew}>
+          <Button size="sm" className="h-9 shrink-0 rounded-lg" onClick={() => { setEditingPatient(null); setShowFormDialog(true); }}>
             Thêm bệnh nhân
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 shrink-0 gap-2 font-normal ml-auto">
-                <Settings2 className="h-4 w-4" />
-                Hiển thị cột
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[150px]">
-              <DropdownMenuLabel>Chọn cột</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table
-                .getAllColumns()
-                .filter(
-                  (column) =>
-                    column.accessorFn !== undefined && column.getCanHide()
-                )
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                    >
-                      {column.id === "code" && "Mã BN"}
-                      {column.id === "fullName" && "Họ tên"}
-                      {column.id === "age" && "Tuổi"}
-                      {column.id === "gender" && "Giới tính"}
-                      {column.id === "phone" && "Số điện thoại"}
-                      {column.id === "address" && "Địa chỉ"}
-                      {column.id === "STT" && "STT"}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <DataTableViewOptions
+            table={table}
+            columnLabels={PATIENT_COLUMN_LABELS}
+          />
         </div>
-      </div>
+      </TableToolbar>
 
-      {/* Main Table Area */}
       {isLoading && patients.length === 0 ? (
         <div className="flex justify-center p-12">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
@@ -284,81 +186,11 @@ export function PatientList() {
       ) : error && !patients.length ? (
         <div className="py-8 text-center text-red-500">{error}</div>
       ) : (
-        <PatientTable table={table} columns={columns} globalFilter={globalFilter} />
+        <>
+          <PatientTable table={table} columns={columns} globalFilter={globalFilter} />
+          <DataTablePagination table={table} itemName="bệnh nhân" />
+        </>
       )}
-
-      {/* Footer / Pagination Controls */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-sm text-muted-foreground">
-        <div>
-          Tổng cộng: <span className="font-medium text-foreground">{totalElements}</span> dòng
-        </div>
-        
-        <div className="flex items-center gap-6 flex-wrap justify-center">
-          <div className="flex items-center space-x-2">
-            <p className="font-medium text-foreground">Số hàng</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value));
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px] bg-background border-border">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 50].map((size) => (
-                  <SelectItem key={size} value={`${size}`}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-center justify-center font-medium text-foreground">
-            Trang {table.getState().pagination.pageIndex + 1} trên {table.getPageCount() || 1}
-          </div>
-          
-          <div className="flex items-center space-x-1">
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Trang đầu</span>
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Trang trước</span>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Trang sau</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Trang cuối</span>
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Forms & Dialogs */}
       <QuickAddPatientDialog
@@ -366,8 +198,8 @@ export function PatientList() {
         onOpenChange={setShowFormDialog}
         patient={editingPatient}
         onSuccess={() => {
-          dispatch(fetchPatients({ 
-            page: pagination.pageIndex + 1, 
+          dispatch(fetchPatients({
+            page: pagination.pageIndex + 1,
             size: pagination.pageSize,
           }));
         }}
@@ -375,19 +207,19 @@ export function PatientList() {
 
       {/* Delete Dialog */}
       <Dialog open={!!patientToDelete} onOpenChange={(open) => !open && setPatientToDelete(null)}>
-        <DialogContent>
+        <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Xác nhận xóa hồ sơ</DialogTitle>
             <DialogDescription>
               Bạn có chắc chắn muốn xóa bệnh nhân <strong>{patientToDelete?.fullName}</strong>?
-              Hành động này không thể hoàn tác và sẽ cập nhật liên đới các thông tin khác.
+              Hành động này không thể hoàn tác.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setPatientToDelete(null)} disabled={isDeleting}>
+            <Button variant="outline" onClick={() => setPatientToDelete(null)} disabled={isDeleting} className="rounded-xl">
               Hủy
             </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting} className="rounded-xl">
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isDeleting ? "Đang xóa..." : "Xóa"}
             </Button>

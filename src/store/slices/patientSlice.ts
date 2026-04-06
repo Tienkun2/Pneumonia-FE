@@ -77,7 +77,7 @@ export const deletePatientThunk = createAsyncThunk<string, string, { rejectValue
   async (id, { rejectWithValue }) => {
     try {
       await PatientService.deletePatient(id);
-      return id; // Return ID to remove from state
+      return id;
     } catch (err: unknown) {
       return rejectWithValue((err as Error).message || "Lỗi khi xoá bệnh nhân");
     }
@@ -101,7 +101,11 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.patients = action.payload.data;
+        if (action.payload.currentPage === 1) {
+          state.patients = action.payload.data;
+        } else {
+          state.patients = [...state.patients, ...action.payload.data];
+        }
         state.totalElements = action.payload.totalElements;
         state.totalPages = action.payload.totalPages;
         state.currentPage = action.payload.currentPage;

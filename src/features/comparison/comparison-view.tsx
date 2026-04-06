@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchPatients } from "@/store/slices/patientSlice";
 import { fetchPatientVisits } from "@/store/slices/visitSlice";
@@ -24,7 +24,8 @@ import {
   ChevronRight,
   Info,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Loader2
 } from "lucide-react";
 import Image from "next/image";
 import { RiskGauge } from "@/components/medical/risk-gauge";
@@ -51,10 +52,28 @@ export function ComparisonView() {
   const [visitAId, setVisitAId] = useState<string>("");
   const [visitBId, setVisitBId] = useState<string>("");
   const [isComparing, setIsComparing] = useState(false);
+  
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const pageRef = useRef(page);
+  const { totalPages, isLoading: isPatientsLoading } = useAppSelector((state) => state.patient);
 
   useEffect(() => {
-    dispatch(fetchPatients({ page: 1, size: 50 }));
-  }, [dispatch]);
+    pageRef.current = page;
+  }, [page]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    dispatch(fetchPatients({ page, size: 10, filters: { search: debouncedSearch } }));
+  }, [dispatch, page, debouncedSearch]);
 
   useEffect(() => {
     if (selectedPatientId) {
@@ -77,6 +96,21 @@ export function ComparisonView() {
         setIsComparing(true);
      }
   };
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+    if (isPatientsLoading) return;
+    
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && pageRef.current < totalPages) {
+        setPage(prev => prev + 1);
+      }
+    });
+
+    if (node) observer.current.observe(node);
+  }, [isPatientsLoading, totalPages]);
 
   return (
     <div className="space-y-8 pb-10">
@@ -105,31 +139,37 @@ export function ComparisonView() {
                     variant="outline"
                     role="combobox"
                     aria-expanded={comboboxOpen}
-                    className="w-full justify-between h-10 bg-background rounded-lg border-border shadow-sm font-medium hover:bg-slate-50 transition-colors"
+                    className="w-full justify-between h-10 bg-background rounded-lg border-border shadow-sm font-medium hover:bg-slate-50 transition-all active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2 truncate">
                        {selectedPatientId
                          ? patients.find((p) => p.id === selectedPatientId)?.fullName
-                         : "Tìm kiếm bệnh nhi..."}
+                         : "Tìm kiếm bệnh nhân..."}
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Nhập tên hoặc mã..." />
-                    <CommandList>
-                      <CommandEmpty>Không tìm thấý bệnh nhi.</CommandEmpty>
+                  <Command shouldFilter={false}>
+                    <CommandInput 
+                      placeholder="Nhập tên hoặc mã..." 
+                      value={search}
+                      onValueChange={setSearch}
+                    />
+                    <CommandList className="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200">
+                      {patients.length === 0 && !isPatientsLoading && (
+                        <CommandEmpty>Không tìm thấy bệnh nhân.</CommandEmpty>
+                      )}
                       <CommandGroup>
-                        {patients.map((patient) => (
+                        {patients.map((patient, index) => (
                           <CommandItem
-                            key={patient.id}
+                            key={`${patient.id}-${index}`}
                             value={patient.fullName}
                             onSelect={() => {
                               setSelectedPatientId(patient.id);
                               setComboboxOpen(false);
                             }}
-                            className="cursor-pointer"
+                            className="cursor-pointer py-3"
                           >
                             <Check
                               className={cn(
@@ -139,11 +179,24 @@ export function ComparisonView() {
                             />
                             <div className="flex flex-col">
                                <span className="font-bold">{patient.fullName}</span>
-                               <span className="text-[10px] text-muted-foreground uppercase">{patient.code}</span>
+                               <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">{patient.code}</span>
                             </div>
                           </CommandItem>
                         ))}
                       </CommandGroup>
+                      {/* Loading Sentinel */}
+                      {!isPatientsLoading && page < totalPages && (
+                        <div ref={lastItemRef} className="h-4" />
+                      )}
+
+                      {isPatientsLoading && (
+                        <div className="h-10 flex items-center justify-center p-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground animate-pulse">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Đang tải...
+                          </div>
+                        </div>
+                      )}
                     </CommandList>
                   </Command>
                 </PopoverContent>
@@ -319,7 +372,7 @@ export function ComparisonView() {
             </div>
             <div>
                <h3 className="text-xl font-bold text-slate-800">Bắt đầu so sánh</h3>
-               <p className="text-sm text-slate-500 max-w-sm mt-1">Chọn một bệnh nhi ở danh sách trên để xem lại hành trình của họ qua các lần X-Quang.</p>
+               <p className="text-sm text-slate-500 max-w-sm mt-1">Chọn một bệnh nhân ở danh sách trên để xem lại hành trình của họ qua các lần X-Quang.</p>
             </div>
          </div>
       )}

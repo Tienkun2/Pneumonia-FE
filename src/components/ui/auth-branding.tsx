@@ -34,9 +34,9 @@ export default function AuthBranding() {
           </svg>
         </div>
         <div>
-          <h1 className="text-xl font-bold leading-none">Phổi Nhi Đồng</h1>
+          <h1 className="text-xl font-bold leading-none">Chẩn đoán Phổi</h1>
           <p className="text-xs text-blue-100/80 font-medium tracking-wide mt-0.5">
-            CHUYÊN KHOA 1-5 TUỔI
+            HỆ THỐNG ĐA ĐỘ TUỔI
           </p>
         </div>
       </div>

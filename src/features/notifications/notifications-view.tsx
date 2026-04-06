@@ -15,6 +15,7 @@ import {
   Loader2,
 } from "lucide-react";
 import React, { useState } from "react";
+import { PageHeader } from "@/components/layout/page-header";
 
 export function NotificationsView() {
   const dispatch = useAppDispatch();
@@ -33,10 +34,10 @@ export function NotificationsView() {
     }
   };
 
-  // Determine type from content heuristic (since API doesn't return type)
   const getTypeFromContent = (content: string) => {
-    if (content.toLowerCase().includes("pneumonia") || content.toLowerCase().includes("nguy cơ cao")) return 'warning';
-    if (content.toLowerCase().includes("tài khoản") || content.toLowerCase().includes("khởi tạo")) return 'success';
+    const lowercaseContent = content.toLowerCase();
+    if (lowercaseContent.includes("pneumonia") || lowercaseContent.includes("nguy cơ cao")) return 'warning';
+    if (lowercaseContent.includes("tài khoản") || lowercaseContent.includes("khởi tạo")) return 'success';
     return 'info';
   };
 
@@ -50,22 +51,75 @@ export function NotificationsView() {
     }
   };
 
+  let content;
+  if (isLoading && notifications.length === 0) {
+    content = (
+      <div className="py-20 text-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
+      </div>
+    );
+  } else if (filteredNotifications.length === 0) {
+    content = (
+      <div className="py-32 text-center text-muted-foreground border-border border rounded-[2rem] bg-muted/20">
+        <p className="text-xs font-semibold italic uppercase tracking-widest opacity-50">Hộp thư thông báo đang trống</p>
+      </div>
+    );
+  } else {
+    content = (
+      <>
+        {filteredNotifications.map((notif) => (
+          <button 
+            key={notif.id}
+            className={`group flex w-full items-start gap-4 p-4 rounded-2xl transition-all cursor-pointer text-left hover:bg-muted/80 ${notif.isRead ? 'opacity-70' : 'bg-primary/5 shadow-sm'}`}
+            onClick={() => dispatch(markOneReadApi(notif.id))}
+          >
+            <div className="mt-1 shrink-0 p-2 bg-background rounded-xl border border-border shadow-sm group-hover:bg-primary/5 transition-colors">
+              {getIcon(getTypeFromContent(notif.content))}
+            </div>
+            <div className="flex-1 min-w-0 space-y-1 py-1">
+              <div className="flex items-center justify-between gap-4">
+                 <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-muted-foreground' : 'text-foreground font-bold'}`}>
+                   {notif.content}
+                 </p>
+               </div>
+               <div className="flex items-center gap-2">
+                 <span className="text-[10px] font-black text-muted-foreground/40 uppercase tabular-nums tracking-widest">
+                   {notif.formattedTime}
+                 </span>
+                 {!notif.isRead && <span className="text-[10px] font-black text-primary uppercase tracking-widest">Mới</span>}
+               </div>
+             </div>
+             {!notif.isRead && (
+               <div className="mt-4 h-2 w-2 rounded-full bg-primary shrink-0 shadow-[0_0_12px_rgba(37,99,235,0.6)]" />
+             )}
+          </button>
+        ))}
+
+        {filter === 'all' && currentPage < totalPages && (
+          <div className="pt-6 text-center">
+             <button
+               onClick={loadMore}
+               className="px-6 py-2 rounded-full border border-border text-[10px] font-black text-primary hover:bg-primary/5 uppercase tracking-widest transition-all"
+             >
+               Tải thêm thông báo
+             </button>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto py-4 px-4">
-      {/* Minimal action bar */}
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-border">
-        <div className="flex items-center gap-2">
-           <Bell className="h-4 w-4 text-muted-foreground" />
-           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-             {unreadCount} chưa đọc
-           </span>
-           {isLoading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/30" />}
-        </div>
-        
-        <div className="flex items-center gap-6">
+    <div className="max-w-2xl mx-auto py-8 px-4 space-y-8">
+      <PageHeader 
+        title="Thông báo"
+        icon={Bell}
+        description={`${unreadCount} thông báo chưa đọc`}
+      >
+        <div className="flex items-center gap-4">
             <button 
               onClick={() => setFilter(filter === 'all' ? 'unread' : 'all')}
-              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${filter === 'unread' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`text-[10px] font-black uppercase tracking-widest transition-colors ${filter === 'unread' ? 'text-primary underline underline-offset-8' : 'text-muted-foreground hover:text-foreground'}`}
             >
               {filter === 'all' ? 'Chưa đọc' : 'Tất cả'}
             </button>
@@ -77,63 +131,15 @@ export function NotificationsView() {
             </button>
             <button 
               onClick={() => dispatch(clearNotifications())}
-              className="text-[10px] font-black text-muted-foreground/50 hover:text-destructive transition-colors uppercase tracking-widest"
+              className="text-[10px] font-black text-muted-foreground/30 hover:text-destructive transition-colors uppercase tracking-widest"
             >
               Làm sạch
             </button>
         </div>
-      </div>
+      </PageHeader>
 
-      {/* Notification list */}
-      <div className="space-y-1">
-        {isLoading && notifications.length === 0 ? (
-          <div className="py-20 text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
-          </div>
-        ) : filteredNotifications.length === 0 ? (
-          <div className="py-32 text-center text-muted-foreground">
-            <p className="text-xs font-medium italic">Hộp thư thông báo đang trống</p>
-          </div>
-        ) : (
-          <>
-            {filteredNotifications.map((notif) => (
-              <div 
-                key={notif.id}
-                className={`group flex items-start gap-4 p-4 rounded-xl transition-all cursor-pointer hover:bg-muted/50 ${notif.isRead ? '' : 'bg-primary/5'}`}
-                onClick={() => dispatch(markOneReadApi(notif.id))}
-              >
-                <div className="mt-1 shrink-0">
-                  {getIcon(getTypeFromContent(notif.content))}
-                </div>
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  <div className="flex items-center justify-between gap-4">
-                     <p className={`text-sm truncate ${notif.isRead ? 'text-muted-foreground' : 'text-foreground font-bold'}`}>
-                       {notif.content}
-                     </p>
-                     <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tabular-nums whitespace-nowrap">
-                       {notif.formattedTime}
-                     </span>
-                   </div>
-                 </div>
-                 {!notif.isRead && (
-                   <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0 shadow-[0_0_8px_rgba(37,99,235,0.4)]" />
-                 )}
-              </div>
-            ))}
-
-            {/* Load more */}
-            {filter === 'all' && currentPage < totalPages && (
-              <div className="pt-4 text-center">
-                 <button
-                   onClick={loadMore}
-                   className="text-xs font-bold text-primary hover:text-primary/80 uppercase tracking-widest transition-colors"
-                 >
-                   Tải thêm
-                 </button>
-              </div>
-            )}
-          </>
-        )}
+      <div className="space-y-3">
+        {content}
       </div>
     </div>
   );
