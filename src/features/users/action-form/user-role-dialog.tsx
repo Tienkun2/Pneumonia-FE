@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { roleSchema, RoleFormValues } from "@/untils/user-schemas";
+import { roleSchema, RoleFormValues } from "@/utils/user-schemas";
 import { User, UpdateUserPayload } from "@/types/user";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUserThunk } from "@/store/slices/userSlice";

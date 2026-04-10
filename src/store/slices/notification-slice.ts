@@ -3,7 +3,6 @@ import { NotificationService, NotificationDto } from "@/services/notification-se
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
-// --- Thunks ---
 export const fetchNotifications = createAsyncThunk(
   "notifications/fetchAll",
   async (page: number = 1) => {

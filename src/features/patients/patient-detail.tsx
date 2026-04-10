@@ -29,7 +29,7 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { QuickAddVisitDialog } from "@/components/patients/quick-add-visit-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 import { toast } from "sonner";
 
 export function PatientDetail({ patientId }: { patientId: string }) {
@@ -123,7 +123,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/patients">
+          <Link href="/medical/patient-mgmt/patient-list">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -249,7 +249,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                               
                               <div className="flex gap-2 items-center">
                                 {visit.diagnoses && visit.diagnoses.length > 0 && (
-                                  <Link href={`/results/${visit.id}?patientId=${patientId}`}>
+                                  <Link href={`/medical/ai-diagnosis/history/${visit.id}?patientId=${patientId}`}>
                                     <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 rounded-xl gap-2 font-black shadow-lg shadow-primary/20">
                                       <FileCheck className="h-4 w-4" />
                                       Kết quả AI

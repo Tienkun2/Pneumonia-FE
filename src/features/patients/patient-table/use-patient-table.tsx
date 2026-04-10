@@ -115,7 +115,7 @@ export function usePatientTable({
                 <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium" asChild>
-                  <Link href={`/patients/${patient.id}`} className="flex items-center w-full">
+                  <Link href={`/medical/patient-mgmt/patient-list/${patient.id}`} className="flex items-center w-full">
                     <Eye className="h-4 w-4 text-muted-foreground" />
                     <span>Xem chi tiết</span>
                   </Link>

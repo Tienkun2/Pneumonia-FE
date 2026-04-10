@@ -22,7 +22,7 @@ import { createVisitThunk, updateVisitThunk } from "@/store/slices/visitSlice";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 
 const visitSchema = z.object({
   symptoms: z.string().optional(),
@@ -79,7 +79,7 @@ export function QuickAddVisitDialog({
       setIsPending(true);
       const payload = {
         patientId,
-        symptoms: data.symptoms || undefined,
+        symptoms: data.symptoms || "",
         note: data.note || undefined,
       };
       

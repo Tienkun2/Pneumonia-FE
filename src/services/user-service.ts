@@ -1,106 +1,35 @@
-import { apiClient } from "./api-client";
-import { ApiResponse, PageResponse } from "@/types/api";
-import { User, CreateUserPayload } from "@/types/user";
+import { api } from "@/services/api-client";
+import { PageResponse } from "@/types/api";
+import { User, CreateUserPayload, UpdateUserPayload } from "@/types/user";
 
+/**
+ * Senior-level User Service
+ * Standardized API calls using central helper
+ */
 export const UserService = {
-  async getUsers(page: number = 1, size: number = 10, filters: Record<string, unknown> = {}) {
+  getUsers: (page: number = 1, size: number = 10, filters: Record<string, unknown> = {}) => {
     let query = `/users?page=${page}&size=${size}`;
     if (filters.search) query += `&search=${encodeURIComponent(String(filters.search))}`;
     if (filters.status) query += `&status=${encodeURIComponent(String(filters.status))}`;
     if (filters.role) query += `&role=${encodeURIComponent(String(filters.role))}`;
 
-    const res = await apiClient(query, {
-      method: "GET",
-    });
-
-    const data: ApiResponse<PageResponse<User>> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to fetch users");
-    }
-
-    return data.result;
+    return api.get<PageResponse<User>>(query);
   },
 
-  async createUser(payload: CreateUserPayload) {
-    const res = await apiClient("/users", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+  createUser: (payload: CreateUserPayload) => api.post<User>("/users", payload),
 
-    const data: ApiResponse<User> = await res.json();
-    if (!res.ok || data.code !== 0) {
-      throw new Error(data.message || "Failed to create user");
-    }
+  updateUser: (id: string, payload: UpdateUserPayload) => api.put<User>(`/users/${id}`, payload),
 
-    return data.result;
-  },
+  deleteUser: (id: string) => api.delete<unknown>(`/users/${id}`),
 
-  async updateUser(id: string, payload: import("@/types/user").UpdateUserPayload) {
-    const res = await apiClient(`/users/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
+  getMyInfo: () => api.get<User>("/users/my-info"),
 
-    const data: ApiResponse<User> = await res.json();
-    if (!res.ok || data.code !== 0) {
-      throw new Error(data.message || "Failed to update user");
-    }
+  changePassword: (oldPassword: string, newPassword: string) => 
+    api.post<void>("/users/change-password", { oldPassword, newPassword }),
 
-    return data.result;
-  },
-
-  async deleteUser(id: string) {
-    const finalRes = await apiClient(`/users/${id}`, {
-       method: "DELETE"
-    })
-
-    const data: ApiResponse<unknown> = await finalRes.json();
-    if (!finalRes.ok || data.code !== 0) {
-      throw new Error(data.message || "Failed to delete user");
-    }
-
-    return true;
-  },
-
-  async getMyInfo(): Promise<User> {
-    const res = await apiClient("/users/my-info", {
-      method: "GET",
-    });
-
-    const data: ApiResponse<User> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to fetch my info");
-    }
-
-    return data.result;
-  },
-
-  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    const res = await apiClient("/users/change-password", {
-      method: "POST",
-      body: JSON.stringify({ oldPassword, newPassword }),
-    });
-
-    const data: ApiResponse<unknown> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to change password");
-    }
-  },
-
-  async uploadAvatar(file: File): Promise<User> {
+  uploadAvatar: (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-
-    const res = await apiClient("/users/upload-avatar", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data: ApiResponse<User> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to upload avatar");
-    }
-
-    return data.result;
+    return api.post<User>("/users/upload-avatar", formData);
   },
 };

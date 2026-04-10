@@ -107,6 +107,8 @@ const authSlice = createSlice({
       if (typeof globalThis !== "undefined" && globalThis.localStorage) {
         globalThis.localStorage.removeItem("token")
         document.cookie = "token=; Max-Age=0; path=/"
+        // Xóa cache menu động để lần login sau fetch lại theo quyền mới
+        sessionStorage.removeItem("dynamic_menus")
       }
     }
   },

@@ -37,23 +37,22 @@ export function DataTableDateRangePicker({
             variant={"outline"}
             size="sm"
             className={cn(
-              "h-9 justify-start text-left font-normal border-dashed hidden lg:flex",
-              !date && "text-muted-foreground"
+              "h-9 rounded-xl gap-2 font-bold border-border/50 bg-card shadow-sm hidden lg:flex"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "dd/MM/yyyy", { locale: vi })} -{" "}
-                  {format(date.to, "dd/MM/yyyy", { locale: vi })}
-                </>
-              ) : (
-                format(date.from, "dd/MM/yyyy", { locale: vi })
-              )
-            ) : (
-              <span>{placeholder}</span>
-            )}
+            <CalendarIcon className="h-3.5 w-3.5" />
+            {(() => {
+              if (!date?.from) return <span>{placeholder}</span>;
+              if (date.to) {
+                return (
+                  <>
+                    {format(date.from, "dd/MM/yyyy", { locale: vi })} -{" "}
+                    {format(date.to, "dd/MM/yyyy", { locale: vi })}
+                  </>
+                );
+              }
+              return format(date.from, "dd/MM/yyyy", { locale: vi });
+            })()}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useActivateForm } from "@/hooks/useActivateForm";
+import { useActivateForm } from "@/hooks/use-activate-form";
 import { Eye, EyeOff, Lock, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

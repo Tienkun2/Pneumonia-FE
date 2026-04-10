@@ -26,14 +26,14 @@ import {
   Settings, 
   LogOut, 
   Search, 
-  HelpCircle, 
   CheckCircle2, 
   AlertTriangle, 
   Clock,
-  Check
+  Check,
+  Menu
 } from "lucide-react";
 
-export function Header() {
+export function Header({ isCollapsed, setIsCollapsed }: { isCollapsed?: boolean; setIsCollapsed?: (val: boolean) => void }) {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { user } = useAppSelector((state) => state.auth);
@@ -72,15 +72,26 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-40 flex h-20 w-full shrink-0 items-center justify-between border-b border-border/40 bg-background/80 px-4 sm:px-8 backdrop-blur-md">
-      {/* Mobile Menu Spacer (Reserved space for Sidebar trigger - 64px width) */}
-      <div className="w-16 lg:hidden shrink-0" />
+      <div className="flex flex-1 items-center gap-2 lg:gap-4">
+        {/* Mobile Menu Spacer */}
+        <div className="w-16 lg:hidden shrink-0" />
 
-      {/* Search Bar (Left - Desktop only) */}
-      <div className="relative w-full max-w-md hidden lg:block group">
-        <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-        </div>
-        <input
+        {/* Desktop Sidebar Toggle */}
+        <Button 
+          variant="outline" 
+          size="icon" 
+          className="hidden lg:flex text-muted-foreground hover:text-primary hover:bg-primary/10 border-border/50 rounded-xl bg-card shadow-sm shrink-0" 
+          onClick={() => setIsCollapsed?.(!isCollapsed)}
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+
+        {/* Search Bar */}
+        <div className="relative w-full max-w-md hidden lg:block group">
+          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+          </div>
+          <input
           type="text"
           placeholder="Search anything here..."
           className="h-11 w-full rounded-full border border-border/50 bg-card pl-11 pr-4 text-sm focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium cursor-pointer placeholder:text-muted-foreground/50"
@@ -95,13 +106,10 @@ export function Header() {
           }}
         />
       </div>
+      </div>
 
       {/* Actions (Right) */}
       <div className="flex items-center gap-4">
-        {/* Help Center */}
-        <Button variant="ghost" size="icon" className="h-11 w-11 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all rounded-full hidden sm:flex">
-          <HelpCircle className="h-5 w-5" />
-        </Button>
 
         {/* Notifications */}
         <Popover>
@@ -181,17 +189,9 @@ export function Header() {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="group flex flex-row-reverse items-center gap-3 rounded-full pl-3 pr-4 py-6 hover:bg-muted/50 transition-all border border-border/50 bg-card shadow-sm"
+              className="h-11 w-11 rounded-full p-0 hover:bg-muted/50 transition-all border border-border/50 bg-card shadow-sm shrink-0 flex items-center justify-center overflow-hidden"
             >
-              <div className="flex flex-col items-start text-left hidden sm:flex">
-                <span className="text-[13px] font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
-                  {user?.displayName || user?.username || "Bác sĩ"}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {user?.email || "Admin"}
-                </span>
-              </div>
-              <Avatar className="h-9 w-9 border border-border shadow-sm">
+              <Avatar className="h-full w-full border-none shadow-none">
                 <AvatarImage src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username}`} />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold">
                   {user?.username?.substring(0, 2).toUpperCase()}

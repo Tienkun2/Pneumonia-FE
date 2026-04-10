@@ -37,7 +37,7 @@ const getBarColor = (val: number) => val > 70 ? "bg-red-500" : val > 40 ? "bg-am
 import { useEffect } from "react";
 import { VisitService } from "@/services/visit-service";
 import { PatientService } from "@/services/patient-service";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 import { Patient } from "@/types/patient";
 import { Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
@@ -121,7 +121,7 @@ export function ResultView({ resultId }: { resultId: string }) {
       <div className="flex flex-col items-center justify-center py-32 gap-4">
         <AlertTriangle className="h-12 w-12 text-amber-500" />
         <p className="text-[16px] font-black text-foreground">Không tìm thấy hồ sơ chẩn đoán</p>
-        <Link href="/results">
+        <Link href="/medical/ai-diagnosis/history">
           <Button variant="outline">Quay lại danh sách</Button>
         </Link>
       </div>
@@ -148,7 +148,7 @@ export function ResultView({ resultId }: { resultId: string }) {
       {/* ── Top Bar ─────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/results">
+          <Link href="/medical/ai-diagnosis/history">
             <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-border/50 bg-card shadow-sm hover:bg-muted/30">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -355,11 +355,11 @@ export function ResultView({ resultId }: { resultId: string }) {
       {/* ── Action Buttons ──────────────────────────────── */}
       <div className="flex flex-wrap gap-3 justify-center">
         <Button asChild variant="outline" className="rounded-xl px-8 h-11 border-border/50 bg-card font-bold text-[13px] shadow-sm hover:bg-muted/30">
-          <Link href="/results">Quay lại danh sách</Link>
+        <Link href="/medical/ai-diagnosis/history">Quay lại danh sách</Link>
         </Button>
         {patient && (
           <Button asChild className="rounded-xl px-8 h-11 font-bold text-[13px] shadow-md shadow-primary/20 gap-2">
-            <Link href={`/diagnosis`}>
+            <Link href={`/medical/ai-diagnosis/analysis`}>
               Tạo chẩn đoán mới <ChevronRight className="h-4 w-4" />
             </Link>
           </Button>

@@ -1,18 +1,19 @@
-import { apiClient } from "./api-client";
-import { ApiResponse } from "@/types/api";
+import { api } from "@/services/api-client";
 import { Role } from "@/types/user";
 
+export interface CreateRolePayload {
+  name: string;
+  description: string;
+  permissions: string[]; // List of permission names
+}
+
 export const RoleService = {
-  async getRoles() {
-    const res = await apiClient("/roles", {
-      method: "GET",
-    });
+  getRoles: () => api.get<Role[]>("/roles"),
 
-    const data: ApiResponse<Role[]> = await res.json();
-    if (!res.ok || data.code !== 0) {
-      throw new Error(data.message || "Failed to fetch roles");
-    }
+  createRole: (payload: CreateRolePayload) => api.post<Role>("/roles", payload),
 
-    return data.result || [];
-  },
+  deleteRole: (name: string) => api.delete<void>(`/roles/${name}`),
+
+  updateRole: (name: string, payload: Partial<CreateRolePayload>) => 
+    api.put<Role>(`/roles/${name}`, payload),
 };

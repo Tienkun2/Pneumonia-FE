@@ -210,7 +210,7 @@ export function DashboardView() {
           </p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <Link href="/patients">
+          <Link href="/medical/patient-mgmt/patient-list">
             <Button variant="outline" size="sm" className="rounded-full gap-1.5 h-9 bg-card border-border/60 shadow-sm text-[13px] font-semibold hover:bg-muted/30">
               <UserPlus className="h-3.5 w-3.5" /> Thêm bệnh nhân
             </Button>

@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { PneumoniaPredictionResponse, ClinicalDiagnosisResponse, FusionPredictionResponse, MultimodalPredictionResponse } from "@/types";
+import { PneumoniaPredictionResponse, ClinicalDiagnosisResponse, FusionPredictionResponse, MultimodalPredictionResponse } from "@/types/diagnosis";
 
 export interface DiagnosisFormData {
   patientId?: string;

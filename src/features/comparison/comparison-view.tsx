@@ -30,13 +30,12 @@ import {
 import Image from "next/image";
 import { RiskGauge } from "@/components/medical/risk-gauge";
 import { formatDate, cn } from "@/lib/utils";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { PageHeader } from "@/components/layout/page-header";
 
-/* ─── Real data calculation ────────────────────────────────── */
 const getVisitRisk = (visit: Visit | undefined) => {
   const diag = visit?.diagnoses?.[0];
   if (!diag) return 0;

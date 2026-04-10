@@ -1,4 +1,4 @@
-import { apiClient } from "./api-client"
+import { apiClient } from "@/services/api-client"
 import { ApiResponse } from "@/types/api"
 import { LoginResponse } from "@/types/auth"
 

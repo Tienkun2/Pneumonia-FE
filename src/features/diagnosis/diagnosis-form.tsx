@@ -17,7 +17,7 @@ import { useDropzone } from "react-dropzone";
 import { PatientService } from "@/services/patient-service";
 import { VisitService } from "@/services/visit-service";
 import { Patient } from "@/types/patient";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";

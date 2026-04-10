@@ -93,7 +93,6 @@ const patientSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch Patients
     builder
       .addCase(fetchPatients.pending, (state) => {
         state.isLoading = true;
@@ -101,11 +100,7 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.isLoading = false;
-        if (action.payload.currentPage === 1) {
-          state.patients = action.payload.data;
-        } else {
-          state.patients = [...state.patients, ...action.payload.data];
-        }
+        state.patients = action.payload.data;
         state.totalElements = action.payload.totalElements;
         state.totalPages = action.payload.totalPages;
         state.currentPage = action.payload.currentPage;
@@ -116,7 +111,6 @@ const patientSlice = createSlice({
         state.error = action.payload || "Lỗi tải dữ liệu";
       });
 
-    // Fetch Patient by ID
     builder
       .addCase(fetchPatientById.pending, (state) => {
         state.isLoading = true;

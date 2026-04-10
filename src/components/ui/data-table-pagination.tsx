@@ -29,7 +29,7 @@ export function DataTablePagination<TData>({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 text-sm text-muted-foreground">
       <div className="flex-1 text-sm text-muted-foreground">
-        Tổng cộng: <span className="font-medium text-foreground">{table.getFilteredRowModel().rows.length}</span> {itemName}
+        Tổng cộng: <span className="font-medium text-foreground">{table.getRowCount()}</span> {itemName}
       </div>
       <div className="flex items-center gap-6 flex-wrap justify-center lg:space-x-8">
         <div className="flex items-center space-x-2">

@@ -3,10 +3,21 @@ export interface Permission {
   description: string;
 }
 
+export interface PermissionTreeNode {
+  name: string;
+  description: string;
+  isChecked: boolean;
+  status?: string;
+  createdAt?: string;
+  children?: PermissionTreeNode[];
+}
+
 export interface Role {
   name: string;
   description: string;
   permissions: Permission[];
+  status?: string;
+  createdAt?: string;
 }
 
 export interface User {

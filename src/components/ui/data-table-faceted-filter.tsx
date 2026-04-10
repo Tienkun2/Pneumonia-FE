@@ -43,8 +43,8 @@ export function DataTableFacetedFilter<TData, TValue>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9 border-dashed hidden lg:flex">
-          <PlusCircle className="mr-2 h-4 w-4" />
+        <Button variant="outline" size="sm" className="h-9 rounded-xl gap-2 text-[13px] font-bold border-border/50 bg-card shadow-sm hidden lg:flex">
+          <PlusCircle className="h-3.5 w-3.5" />
           {title}
           {selectedValues?.size > 0 && (
             <>
@@ -81,22 +81,22 @@ export function DataTableFacetedFilter<TData, TValue>({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-[200px]">
+      <DropdownMenuContent align="start" className="w-[210px] rounded-xl shadow-xl border-border/60 p-1">
         {searchable && (
           <div className="p-2">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
               <Input
                 placeholder={`Tìm ${title?.toLowerCase()}...`}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 pl-7 text-xs"
+                className="h-8 pl-8 text-[11px] rounded-full bg-muted/30 border-none focus-visible:ring-1 focus-visible:ring-primary/20"
               />
             </div>
           </div>
         )}
-        {searchable && <DropdownMenuSeparator />}
-        <div className="max-h-[300px] overflow-y-auto">
+        {searchable && <DropdownMenuSeparator className="opacity-40" />}
+        <div className="max-h-[300px] overflow-y-auto p-1 space-y-0.5">
           {filteredOptions.map((option) => {
             const isSelected = selectedValues.has(option.value);
             return (
@@ -114,34 +114,34 @@ export function DataTableFacetedFilter<TData, TValue>({
                     filterValues.length ? filterValues : undefined
                   );
                 }}
-                className="flex items-center gap-2 cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer rounded-lg py-1.5 px-2 hover:bg-muted/60"
               >
                 <div
                   className={cn(
-                    "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                    "mr-1 flex h-4 w-4 items-center justify-center rounded-full border border-primary/40 transition-all",
                     isSelected
-                      ? "bg-primary text-primary-foreground"
-                      : "opacity-50 [&_svg]:invisible"
+                      ? "bg-primary border-primary text-primary-foreground scale-110 shadow-sm shadow-primary/20"
+                      : "opacity-40 [&_svg]:invisible"
                   )}
                 >
-                  <Check className={cn("h-4 w-4")} />
+                  <Check className={cn("h-2.5 w-2.5 stroke-[4]")} />
                 </div>
                 {option.icon && (
                   <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                 )}
-                <span>{option.label}</span>
+                <span className="text-[13px] font-bold text-foreground pr-2">{option.label}</span>
               </DropdownMenuItem>
             );
           })}
         </div>
         {selectedValues.size > 0 && (
           <>
-            <DropdownMenuSeparator />
+            <DropdownMenuSeparator className="opacity-40" />
             <DropdownMenuItem
               onSelect={() => column?.setFilterValue(undefined)}
-              className="justify-center text-center font-bold text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground cursor-pointer py-2"
+              className="justify-center text-center font-semibold text-[12px] text-muted-foreground/80 hover:text-primary cursor-pointer py-2 rounded-lg mt-1 border-t border-border/40"
             >
-              Xóa bộ lọc
+              Đặt lại
             </DropdownMenuItem>
           </>
         )}

@@ -2,6 +2,12 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "https://pneumonia-backend-1-0.onrender.com/api/v1"
 
+export interface ApiResponse<T> {
+  code: number;
+  message?: string;
+  result: T;
+}
+
 type ApiOptions = RequestInit & {
   withAuth?: boolean
 }
@@ -45,10 +51,8 @@ export const apiClient = async (
   // Handle 401 Unauthorized — attempt token refresh
   if (res.status === 401 && withAuth && endpoint !== '/auth/refresh' && endpoint !== '/auth/login') {
     if (isRefreshing) {
-      // If a refresh is already happening, wait for it to complete
       return new Promise<Response>((resolve) => {
         subscribeTokenRefresh(async (newToken) => {
-          // Retry original request with new token
           const retryRes = await fetch(`${API_URL}${endpoint}`, {
             ...fetchOptions,
             headers: {
@@ -79,13 +83,11 @@ export const apiClient = async (
              if (typeof window !== "undefined") {
                 localStorage.setItem("token", newToken);
                 document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
-                window.dispatchEvent(new CustomEvent('auth:token-refreshed', { detail: { token: newToken } }));
              }
              
              isRefreshing = false;
              onRefreshed(newToken);
              
-             // Retry original request with new token
              res = await fetch(`${API_URL}${endpoint}`, {
                  ...fetchOptions,
                  headers: {
@@ -102,14 +104,53 @@ export const apiClient = async (
     isRefreshing = false;
     refreshSubscribers = [];
 
-    // Refresh failed — force logout
     if (typeof window !== "undefined") {
         localStorage.removeItem("token");
         document.cookie = "token=; Max-Age=0; path=/";
-        window.dispatchEvent(new Event('auth:logout'));
         window.location.href = "/auth/login";
     }
   }
 
   return res
+}
+
+/**
+ * High-level API helpers for a more senior and maintainable code
+ */
+export const api = {
+    get: <T>(endpoint: string, options?: ApiOptions) => 
+        apiClient(endpoint, { ...options, method: 'GET' }).then(async r => {
+            const data = await r.json() as ApiResponse<T>;
+            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            return data.result;
+        }),
+        
+    post: <T>(endpoint: string, body: unknown, options?: ApiOptions) => 
+        apiClient(endpoint, { 
+            ...options, 
+            method: 'POST', 
+            body: body instanceof FormData ? body : JSON.stringify(body) 
+        }).then(async r => {
+            const data = await r.json() as ApiResponse<T>;
+            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            return data.result;
+        }),
+        
+    put: <T>(endpoint: string, body: unknown, options?: ApiOptions) => 
+        apiClient(endpoint, { 
+            ...options, 
+            method: 'PUT', 
+            body: body instanceof FormData ? body : JSON.stringify(body) 
+        }).then(async r => {
+            const data = await r.json() as ApiResponse<T>;
+            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            return data.result;
+        }),
+        
+    delete: <T>(endpoint: string, options?: ApiOptions) => 
+        apiClient(endpoint, { ...options, method: 'DELETE' }).then(async r => {
+            const data = await r.json() as ApiResponse<T>;
+            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            return data.result;
+        }),
 }

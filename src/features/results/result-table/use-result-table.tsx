@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Eye } from "lucide-react";
@@ -20,9 +20,19 @@ interface PatientInfo {
 interface UseResultTableProps {
   data: Visit[];
   patients: PatientInfo[];
+  pagination?: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  onPaginationChange?: (pagination: { pageIndex: number; pageSize: number }) => void;
 }
 
-export function useResultTable({ data, patients }: UseResultTableProps) {
+export function useResultTable({ 
+  data, 
+  patients,
+  pagination,
+  onPaginationChange
+}: UseResultTableProps) {
   const getPatientName = useCallback((patientId: string) => {
     const p = patients.find(p => p.id === patientId);
     return p ? p.fullName : "N/A";
@@ -34,13 +44,7 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
   }, [patients]);
 
   const getRiskStatus = useCallback((visit: Visit) => {
-    const lastDiag = visit.diagnoses?.[0];
-    if (lastDiag?.result) {
-      if (lastDiag.result === "PNEUMONIA") return "Cao";
-      if (lastDiag.result === "NORMAL") return "Thấp";
-      return lastDiag.result;
-    }
-    return "Thấp";
+    return visit.diagnosisResult || "Thấp";
   }, []);
 
   const getBadgeStyles = useCallback((risk: string) => {
@@ -112,7 +116,7 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
       header: "",
       cell: ({ row }) => (
         <div className="text-right">
-          <Link href={`/results/${row.original.id}?patientId=${row.original.patientId}`}>
+          <Link href={`/medical/ai-diagnosis/history/${row.original.id}?patientId=${row.original.patientId}`}>
             <Button 
               variant="ghost" 
               size="icon" 
@@ -131,6 +135,9 @@ export function useResultTable({ data, patients }: UseResultTableProps) {
   const { table, globalFilter, setGlobalFilter, columnFilters, setColumnFilters, columnVisibility, setColumnVisibility } = useDataTable({
     data,
     columns,
+    pagination,
+    onPaginationChange,
+    manualPagination: true,
   });
 
   return {

@@ -7,7 +7,7 @@ import {
     FusionPredictionResponse,
     MultimodalPredictionResponse,
     AIHealthStatus
-} from "@/types";
+} from "@/types/diagnosis";
 
 export const AiService = {
     /**

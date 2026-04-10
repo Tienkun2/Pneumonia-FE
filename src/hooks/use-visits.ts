@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { VisitService } from "@/services/visit-service";
-import { CreateVisitPayload } from "@/types/visit";
+import { CreateVisitPayload } from "@/types/diagnosis";
 
 export const usePatientVisits = (patientId: string) => {
   return useQuery({

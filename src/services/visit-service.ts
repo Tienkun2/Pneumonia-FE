@@ -1,76 +1,28 @@
-import { apiClient } from "./api-client";
-import { ApiResponse, PageResponse } from "@/types/api";
-import { Visit, CreateVisitPayload } from "@/types/visit";
+import { api } from "@/services/api-client";
+import { PageResponse } from "@/types/api";
+import { Visit, CreateVisitPayload } from "@/types/diagnosis";
 
+/**
+ * Senior-level Visit Service
+ * Handles patient visits and diagnostic records
+ */
 export const VisitService = {
-  async getAllVisits(page: number = 1, size: number = 10): Promise<PageResponse<Visit>> {
-    const res = await apiClient(`/visits?page=${page}&size=${size}`, {
-      method: "GET",
-    });
+  getAllVisits: (page: number = 1, size: number = 10) => 
+    api.get<PageResponse<Visit>>(`/visits?page=${page}&size=${size}`),
 
-    const data: ApiResponse<PageResponse<Visit>> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to fetch all visits");
-    }
+  getPatientVisits: (patientId: string) => 
+    api.get<Visit[]>(`/patients/${patientId}/visits`),
 
-    return data.result;
-  },
+  createVisit: (payload: CreateVisitPayload) => 
+    api.post<Visit>("/visits", payload),
 
-  async getPatientVisits(patientId: string): Promise<Visit[]> {
-    const res = await apiClient(`/patients/${patientId}/visits`, {
-      method: "GET",
-    });
+  updateVisit: (id: string, payload: Partial<CreateVisitPayload>) => 
+    api.put<Visit>(`/visits/${id}`, payload),
 
-    const data: ApiResponse<Visit[]> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to fetch visits for patient");
-    }
+  deleteVisit: (id: string) => 
+    api.delete<boolean>(`/visits/${id}`),
 
-    return data.result;
-  },
-
-  async createVisit(payload: CreateVisitPayload): Promise<Visit> {
-    const res = await apiClient("/visits", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-
-    const data: ApiResponse<Visit> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to create visit");
-    }
-
-    return data.result;
-  },
-
-  async updateVisit(id: string, payload: Partial<CreateVisitPayload>): Promise<Visit> {
-    const res = await apiClient(`/visits/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-
-    const data: ApiResponse<Visit> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to update visit");
-    }
-
-    return data.result;
-  },
-
-  async deleteVisit(id: string): Promise<boolean> {
-    const res = await apiClient(`/visits/${id}`, {
-      method: "DELETE",
-    });
-
-    const data: ApiResponse<unknown> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to delete visit");
-    }
-
-    return true;
-  },
-
-  async createMultimodalVisit(payload: {
+  createMultimodalVisit: (payload: {
     patientId: string;
     symptoms: string;
     note?: string;
@@ -79,30 +31,8 @@ export const VisitService = {
     result: string;
     confidenceScore: number;
     modelVersion: string;
-  }): Promise<Visit> {
-    const res = await apiClient("/visits/multimodal", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+  }) => api.post<Visit>("/visits/multimodal", payload),
 
-    const data: ApiResponse<Visit> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to save multimodal diagnosis");
-    }
-
-    return data.result;
-  },
-
-  async getVisitById(id: string): Promise<Visit> {
-    const res = await apiClient(`/visits/${id}`, {
-      method: "GET",
-    });
-
-    const data: ApiResponse<Visit> = await res.json();
-    if (!res.ok || (data.code !== 1000 && data.code !== 0)) {
-      throw new Error(data.message || "Failed to fetch visit details");
-    }
-
-    return data.result;
-  },
+  getVisitById: (id: string) => 
+    api.get<Visit>(`/visits/${id}`),
 };

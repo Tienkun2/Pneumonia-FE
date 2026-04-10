@@ -1,5 +1,5 @@
 import { flexRender, Table as ReactTable, ColumnDef } from "@tanstack/react-table";
-import { Visit } from "@/types/visit";
+import { Visit } from "@/types/diagnosis";
 import {
   Table,
   TableBody,

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { Visit, CreateVisitPayload } from "@/types/visit";
+import { Visit, CreateVisitPayload } from "@/types/diagnosis";
 import { PageResponse } from "@/types/api";
 import { VisitService } from "@/services/visit-service";
 
