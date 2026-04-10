@@ -11,8 +11,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Care DR. — Hệ thống chẩn đoán phổi AI",
+  title: "PlumoX — Hệ thống chẩn đoán phổi AI",
   description: "Hệ thống quản lý và chẩn đoán viêm phổi sử dụng trí tuệ nhân tạo",
+  icons: {
+    icon: "/images/PlumoX_Logo.png",
+  },
 };
 
 export default function RootLayout({

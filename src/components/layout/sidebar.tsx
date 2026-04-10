@@ -2,12 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Moon, Sun, Stethoscope, Menu, X } from "lucide-react";
+import { Moon, Sun, Menu, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SidebarMenuItem } from "./sidebar-menu-item";
 import { useMenus } from "@/hooks/use-menus";
+import Image from "next/image";
 
 const SKELETON_WIDTHS = ["75%", "90%", "65%", "80%", "85%", "70%"];
 
@@ -40,21 +41,18 @@ export function Sidebar({ isCollapsed = false }: { isCollapsed?: boolean }) {
         )}
       >
         {/* Logo Header */}
-        <div className={cn("flex h-20 shrink-0 items-center", isCollapsed ? "justify-center px-0" : "px-6")}>
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Stethoscope className="h-6 w-6 text-primary" />
+        <div className={cn("flex h-20 shrink-0 items-center border-b border-border/10 justify-center", isCollapsed ? "px-2" : "px-6")}>
+          <div className="flex items-center justify-center w-full group">
+            <div className={cn("relative flex items-center justify-center shrink-0 transition-all duration-500 ease-in-out", isCollapsed ? "h-12 w-12" : "h-16 w-full max-w-[180px]")}>
+               <Image 
+                 src="/images/PlumoX_Logo.png" 
+                 alt="PlumoX" 
+                 fill 
+                 className="object-contain drop-shadow-[0_0_8px_rgba(0,0,0,0.02)] transition-transform duration-500 group-hover:scale-105 dark:invert dark:hue-rotate-180"
+                 unoptimized
+                 priority
+               />
             </div>
-            {!isCollapsed && (
-              <div className="animate-in fade-in duration-300">
-                <h2 className="text-xl font-bold text-foreground leading-tight tracking-tight">
-                  Care DR.
-                </h2>
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
-                  Medical Admin
-                </span>
-              </div>
-            )}
           </div>
         </div>
 

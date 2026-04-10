@@ -11,8 +11,6 @@ import {
 import { AiService } from "@/services/ai-service";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useDropzone } from "react-dropzone";
 import { PatientService } from "@/services/patient-service";
 import { VisitService } from "@/services/visit-service";
@@ -25,7 +23,6 @@ import {
   Upload,
   Loader2,
   Activity,
-  FileImage,
   Stethoscope,
   AlertTriangle,
   Check,
@@ -34,21 +31,22 @@ import {
   ImageIcon,
   Zap,
   Search,
-  UserCircle,
-  Hash,
   History,
   Calendar,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/layout/page-header";
+import { Switch } from "@/components/ui/switch";
+import { useSearchParams } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /* ─── Constants ─────────────────────────────────────────────────── */
-const RISKS_MAP: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  LOW: { label: "Nguy cơ thấp", color: "text-emerald-500", bg: "bg-emerald-500/10 border-emerald-500/20", dot: "bg-emerald-500" },
-  MEDIUM: { label: "Nguy cơ trung bình", color: "text-amber-500", bg: "bg-amber-500/10 border-amber-500/20", dot: "bg-amber-500" },
-  HIGH: { label: "Nguy cơ cao", color: "text-red-500", bg: "bg-red-500/10 border-red-500/20", dot: "bg-red-500" },
-  Unknown: { label: "Chưa xác định", color: "text-muted-foreground", bg: "bg-muted/40 border-border/40", dot: "bg-muted-foreground" },
+const RISKS_MAP: Record<string, { label: string; color: string; bg: string; dot: string; border: string }> = {
+  LOW: { label: "Nguy cơ thấp", color: "text-emerald-500", bg: "bg-emerald-500/10 dark:bg-emerald-500/5", dot: "bg-emerald-500", border: "border-emerald-500/20" },
+  MEDIUM: { label: "Nguy cơ trung bình", color: "text-amber-500", bg: "bg-amber-500/10 dark:bg-amber-500/5", dot: "bg-amber-500", border: "border-amber-500/20" },
+  HIGH: { label: "Nguy cơ cao", color: "text-red-500", bg: "bg-red-500/10 dark:bg-red-500/5", dot: "bg-red-500", border: "border-red-500/20" },
+  Unknown: { label: "Chưa xác định", color: "text-slate-500", bg: "bg-slate-500/10", dot: "bg-slate-400", border: "border-slate-500/20" },
 };
 
 const SYMPTOM_LABELS: Record<string, string> = {
@@ -67,8 +65,31 @@ const SYMPTOM_LABELS: Record<string, string> = {
 const getBarColor = (score: number) => {
   if (score > 0.7) return "bg-red-500";
   if (score > 0.4) return "bg-amber-500";
-  return "bg-emerald-500";
+  return "bg-blue-600";
 };
+
+function AnimatedScore({ value, className }: { value: number; className?: string }) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    const duration = 1000;
+    const steps = 60;
+    const increment = value / steps;
+    let current = 0;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= value) {
+        setDisplayValue(value);
+        clearInterval(timer);
+      } else {
+        setDisplayValue(current);
+      }
+    }, duration / steps);
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span className={className}>{(displayValue * 100).toFixed(0)}%</span>;
+}
 
 /* ─── Main Component ────────────────────────────────────────────── */
 export function DiagnosisForm() {
@@ -80,6 +101,8 @@ export function DiagnosisForm() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [isSymptomEditing, setIsSymptomEditing] = useState(false);
 
   // Patient Selection State
   const [searchQuery, setSearchQuery] = useState("");
@@ -118,6 +141,24 @@ export function DiagnosisForm() {
     }, { rootMargin: '100px' });
     if (node) observerRef.current.observe(node);
   }, [isSearching, hasMore]);
+
+  // Handle Auto-select Patient from query params
+  const searchParams = useSearchParams();
+  const patientIdFromUrl = searchParams.get("patientId");
+
+  useEffect(() => {
+    if (patientIdFromUrl && !selectedPatient) {
+      const fetchInitialPatient = async () => {
+        try {
+          const patientData = await PatientService.getPatientById(patientIdFromUrl);
+          setSelectedPatient(patientData);
+        } catch (error) {
+          console.error("Failed to auto-select patient:", error);
+        }
+      };
+      fetchInitialPatient();
+    }
+  }, [patientIdFromUrl, selectedPatient]);
 
   // Fetch Patients
   const fetchPatients = useCallback(async (currentPage: number, qs: string, append = false) => {
@@ -259,7 +300,7 @@ export function DiagnosisForm() {
       });
 
       toast.success("Đã lưu kết quả chẩn đoán vào hồ sơ bệnh nhân!");
-      setNote(""); // Clear note after success
+      setNote("");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Lỗi khi lưu kết quả chẩn đoán";
       toast.error(message);
@@ -268,564 +309,331 @@ export function DiagnosisForm() {
     }
   };
 
-  const riskInfo = RISKS_MAP[diagnosisData.multimodalResult?.risk_level ?? "Unknown"] ?? RISKS_MAP.Unknown;
   const canSubmit = !!selectedFile && !isSubmitting;
 
   return (
     <div className="space-y-6 pb-6 animate-in fade-in duration-500">
       {/* ── Header ──────────────────────────────────────────────── */}
-      <PageHeader
-        title="Chẩn đoán đa phương thức"
-        subtitle="Kết hợp hình ảnh X-quang và triệu chứng lâm sàng để phân tích chính xác hơn"
-        icon={BrainCircuit}
-      />
-
-      {/* ── Patient Selection Section ──────────────────────────────── */}
-      <div className="bg-card rounded-[20px] shadow-sm border border-border/50 p-5 sm:px-8 sm:py-6 relative z-20 transition-colors">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <UserCircle className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-[15px] font-black text-foreground">Hồ sơ bệnh nhân</h2>
-              <p className="text-[12px] font-medium text-muted-foreground">Chọn bệnh nhân để lưu kết quả chẩn đoán</p>
-            </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-5 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+            <BrainCircuit className="h-6 w-6 text-primary-foreground" />
           </div>
-
-          <div className="w-full sm:w-[350px] relative" ref={dropdownRef}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Tìm kiếm theo Tên, SĐT, Mã BN..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setPage(1);
-              }}
-              onFocus={() => {
-                setIsDropdownOpen(true);
-                setPage(1);
-              }}
-              className="pl-9 h-11 rounded-xl bg-muted/40 border-border/40 focus:bg-card transition-all font-medium text-[13px]"
-            />
-            {isDropdownOpen && (
-              <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-card border border-border/50 rounded-xl shadow-xl overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 z-50">
-                <div className="px-3 py-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider bg-muted/40 border-b border-border/30 flex items-center justify-between">
-                  <span>Danh sách bệnh nhân</span>
-                  <button onClick={() => setIsDropdownOpen(false)}><X className="h-4 w-4 hover:text-slate-700" /></button>
-                </div>
-
-                <div className="max-h-[300px] overflow-y-auto">
-                  {patients.map((patient, index) => {
-                    const isLast = index === patients.length - 1;
-                    return (
-                      <button
-                        key={patient.id}
-                        ref={isLast ? lastPatientElementRef : null}
-                        onClick={() => { setSelectedPatient(patient); setIsDropdownOpen(false); setSearchQuery(''); }}
-                        className="w-full text-left px-4 py-3 hover:bg-muted/40 flex items-center justify-between group transition-colors border-b border-border/20 last:border-0"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-muted/60 border border-border/40 flex items-center justify-center text-[12px] font-bold text-muted-foreground group-hover:bg-primary/20 group-hover:border-primary/40 group-hover:text-primary transition-colors">
-                            {patient.fullName.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="text-[13px] font-bold text-foreground">{patient.fullName}</p>
-                            <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 flex gap-2">
-                              <span>SĐT: {patient.phone || "Trống"}</span>
-                              <span>•</span>
-                              <span>{patient.gender === "MALE" ? "Nam" : patient.gender === "FEMALE" ? "Nữ" : "Khác"}</span>
-                            </p>
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] bg-card text-muted-foreground whitespace-nowrap ml-2"><Hash className="w-3 h-3 mr-1" /> {patient.code}</Badge>
-                      </button>
-                    );
-                  })}
-
-                  {isSearching && (
-                    <div className="flex items-center justify-center p-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    </div>
-                  )}
-
-                  {!isSearching && patients.length === 0 && (
-                    <div className="p-4 text-center text-[13px] text-muted-foreground font-semibold">Không tìm thấy bệnh nhân nào.</div>
-                  )}
- 
-                  {!isSearching && patients.length > 0 && !hasMore && (
-                    <div className="p-3 text-center text-[11px] text-muted-foreground/60 font-black uppercase tracking-wider">Đã tải toàn bộ dữ liệu</div>
-                  )}
-                </div>
-              </div>
-            )}
+          <div>
+            <h1 className="text-xl font-black text-foreground tracking-tight leading-none uppercase">Chẩn đoán đa phương thức</h1>
           </div>
         </div>
 
-        {selectedPatient && (
-          <>
-            <div className="mt-5 pt-5 border-t border-border/30 flex items-center justify-between animate-in fade-in">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 gap-1 rounded-full px-3 py-1 text-[12px]">
-                  <Check className="w-3.5 h-3.5" />
-                  Đã chọn: <strong className="font-black ml-1 text-foreground">{selectedPatient.fullName}</strong>
-                </Badge>
-                <Badge variant="outline" className="border-border/40 text-muted-foreground rounded-full px-3 py-1 text-[11px] font-semibold bg-card">
-                  {selectedPatient.code}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="flex items-center gap-1.5 text-[12px] font-black text-primary hover:opacity-80 transition-all"
-                >
-                  <History className="h-4 w-4" />
-                  {showHistory ? "Thoát lịch sử" : `Xem lịch sử (${patientVisits.length})`}
-                </button>
-                <button onClick={() => setSelectedPatient(null)} className="text-[12px] font-bold text-muted-foreground hover:text-destructive transition-colors">Hủy chọn</button>
-              </div>
+        {/* Integrated Patient Selector */}
+        <div className="relative flex items-center min-w-[320px]" ref={dropdownRef}>
+          {selectedPatient ? (
+            <div className="flex items-center justify-between w-full bg-card border border-border/60 rounded-xl px-3 py-1.5 shadow-sm animate-in fade-in zoom-in-95 duration-300">
+               <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-[11px] font-bold">
+                    {selectedPatient.fullName.charAt(0)}
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-[12px] font-bold text-foreground">{selectedPatient.fullName}</p>
+                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{selectedPatient.code}</p>
+                  </div>
+               </div>
+               <div className="flex items-center gap-1">
+                 <Button variant="ghost" size="icon" onClick={() => setShowHistory(!showHistory)} className={cn("h-7 w-7 rounded-md", showHistory ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground")}>
+                   <History className="h-4 w-4" />
+                 </Button>
+                 <Button variant="ghost" size="icon" onClick={() => setSelectedPatient(null)} className="h-7 w-7 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10">
+                    <X className="h-4 w-4" />
+                 </Button>
+               </div>
             </div>
-
-            {showHistory && (
-              <div className="mt-6 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                <h3 className="text-[12px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-muted flex items-center justify-center">
-                    <Calendar className="h-3.5 w-3.5" />
+          ) : (
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
+              <Input
+                placeholder="Tìm bệnh nhân (mã hoặc tên)..."
+                value={searchQuery}
+                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                onFocus={() => { setIsDropdownOpen(true); setPage(1); }}
+                className="pl-9 h-10 border-border/60 rounded-xl bg-card focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:border-primary/40 text-[13px] font-medium placeholder:text-muted-foreground/40 w-full shadow-sm transition-all"
+              />
+              {isDropdownOpen && (
+                <div className="absolute top-full mt-2 left-0 w-full bg-popover border border-border shadow-2xl rounded-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1">
+                  <div className="p-2 border-b border-border/40 bg-muted/40">
+                    <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest px-2">Kết quả tìm kiếm</p>
                   </div>
-                  Lịch sử khám bệnh
-                </h3>
-                
-                {isLoadingVisits ? (
-                  <div className="flex items-center justify-center py-10">
-                    <Loader2 className="h-6 w-6 animate-spin text-slate-300" />
-                  </div>
-                ) : patientVisits.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {patientVisits.map((visit) => (
-                      <div key={visit.id} className="bg-muted/30 border border-border/30 rounded-2xl p-4 space-y-3 hover:border-primary/40 transition-all cursor-default group">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Calendar className="h-3.5 w-3.5" />
-                            <span className="text-[11px] font-bold uppercase">
-                              {format(new Date(visit.visitDate), "dd MMM yyyy", { locale: vi })}
-                            </span>
-                          </div>
-                          {visit.diagnoses && visit.diagnoses.length > 0 && (
-                            <Badge className={`${visit.diagnoses[0].result === "PNEUMONIA" ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"} text-[10px] uppercase font-black`}>
-                              {visit.diagnoses[0].result}
-                            </Badge>
-                          )}
+                  <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
+                    {patients.map((patient, index) => (
+                      <button
+                        key={patient.id}
+                        ref={index === patients.length - 1 ? lastPatientElementRef : null}
+                        onClick={() => { setSelectedPatient(patient); setIsDropdownOpen(false); setSearchQuery(''); }}
+                        className="w-full text-left px-4 py-3 hover:bg-muted transition-colors flex items-center justify-between border-b border-border/40 last:border-0"
+                      >
+                        <div>
+                          <p className="text-[12px] font-bold text-foreground">{patient.fullName}</p>
+                          <p className="text-[10px] font-bold text-muted-foreground/70 uppercase">{patient.code} • {patient.phone}</p>
                         </div>
-
-                        <div className="aspect-[4/3] rounded-xl overflow-hidden relative bg-muted/40 border border-border/30">
-                          {visit.medicalImages && visit.medicalImages.length > 0 ? (
-                            <Image
-                              src={visit.medicalImages[0].imageUrl} 
-                              alt="X-Ray" 
-                              fill
-                              className="object-cover group-hover:scale-105 transition-transform duration-500"
-                              unoptimized
-                            />
-                          ) : (
-                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/40">
-                              <ImageIcon className="h-8 w-8 opacity-20" />
-                              <span className="text-[10px] font-bold">KHÔNG CÓ ẢNH</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="space-y-1">
-                          <p className="text-[11px] font-bold text-muted-foreground/60 uppercase tracking-tighter">Triệu chứng & Chẩn đoán</p>
-                          <p className="text-[12px] font-semibold text-foreground/80 line-clamp-2 leading-relaxed">
-                            {visit.symptoms || "Không ghi chú triệu chứng"}
-                          </p>
-                          {visit.diagnoses && visit.diagnoses.length > 0 && (
-                            <div className="pt-1 flex items-center justify-between">
-                              <span className="text-[10px] font-extrabold text-muted-foreground/70 uppercase">Độ tin cậy AI</span>
-                              <span className="text-[11px] font-black text-foreground">
-                                {(visit.diagnoses[0].confidenceScore * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                        <Badge variant="outline" className="text-[9px] font-bold h-5 border-border/60 bg-muted/30">{patient.gender === "MALE" ? "NAM" : "NỮ"}</Badge>
+                      </button>
                     ))}
-                  </div>
-                ) : (
-                  <div className="py-12 bg-muted/20 rounded-2xl border border-dashed border-border/50 flex flex-col items-center justify-center gap-2">
-                    <History className="h-6 w-6 text-muted-foreground/30" />
-                    <p className="text-[12px] font-semibold text-muted-foreground/50">Chưa có lịch sử khám bệnh trước đây</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* ── Input Section ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative z-10">
-        {/* Left: Image Upload */}
-        <div className="bg-card rounded-[20px] shadow-sm border border-border/50 flex flex-col overflow-hidden">
-          {/* Card Header */}
-          <div className="flex items-center gap-3 px-6 py-4 border-b border-border/30">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-              <FileImage className="h-4 w-4 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-[14px] font-black text-foreground leading-tight">Chẩn đoán hình ảnh</h2>
-              <p className="text-[12px] font-medium text-muted-foreground">Tải lên ảnh X-quang phổi để AI phân tích</p>
-            </div>
-          </div>
-
-          {/* Dropzone */}
-          <div className="p-5 flex-1 flex flex-col">
-            <div
-              {...getRootProps()}
-              className={`
-                relative flex-1 min-h-[280px] rounded-2xl border-2 border-dashed cursor-pointer
-                flex flex-col items-center justify-center transition-all duration-200 group
-                ${isDragActive
-                  ? "border-primary bg-primary/5 scale-[1.01]"
-                  : diagnosisData.imagePreview
-                    ? "border-transparent bg-transparent p-0"
-                    : "border-border/50 bg-muted/20 hover:border-primary/40 hover:bg-primary/5"
-                }
-              `}
-            >
-              <input {...getInputProps()} />
-
-              {diagnosisData.imagePreview ? (
-                /* Image Preview */
-                <div className="relative w-full h-full min-h-[280px] rounded-2xl overflow-hidden border border-border/30 bg-slate-950">
-                  <Image
-                    src={diagnosisData.imagePreview}
-                    alt="X-quang Preview"
-                    fill
-                    className="object-contain"
-                    unoptimized
-                  />
-                  {/* Overlay controls */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-200 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
-                    <button
-                      onClick={clearImage}
-                      className="flex items-center gap-1.5 bg-red-500 text-white text-[12px] font-bold px-4 py-2 rounded-full shadow-lg hover:bg-red-600 transition-colors"
-                    >
-                      <X className="h-3.5 w-3.5" /> Xóa ảnh
-                    </button>
-                    <span className="text-white text-[11px] font-semibold bg-black/50 px-3 py-1.5 rounded-full">
-                      Click để thay thế
-                    </span>
-                  </div>
-                  {/* File name badge */}
-                  <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[11px] font-semibold px-3 py-1.5 rounded-full max-w-[80%] truncate">
-                    {selectedFile?.name}
-                  </div>
-                  {/* Check badge */}
-                  <div className="absolute top-3 right-3 bg-emerald-500 text-white w-7 h-7 rounded-full flex items-center justify-center shadow-lg">
-                    <Check className="h-3.5 w-3.5" />
-                  </div>
-                </div>
-              ) : (
-                /* Empty State */
-                <div className="flex flex-col items-center gap-4 p-8 text-center">
-                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center transition-all duration-200 ${isDragActive ? "bg-primary/20 scale-110" : "bg-primary/10"}`}>
-                    <Upload className={`h-9 w-9 transition-colors ${isDragActive ? "text-primary" : "text-primary/70"}`} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-[15px] font-bold text-foreground">
-                      {isDragActive ? "Thả file vào đây!" : "Tải lên ảnh X-quang"}
-                    </p>
-                    <p className="text-[12px] font-medium text-muted-foreground max-w-[200px] leading-relaxed">
-                      Kéo thả hoặc <span className="text-primary font-bold underline underline-offset-2">click để chọn</span> file<br />(JPG, PNG, DICOM)
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2">
-                    <ImageIcon className="h-3.5 w-3.5" />
-                    Hỗ trợ: JPG, PNG, DICOM • Tối đa 10MB
+                    {isSearching && <div className="p-4 text-center"><Loader2 className="h-4 w-4 animate-spin mx-auto text-primary" /></div>}
+                    {patients.length === 0 && !isSearching && <div className="p-6 text-center text-[12px] text-muted-foreground font-medium italic">Không tìm thấy bệnh nhân</div>}
                   </div>
                 </div>
               )}
             </div>
-          </div>
-        </div>
-
-        {/* Right: Symptoms + Submit */}
-        <div className="bg-card rounded-[20px] shadow-sm border border-border/50 flex flex-col overflow-hidden">
-          {/* Card Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Activity className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-[14px] font-black text-foreground leading-tight">Triệu chứng & Lâm sàng</h2>
-                <p className="text-[12px] font-medium text-muted-foreground">Chọn các triệu chứng bệnh nhân</p>
-              </div>
-            </div>
-            {selectedSymptoms.length > 0 && (
-              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2.5 py-1 rounded-full">
-                <Check className="h-3 w-3" /> {selectedSymptoms.length} triệu chứng
-              </span>
-            )}
-          </div>
-
-          {/* Symptoms Grid */}
-          <div className="flex-1 overflow-y-auto p-5">
-            <Label className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider mb-3 block">
-              Tích chọn triệu chứng hiện tại
-            </Label>
-
-            {availableSymptoms.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {availableSymptoms.map((symptom) => {
-                  const isChecked = selectedSymptoms.includes(symptom);
-                  return (
-                    <label
-                      key={symptom}
-                      htmlFor={`symptom-${symptom}`}
-                      className={`
-                        flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-150
-                        ${isChecked
-                          ? "border-primary/40 bg-primary/10"
-                          : "border-border/40 bg-muted/20 hover:border-border hover:bg-muted/40"
-                        }
-                      `}
-                    >
-                      <Checkbox
-                        id={`symptom-${symptom}`}
-                        checked={isChecked}
-                        onCheckedChange={(checked) => toggleSymptom(symptom, !!checked)}
-                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary shrink-0"
-                      />
-                      <span className={`text-[13px] font-semibold ${isChecked ? "text-primary" : "text-foreground/80"}`}>
-                        {SYMPTOM_LABELS[symptom] || symptom}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
-                <Loader2 className="h-7 w-7 animate-spin text-primary" />
-                <p className="text-[13px] font-semibold">Đang tải triệu chứng từ AI...</p>
-              </div>
-            )}
-          </div>
-
-        </div>
-      </div>
-
-      {/* ── Central Submit Button ───────────────────────────────── */}
-      <div className="flex flex-col items-center justify-center pt-2 pb-6">
-        {!selectedFile && (
-          <p className="text-[12px] font-semibold text-amber-600 flex items-center gap-1.5 mb-3 px-4 py-1.5 bg-amber-500/10 rounded-full border border-amber-500/20">
-            <AlertTriangle className="h-3.5 w-3.5" /> Vui lòng tải ảnh X-quang trước khi phân tích
-          </p>
-        )}
-        <Button
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          className={`h-14 px-12 rounded-full gap-3 text-[16px] font-black shadow-xl transition-all duration-300 ${!canSubmit ? 'opacity-40 cursor-not-allowed scale-100' : 'hover:scale-105 active:scale-95 shadow-primary/30'}`}
-          style={{
-            background: canSubmit
-              ? "linear-gradient(135deg, hsl(var(--primary)) 0%, #4f46e5 100%)"
-              : undefined,
-          }}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-6 w-6 animate-spin" />
-              Đang phân tích AI...
-            </>
-          ) : (
-            <>
-              <Zap className="h-6 w-6 fill-white" />
-              Tiến Hành Chẩn Đoán AI
-            </>
           )}
-        </Button>
+        </div>
       </div>
 
-      {/* ── Results Section ──────────────────────────────────────── */}
-      {diagnosisData.multimodalResult && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-5">
-          {/* Result Header Banner */}
-          <div className={`rounded-[20px] border px-6 py-5 flex items-center justify-between ${riskInfo.bg}`}>
-            <div className="flex items-center gap-3">
-              <div className={`w-3 h-3 rounded-full ${riskInfo.dot} animate-pulse`} />
-              <div>
-                <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">Kết quả chẩn đoán AI</p>
-                <h3 className={`text-[22px] font-black tracking-tight ${riskInfo.color}`}>{riskInfo.label}</h3>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase">Điểm tổng hợp</p>
-                <p className={`text-[26px] font-black ${riskInfo.color}`}>
-                  {(diagnosisData.multimodalResult.final_score * 100).toFixed(0)}%
-                </p>
-              </div>
-              <BrainCircuit className={`h-10 w-10 ${riskInfo.color} opacity-60`} />
-            </div>
-          </div>
-
-          {/* Results Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {/* Left: Heatmap */}
-            <div className="bg-card rounded-[20px] shadow-sm border border-border/50 overflow-hidden">
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-border/30">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                  <FileImage className="h-4 w-4 text-purple-500" />
-                </div>
-                <div>
-                  <h3 className="text-[14px] font-black text-foreground">Heatmap Grad-CAM</h3>
-                  <p className="text-[12px] font-medium text-muted-foreground">Vùng AI nhận diện tổn thương</p>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="relative aspect-square w-full max-w-sm mx-auto overflow-hidden rounded-2xl bg-slate-950 border border-border/20">
-                  {(diagnosisData.multimodalResult.heatmap || diagnosisData.imagePreview) ? (
-                    <>
-                      <Image
-                        src={
-                          diagnosisData.multimodalResult.heatmap
-                            ? diagnosisData.multimodalResult.heatmap.startsWith("data:")
-                              ? diagnosisData.multimodalResult.heatmap
-                              : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`
-                            : (diagnosisData.imagePreview || "")
-                        }
-                        alt="AI Heatmap"
-                        fill
-                        className="object-contain"
-                        unoptimized
-                      />
-                      {diagnosisData.multimodalResult.heatmap && (
-                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                          🔴 Vùng tổn thương
-                        </div>
+      {/* ── Patient History Dropdown Area ── */}
+      {showHistory && selectedPatient && (
+        <Card className="mb-6 animate-in slide-in-from-top-4 duration-500 overflow-hidden border-border/60 shadow-2xl bg-card/80 backdrop-blur-xl">
+           <CardHeader className="bg-muted/40 border-b border-border/40 flex flex-row items-center justify-between px-6 py-2.5">
+              <CardTitle className="text-[10px] font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                 <History className="h-4 w-4 text-primary" /> Nhật ký chẩn đoán
+              </CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowHistory(false)} className="h-8 w-8 p-0 hover:bg-red-500/10 hover:text-red-500">
+                 <X className="h-4 w-4" />
+              </Button>
+           </CardHeader>
+           <CardContent className="p-5 max-h-[350px] overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {isLoadingVisits ? (
+                 <div className="col-span-full py-12 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary/20" />
+                 </div>
+              ) : patientVisits.length > 0 ? (
+                patientVisits.map((visit) => (
+                  <div key={visit.id} className="p-4 rounded-xl border border-border/40 bg-card/40 hover:border-primary/40 hover:bg-card/60 transition-all cursor-default group">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                         <Calendar className="h-3.5 w-3.5 text-muted-foreground/60" />
+                         <span className="text-[10px] font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                           {format(new Date(visit.visitDate), "dd/MM/yyyy", { locale: vi })}
+                         </span>
+                      </div>
+                      {visit.diagnoses?.[0] && (
+                        <Badge className={cn("text-[8px] font-black uppercase px-2 shadow-none border-none", visit.diagnoses[0].result === "PNEUMONIA" ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500")}>
+                          {visit.diagnoses[0].result}
+                        </Badge>
                       )}
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                      <FileImage className="h-10 w-10 opacity-30" />
-                      <p className="text-[12px] font-semibold">Không có dữ liệu hình ảnh</p>
                     </div>
-                  )}
-                </div>
-                <p className="text-[11px] font-semibold text-muted-foreground text-center italic mt-3">
-                  Vùng màu đỏ/vàng là khu vực AI xác định có xác suất tổn thương cao
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Scores + Clinical Notes */}
-            <div className="space-y-4">
-              {/* Score Bars */}
-              <div className="bg-card rounded-[20px] shadow-sm border border-border/50 overflow-hidden">
-                <div className="flex items-center gap-3 px-6 py-4 border-b border-border/30">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Activity className="h-4 w-4 text-primary" />
+                    <p className="text-[11px] font-medium text-muted-foreground group-hover:text-foreground/90 line-clamp-2 italic leading-relaxed transition-colors">&quot;{visit.symptoms || "—"}&quot;</p>
                   </div>
-                  <h3 className="text-[14px] font-black text-foreground">Phân bổ xác suất</h3>
-                </div>
-                <div className="p-5 space-y-5">
-                  {([
-                    { label: "Hình ảnh (Vision AI)", value: diagnosisData.multimodalResult.vision_probability },
-                    { label: "Lâm sàng (Clinical AI)", value: diagnosisData.multimodalResult.clinical_probability },
-                    { label: "Tổng hợp (Multimodal)", value: diagnosisData.multimodalResult.final_score, highlight: true },
-                  ] as { label: string; value: number; highlight?: boolean }[]).map((item) => (
-                    <div key={item.label}>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className={`text-[13px] font-${item.highlight ? "black" : "semibold"} ${item.highlight ? "text-primary" : "text-foreground/80"}`}>
-                          {item.label}
-                        </span>
-                        <span className={`text-[14px] font-black ${item.highlight ? "text-primary" : "text-foreground"}`}>
-                          {(item.value * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <div className={`w-full rounded-full overflow-hidden shadow-inner ${item.highlight ? "h-3 bg-muted/80" : "h-2 bg-muted/60"}`}>
-                        <div
-                          className={`h-full rounded-full transition-all duration-1000 ease-out ${getBarColor(item.value)}`}
-                          style={{ width: `${item.value * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                ))
+              ) : (
+                <div className="col-span-full py-12 text-center text-muted-foreground/40 font-medium italic">Chưa có lịch sử khám</div>
+              )}
+           </CardContent>
+        </Card>
+      )}
 
-              {/* Clinical assessment */}
-              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 space-y-3">
-                <div className="flex items-center gap-2">
-                  <Stethoscope className="h-4 w-4 text-primary" />
-                  <h4 className="text-[13px] font-black text-primary/90">Nhận định lâm sàng</h4>
-                </div>
-                <p className="text-[13px] text-foreground/80 leading-relaxed font-medium">
-                  Dựa trên phân tích kết hợp X-quang và{" "}
-                  <strong className="text-primary">{selectedSymptoms.length}</strong> triệu chứng, mức độ rủi ro viêm phổi được đánh giá là{" "}
-                  <strong className="uppercase text-primary">{riskInfo.label}</strong>.
-                </p>
-                {selectedSymptoms.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {selectedSymptoms.map(s => (
-                      <span key={s} className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-3 py-1 rounded-full border border-primary/10">
-                        <Check className="h-2.5 w-2.5" /> {SYMPTOM_LABELS[s] || s}
-                      </span>
-                    ))}
+      {/* ── Main Layout ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 relative z-10">
+        
+        {/* ── LEFT COLUMN: Input Data ───────────────────── */}
+        <div className="xl:col-span-5 space-y-6">
+          <Card className="border-border/60 shadow-sm overflow-hidden bg-card/50">
+            <CardHeader className="p-0 border-b border-border/40 bg-muted/30">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center">
+                    <Stethoscope className="h-4 w-4 text-teal-500" />
                   </div>
-                )}
-              </div>
-
-              {/* Disclaimer */}
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3">
-                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                <p className="text-[12px] text-amber-500/90 leading-relaxed font-semibold italic">
-                  Kết quả này chỉ mang tính tham khảo từ AI. Bác sĩ cần đối chiếu với lâm sàng thực tế và các xét nghiệm bổ sung trước khi kết luận.
-                </p>
-              </div>
-
-              {/* Save Results Action */}
-              <div className="bg-card rounded-[20px] shadow-sm border border-border/50 p-6 space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-[13px] font-black text-foreground">Ghi chú của bác sĩ</Label>
-                  <Textarea
-                    placeholder="Ghi chú thêm về tình trạng bệnh nhân hoặc chỉ dẫn điều trị..."
-                    className="min-h-[100px] rounded-xl bg-muted/20 border-border/40 focus:bg-card resize-none text-[13px]"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
+                  <CardTitle className="text-[13px] font-bold text-foreground uppercase tracking-tight">Dấu hiệu lâm sàng</CardTitle>
                 </div>
-
-                {!selectedPatient && (
-                  <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
-                    <AlertTriangle className="h-4 w-4 text-destructive" />
-                    <p className="text-[11px] font-bold text-destructive">Bạn chưa chọn bệnh nhân để lưu hồ sơ</p>
-                  </div>
-                )}
-
-                <Button
-                  onClick={handleSaveVisit}
-                  disabled={isSaving || !selectedPatient}
-                  className="w-full h-12 rounded-xl gap-2 font-black text-[14px] shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] transition-all"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Đang lưu hồ sơ...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="h-5 w-5" />
-                      Lưu Kết Quả Vào Hồ Sơ
-                    </>
-                  )}
+                <Button variant="ghost" size="sm" onClick={() => setIsSymptomEditing(!isSymptomEditing)} className="h-7 text-[11px] font-bold text-primary px-3 rounded-full hover:bg-primary/10">
+                  {isSymptomEditing ? "Xong" : "Chọn nhanh"}
                 </Button>
               </div>
-            </div>
-          </div>
+            </CardHeader>
+            <CardContent className="p-4">
+              {isSymptomEditing ? (
+                <div className="flex flex-wrap gap-2">
+                  {availableSymptoms.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => toggleSymptom(s, !selectedSymptoms.includes(s))}
+                      className={cn(
+                        "px-4 py-2 rounded-full border text-[11px] font-bold transition-all flex items-center gap-2",
+                        selectedSymptoms.includes(s)
+                          ? "bg-primary/10 border-primary/40 text-primary shadow-sm"
+                          : "bg-card border-border/60 text-muted-foreground hover:border-primary/40 hover:bg-muted"
+                      )}
+                    >
+                      {selectedSymptoms.includes(s) && <Check className="h-3 w-3" />}
+                      {SYMPTOM_LABELS[s] || s}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {selectedSymptoms.length > 0 ? (
+                    selectedSymptoms.map((s) => (
+                      <Badge key={s} variant="secondary" className="px-4 py-1.5 rounded-full text-[11px] font-bold bg-muted text-foreground border-none">
+                        {SYMPTOM_LABELS[s] || s}
+                      </Badge>
+                    ))
+                  ) : (
+                    <div className="w-full py-2 text-center text-muted-foreground/40 text-[11px] italic font-medium">Chưa chọn triệu chứng</div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60 shadow-sm overflow-hidden bg-card/50 flex flex-col">
+            <CardHeader className="p-0 border-b border-border/40 bg-muted/30">
+              <div className="px-4 py-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                    <ImageIcon className="h-4 w-4 text-indigo-500" />
+                  </div>
+                  <CardTitle className="text-[13px] font-bold text-foreground uppercase tracking-tight">Bản phim X-quang</CardTitle>
+                </div>
+                {diagnosisData.multimodalResult && (
+                  <div className="flex items-center gap-2 bg-muted/50 px-2 py-0.5 rounded-full border border-border/40 shadow-sm">
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Overlay</span>
+                    <Switch checked={showOverlay} onCheckedChange={setShowOverlay} className="scale-75" />
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div {...getRootProps()} className={cn("relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-dashed flex flex-col items-center justify-center transition-all", diagnosisData.imagePreview ? "border-transparent bg-slate-950" : "border-border/40 bg-muted/20 hover:bg-muted/40 hover:border-primary/40", isDragActive && "border-primary bg-primary/5")}>
+                <input {...getInputProps()} />
+                {diagnosisData.imagePreview ? (
+                  <>
+                    <Image src={diagnosisData.imagePreview} alt="Original X-ray" fill className="object-contain" unoptimized />
+                    {showOverlay && diagnosisData.multimodalResult?.heatmap && (
+                      <div className="absolute inset-0 z-10 opacity-70 mix-blend-screen pointer-events-none">
+                        <Image src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`} alt="Heatmap Overlay" fill className="object-contain" unoptimized />
+                      </div>
+                    )}
+                    <div className="absolute top-2 right-2">
+                      <Button variant="secondary" size="sm" onClick={clearImage} className="bg-background/80 hover:bg-background h-7 text-[10px] font-bold px-3 rounded-full shadow-sm text-red-500 border-none transition-colors">
+                        <X className="h-3.5 w-3.5 mr-1" /> Gỡ ảnh
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center p-4">
+                    <div className="w-16 h-16 bg-card rounded-xl flex items-center justify-center mx-auto shadow-sm border border-border/40 mb-4 group-hover:border-primary/40 transition-all">
+                      <Upload className="h-6 w-6 text-primary" />
+                    </div>
+                    <p className="text-sm font-bold text-foreground">Tải ảnh phim chụp</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-1 uppercase tracking-wider">JPG, PNG, DICOM (MAX 10MB)</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {!diagnosisData.multimodalResult && (
+            <Button onClick={handleSubmit} disabled={!canSubmit} className={cn("w-full h-12 rounded-xl text-xs font-bold gap-3 shadow-lg transition-all", "bg-blue-600 hover:bg-blue-700 shadow-blue-100", !canSubmit && "opacity-50 grayscale shadow-none")}>
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <BrainCircuit className="h-4 w-4" />}
+              {isSubmitting ? "ĐANG XỬ LÝ..." : "PHÂN TÍCH CHẨN ĐOÁN"}
+            </Button>
+          )}
         </div>
-      )}
+
+        {/* ── RIGHT COLUMN: AI Analysis ─────────────────── */}
+        <div className="xl:col-span-7">
+          {diagnosisData.multimodalResult ? (
+            <div className="space-y-3 animate-in slide-in-from-right-2 duration-500">
+              <Card className={cn("border-none p-3.5 flex flex-row items-center justify-between gap-4 shadow-sm", RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.bg)}>
+                <div className="flex items-center gap-3">
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center bg-white/60 backdrop-blur-sm shadow-sm")}>
+                    <BrainCircuit className={cn("h-7 w-7", RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.color)} />
+                  </div>
+                  <div className="leading-tight">
+                    <h3 className="text-[22px] font-black leading-none mb-1 tracking-tighter">
+                      <AnimatedScore value={diagnosisData.multimodalResult.final_score} className={RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.color} />
+                    </h3>
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn("w-1.5 h-1.5 rounded-full", RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.dot, "animate-pulse")} />
+                      <span className={cn("text-[10px] font-bold uppercase tracking-widest", RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.color)}>
+                        {RISKS_MAP[diagnosisData.multimodalResult.risk_level]?.label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="border-border/60 shadow-sm overflow-hidden bg-card/50">
+                <CardHeader className="py-2 px-4 border-b border-border/40 bg-muted/30">
+                  <CardTitle className="text-[10px] font-bold text-foreground flex items-center gap-2 uppercase tracking-tight">
+                    <Activity className="h-3 w-3 text-primary" /> Xác suất chi tiết
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-5 py-3.5 space-y-3">
+                  {[
+                    { label: "Hình ảnh", value: diagnosisData.multimodalResult.vision_probability },
+                    { label: "Lâm sàng", value: diagnosisData.multimodalResult.clinical_probability },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-3">
+                      <p className="text-[9px] font-bold uppercase text-muted-foreground tracking-wider w-16 shrink-0">{item.label}</p>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden bg-muted shadow-inner">
+                        <div className={cn("h-full rounded-full transition-all duration-1000 ease-out", getBarColor(item.value))} style={{ width: `${item.value * 100}%` }} />
+                      </div>
+                      <span className="text-[11px] font-bold text-foreground w-10 text-right">{(item.value * 100).toFixed(0)}%</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60 shadow-sm overflow-hidden bg-card/50">
+                <CardHeader className="py-2 px-4 border-b border-border/40 bg-muted/30">
+                  <CardTitle className="text-[10px] font-bold text-foreground flex items-center gap-2 uppercase tracking-tight">
+                    <Zap className="h-3 w-3 text-amber-500" /> Trực quan tổn thương
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div className="relative aspect-[16/9] bg-slate-950 rounded-lg overflow-hidden border border-border/40 shadow-md">
+                      <Image src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`} alt="Heatmap" fill className="object-contain" unoptimized />
+                    </div>
+                    <div className="space-y-2.5 text-[9px] font-bold text-muted-foreground/80">
+                      <div className="flex items-center gap-2 px-1"><div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]" /> Nguy cơ cao</div>
+                      <div className="flex items-center gap-2 px-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_5px_rgba(251,191,36,0.5)]" /> Nghi ngờ thâm nhiễm</div>
+                      <div className="p-2 bg-primary/5 border border-primary/20 rounded-lg flex items-start gap-2">
+                        <AlertTriangle className="h-3 w-3 text-primary shrink-0 mt-0.5" />
+                        <p className="text-[9px] text-primary leading-snug font-bold">
+                          Dùng <strong>Overlay</strong> (cột trái) để đối chiếu phim gốc.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border/60 shadow-sm p-4 space-y-3 bg-card/50">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-3.5 w-3.5 text-primary" />
+                  <CardTitle className="text-[10px] font-bold text-foreground uppercase tracking-tight">Kết luận bác sĩ</CardTitle>
+                </div>
+                <Textarea placeholder="Ghi chú lâm sàng..." className="bg-muted/30 border-border/60 text-[11px] min-h-[60px] rounded-lg focus-visible:ring-primary/20 text-foreground" value={note} onChange={(e) => setNote(e.target.value)} />
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-[9px] text-muted-foreground/50 italic">Lưu tự động vào EMR.</p>
+                  <Button onClick={handleSaveVisit} disabled={isSaving || !selectedPatient} className="bg-primary hover:bg-primary/90 text-primary-foreground h-8 px-5 rounded-full font-bold text-[10px] shadow-sm">
+                    {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />} LƯU HỒ SƠ
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          ) : (
+            <Card className="h-full min-h-[500px] border-2 border-dashed border-border/40 flex flex-col items-center justify-center text-center p-8 bg-muted/5">
+              <div className="w-16 h-16 bg-card rounded-2xl flex items-center justify-center shadow-lg mb-5 border border-border/40">
+                <BrainCircuit className="h-8 w-8 text-muted-foreground/20" />
+              </div>
+              <h3 className="text-base font-black text-muted-foreground/60 uppercase tracking-tighter">Đang đợi phân tích</h3>
+              <p className="text-[11px] text-muted-foreground/40 mt-2 max-w-[240px] leading-relaxed font-bold">
+                Tải ảnh và chọn triệu chứng, sau đó nhấn &quot;PHÂN TÍCH&quot; để bắt đầu quy trình chẩn đoán đa phương thức.
+              </p>
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -15,26 +15,24 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeftRight,
-  Search,
-  Calendar,
-  TrendingDown,
-  TrendingUp,
-  ChevronRight,
-  Info,
   Check,
   ChevronsUpDown,
-  Loader2,
-  Zap,
   AlertTriangle,
+  FileText,
+  TrendingDown,
+  Calendar,
+  Zap,
+  ChevronRight,
+  UserCircle2,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
-import { RiskGauge } from "@/components/medical/risk-gauge";
 import { formatDate, cn } from "@/lib/utils";
 import { Visit } from "@/types/diagnosis";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { PageHeader } from "@/components/layout/page-header";
+import { Switch } from "@/components/ui/switch";
 
 const getVisitRisk = (visit: Visit | undefined) => {
   const diag = visit?.diagnoses?.[0];
@@ -43,10 +41,9 @@ const getVisitRisk = (visit: Visit | undefined) => {
 };
 
 const getRiskLabel = (risk: number) => risk > 70 ? "Cao" : risk > 40 ? "Trung bình" : "Thấp";
-const getRiskColor = (risk: number) => risk > 70 ? "text-red-600" : risk > 40 ? "text-amber-600" : "text-emerald-600";
-const getRiskBg = (risk: number) => risk > 70 ? "bg-red-500/10 border-red-500/20" : risk > 40 ? "bg-amber-500/10 border-amber-500/20" : "bg-emerald-500/10 border-emerald-500/20";
+const getRiskColor = (risk: number) => risk > 70 ? "text-red-500" : risk > 40 ? "text-amber-500" : "text-emerald-500";
+const getRiskBg = (risk: number) => risk > 70 ? "bg-red-500/10" : risk > 40 ? "bg-amber-500/10" : "bg-emerald-500/10";
 
-/* ─── Component ─────────────────────────────────────────────── */
 export function ComparisonView() {
   const dispatch = useAppDispatch();
   const patients = useAppSelector((state) => state.patient.patients);
@@ -57,6 +54,7 @@ export function ComparisonView() {
   const [visitAId, setVisitAId] = useState<string>("");
   const [visitBId, setVisitBId] = useState<string>("");
   const [isComparing, setIsComparing] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -68,9 +66,11 @@ export function ComparisonView() {
     const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 500);
     return () => clearTimeout(t);
   }, [search]);
+  
   useEffect(() => {
     dispatch(fetchPatients({ page, size: 10, filters: { search: debouncedSearch } }));
   }, [dispatch, page, debouncedSearch]);
+
   useEffect(() => {
     if (selectedPatientId) {
       dispatch(fetchPatientVisits(selectedPatientId));
@@ -81,7 +81,6 @@ export function ComparisonView() {
   const visitA = useMemo(() => visits.find((v) => v.id === visitAId), [visits, visitAId]);
   const visitB = useMemo(() => visits.find((v) => v.id === visitBId), [visits, visitBId]);
 
-  // Determine chronological order to label cards correctly
   const sortedVisits = useMemo(() => {
     if (!visitA || !visitB) return { first: visitA, second: visitB };
     const dateA = new Date(visitA.visitDate).getTime();
@@ -108,253 +107,200 @@ export function ComparisonView() {
   const canCompare = !!visitAId && !!visitBId;
 
   return (
-    <div className="space-y-5 pb-8">
-      {/* ── Header ──────────────────────────────────────── */}
-      <PageHeader
-        title="So sánh tiến triển"
-        subtitle="Đối chiếu hai lượt khám để theo dõi diễn biến và hiệu quả điều trị"
-        icon={ArrowLeftRight}
-      />
-
-      {/* ── Selection Panel ─────────────────────────────── */}
-      <div className="bg-card rounded-[20px] shadow-sm border border-border/50 p-6">
-        <p className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider mb-4">
-          Cấu hình so sánh
-        </p>
-        <div className="grid gap-4 md:grid-cols-4 items-end">
-          {/* Patient combobox */}
-          <div className="space-y-2">
-            <label className="text-[12px] font-bold text-muted-foreground flex items-center gap-1.5">
-              <Search className="h-3.5 w-3.5" /> Bệnh nhân
-            </label>
-            <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  className="w-full justify-between h-10 bg-card rounded-xl border-border/50 shadow-sm font-medium text-[13px] hover:bg-muted/30"
-                >
-                  <span className="truncate text-foreground">
-                    {selectedPatient?.fullName ?? "Tìm kiếm bệnh nhân..."}
-                  </span>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 rounded-2xl shadow-xl" align="start">
-                <Command shouldFilter={false}>
-                  <CommandInput placeholder="Nhập tên hoặc mã..." value={search} onValueChange={setSearch} />
-                  <CommandList className="max-h-[260px] overflow-y-auto">
-                    {patients.length === 0 && !isPatientsLoading && (
-                      <CommandEmpty>Không tìm thấy bệnh nhân.</CommandEmpty>
-                    )}
-                    <CommandGroup>
-                      {patients.map((patient, index) => (
-                        <CommandItem
-                          key={`${patient.id}-${index}`}
-                          value={patient.fullName}
-                          onSelect={() => { setSelectedPatientId(patient.id); setComboboxOpen(false); }}
-                          className="cursor-pointer py-3 rounded-xl"
-                        >
-                          <Check className={cn("mr-2 h-4 w-4 text-primary", selectedPatientId === patient.id ? "opacity-100" : "opacity-0")} />
-                          <div className="flex flex-col">
-                            <span className="text-[13px] font-bold">{patient.fullName}</span>
-                            <span className="text-[11px] text-muted-foreground">{patient.code}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                    {!isPatientsLoading && page < totalPages && <div ref={lastItemRef} className="h-4" />}
-                    {isPatientsLoading && (
-                      <div className="flex items-center justify-center gap-2 py-3 text-[12px] text-muted-foreground">
-                        <Loader2 className="h-3 w-3 animate-spin" /> Đang tải...
-                      </div>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+    <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
+      {/* ── HEADER ────────────────────────────────────────── */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <ArrowLeftRight className="h-5 w-5" />
           </div>
-
-          {/* Visit A */}
-          <div className="space-y-2">
-            <label className="text-[12px] font-bold text-muted-foreground flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5" /> Lượt khám Cơ sở
-            </label>
-            <Select value={visitAId} onValueChange={setVisitAId} disabled={!selectedPatientId || isVisitsLoading}>
-              <SelectTrigger className="h-10 rounded-xl border-border/50 bg-card shadow-sm text-[13px] font-medium">
-                <SelectValue placeholder={isVisitsLoading ? "Đang tải..." : "Chọn ngày khám..."} />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl">
-                {visits.map(v => (
-                  <SelectItem key={v.id} value={v.id} className="text-[13px]">
-                    {formatDate(v.visitDate, "HH:mm:ss DD/MM/YYYY")} — {v.createdBy}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div>
+            <h1 className="text-xl font-black text-foreground tracking-tight">So Sánh Tiến Triển</h1>
+            <p className="text-xs font-bold text-muted-foreground opacity-70">Đối chiếu hình ảnh và biến thiên chỉ số AI</p>
           </div>
-
-          {/* Visit B */}
-          <div className="space-y-2">
-            <label className="text-[12px] font-bold text-muted-foreground flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5" /> Lượt khám Đối chiếu
-            </label>
-            <Select value={visitBId} onValueChange={setVisitBId} disabled={!selectedPatientId || isVisitsLoading}>
-              <SelectTrigger className="h-10 rounded-xl border-border/50 bg-card shadow-sm text-[13px] font-medium">
-                <SelectValue placeholder={isVisitsLoading ? "Đang tải..." : "Chọn ngày khám..."} />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl">
-                {visits.filter(v => v.id !== visitAId).map(v => (
-                  <SelectItem key={v.id} value={v.id} className="text-[13px]">
-                    {formatDate(v.visitDate, "HH:mm:ss DD/MM/YYYY")} — {v.createdBy}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Action */}
-          <Button
-            onClick={() => setIsComparing(true)}
-            disabled={!canCompare}
-            className="h-10 rounded-xl gap-2 text-[13px] font-bold shadow-md shadow-primary/20 disabled:opacity-40"
-          >
-            <Zap className="h-4 w-4" /> Phân tích <ChevronRight className="h-4 w-4" />
+        </div>
+        
+        {isComparing && (
+          <Button variant="ghost" size="sm" onClick={() => setIsComparing(false)} className="text-muted-foreground hover:text-red-500 h-9 font-bold">
+            <Trash2 className="h-4 w-4 mr-2" /> Hủy so sánh
           </Button>
+        )}
+      </div>
+
+      {/* ── TOOLBAR - Minimalist ─────────────────────────── */}
+      <div className="bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Patient Selector */}
+          <div className="flex-1 min-w-[200px]">
+             <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full justify-between h-10 rounded-xl border-border/50 bg-background font-bold text-[13px] px-4">
+                    <div className="flex items-center gap-2">
+                       <UserCircle2 className="h-4 w-4 text-primary" />
+                       <span className="truncate">{selectedPatient?.fullName || "Chọn bệnh nhân..."}</span>
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0 rounded-xl shadow-2xl border-border" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput placeholder="Nhập tên..." value={search} onValueChange={setSearch} className="h-10 text-xs" />
+                    <CommandList>
+                      {patients.length === 0 && !isPatientsLoading && <CommandEmpty>Không có bệnh nhân.</CommandEmpty>}
+                      <CommandGroup>
+                        {patients.map((p) => (
+                          <CommandItem key={p.id} onSelect={() => { setSelectedPatientId(p.id); setComboboxOpen(false); }} className="cursor-pointer py-2 px-3 m-1 rounded-lg">
+                             <div className="flex flex-col">
+                                <span className="text-[12px] font-black">{p.fullName}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">{p.code}</span>
+                             </div>
+                             {selectedPatientId === p.id && <Check className="ml-auto h-4 w-4 text-primary" />}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                      {!isPatientsLoading && page < totalPages && <div ref={lastItemRef} className="h-4" />}
+                      {isPatientsLoading && <div className="p-4 text-center text-xs text-muted-foreground italic">Đang tải...</div>}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+             </Popover>
+          </div>
+
+          {/* Visits Selectors */}
+          <div className="flex items-center gap-2">
+            <Select value={visitAId} onValueChange={setVisitAId} disabled={!selectedPatientId || isVisitsLoading}>
+              <SelectTrigger className="h-10 w-[160px] rounded-xl border-border/50 bg-background font-bold text-xs ring-0">
+                <SelectValue placeholder="Lượt T0" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                 {visits.map(v => (
+                   <SelectItem key={v.id} value={v.id} className="text-xs py-2 rounded-lg">{formatDate(v.visitDate, "DD.MM.YYYY — HH:mm")}</SelectItem>
+                 ))}
+              </SelectContent>
+            </Select>
+
+            <ArrowLeftRight className="h-3.5 w-3.5 text-muted-foreground/30 rotate-45" />
+
+            <Select value={visitBId} onValueChange={setVisitBId} disabled={!selectedPatientId || isVisitsLoading}>
+              <SelectTrigger className="h-10 w-[160px] rounded-xl border-border/50 bg-background font-bold text-xs ring-0">
+                <SelectValue placeholder="Lượt T1" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                 {visits.filter(v => v.id !== visitAId).map(v => (
+                   <SelectItem key={v.id} value={v.id} className="text-xs py-2 rounded-lg">{formatDate(v.visitDate, "DD.MM.YYYY — HH:mm")}</SelectItem>
+                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="w-[1px] h-6 bg-border/50 mx-1 hidden md:block" />
+
+          {/* Controls */}
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-2">
+                <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest hidden lg:block">Grad-Cam</span>
+                <Switch checked={showHeatmap} onCheckedChange={setShowHeatmap} className="scale-75" />
+             </div>
+             <Button onClick={() => setIsComparing(true)} disabled={!canCompare} className="h-10 rounded-xl px-8 font-black text-xs shadow-lg shadow-primary/20 bg-primary hover:primary/90">
+               SO SÁNH NGAY
+             </Button>
+          </div>
         </div>
       </div>
 
-      {/* ── Empty State ─────────────────────────────────── */}
-      {!selectedPatientId && !isComparing && (
-        <div className="bg-card rounded-[20px] shadow-sm border border-border/50 py-20 flex flex-col items-center gap-5">
-          <div className="w-20 h-20 rounded-3xl bg-muted/50 flex items-center justify-center">
-            <ArrowLeftRight className="h-10 w-10 text-muted-foreground/30" />
-          </div>
-          <div className="text-center">
-            <h3 className="text-[16px] font-bold text-foreground">Bắt đầu so sánh tiến triển</h3>
-            <p className="text-[13px] font-medium text-muted-foreground mt-1 max-w-sm">
-              Chọn một bệnh nhân ở trên để xem lại hành trình điều trị qua các lần X-Quang.
-            </p>
-          </div>
+      {/* ── COMPARISON AREA ─────────────────────────────── */}
+      {!isComparing ? (
+        <div className="bg-card rounded-2xl border-2 border-dashed border-border/50 py-32 flex flex-col items-center justify-center text-center">
+           <div className="w-20 h-20 rounded-3xl bg-muted/30 flex items-center justify-center mb-6 text-muted-foreground/20 italic">
+              <Zap className="h-10 w-10" />
+           </div>
+           <h3 className="text-lg font-black text-foreground">Sẵn sàng đối chiếu</h3>
+           <p className="text-sm font-bold text-muted-foreground max-w-xs mt-2 italic opacity-60">Chọn bệnh nhân và 2 thời điểm chẩn đoán để bắt đầu phân tích sự thay đổi.</p>
         </div>
-      )}
-
-      {/* ── Comparison Workspace ─────────────────────────── */}
-      {isComparing && (
-        <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3 duration-500">
-          {/* Summary Banner */}
-          <div className={`rounded-[20px] border px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-6 ${improving ? "bg-emerald-500/10 border-emerald-500/20" : "bg-orange-500/10 border-orange-500/20"}`}>
-            <div className="space-y-1.5 text-center sm:text-left">
-              <div className="flex items-center gap-2 justify-center sm:justify-start">
-                {improving
-                  ? <TrendingDown className="h-5 w-5 text-emerald-500" />
-                  : <TrendingUp className="h-5 w-5 text-orange-500" />
-                }
-                <h3 className={`text-[17px] font-black ${improving ? "text-emerald-500" : "text-orange-500"}`}>
-                  Kết quả phân tích tiến triển
-                </h3>
-              </div>
-              <p className={`text-[13px] font-medium max-w-md leading-relaxed ${improving ? "text-emerald-500/80" : "text-orange-500/80"}`}>
-                {improving
-                  ? "Hệ thống phát hiện các dấu hiệu phục hồi tích cực. Vùng tổn thương phổi đang có xu hướng thu hẹp."
-                  : "Cảnh báo: Có sự gia tăng các chỉ số nguy cơ. Cần xem xét lại phác đồ điều trị hiện tại."}
-              </p>
+      ) : (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Visit 1 Card */}
+            <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col">
+               <div className="p-5 border-b border-border/30 bg-muted/10 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Base Diagnosis (T0)</span>
+                    <h3 className="text-base font-black text-foreground">{formatDate(sortedVisits.first?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+                  </div>
+                  <Badge className={cn("px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase", getRiskBg(riskFirst), getRiskColor(riskFirst))}>
+                    {getRiskLabel(riskFirst)} • {riskFirst.toFixed(0)}%
+                  </Badge>
+               </div>
+               <div className="p-4 flex-1">
+                  <div className="relative aspect-square w-full rounded-2xl bg-black overflow-hidden border border-border/10 shadow-inner group">
+                     <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 X-ray" fill className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" unoptimized />
+                     {showHeatmap && (
+                       <div className="absolute inset-0 opacity-60 mix-blend-screen pointer-events-none">
+                         <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 Heatmap" fill className="object-cover" unoptimized />
+                       </div>
+                     )}
+                     <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm">
+                        <Calendar className="h-4 w-4 text-primary" />
+                     </div>
+                  </div>
+               </div>
             </div>
-            <div className="flex items-center gap-5 flex-shrink-0">
-              <div className="bg-card rounded-2xl px-6 py-4 border border-border/30 shadow-sm text-center min-w-[140px]">
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider mb-1">Thay đổi nguy cơ</p>
-                <div className={`text-[32px] font-black flex items-center justify-center gap-1 ${improving ? "text-emerald-500" : "text-orange-500"}`}>
-                  {improving ? <TrendingDown className="h-7 w-7" /> : <TrendingUp className="h-7 w-7" />}
-                  {Math.abs(delta).toFixed(1)}%
+
+            {/* Visit 2 Card */}
+            <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col">
+               <div className="p-5 border-b border-border/30 bg-primary/5 flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-black uppercase text-primary/70 tracking-widest">Follow-up (T1)</span>
+                    <h3 className="text-base font-black text-foreground">{formatDate(sortedVisits.second?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     {improving && <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[10px] flex items-center gap-1"><TrendingDown className="h-3.5 w-3.5" /> TIẾN TRIỂN TỐT</Badge>}
+                     <Badge className={cn("px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase", getRiskBg(riskSecond), getRiskColor(riskSecond))}>
+                        {getRiskLabel(riskSecond)} • {riskSecond.toFixed(0)}%
+                     </Badge>
+                  </div>
+               </div>
+               <div className="p-4 flex-1">
+                  <div className="relative aspect-square w-full rounded-2xl bg-black overflow-hidden border border-border/10 shadow-inner group">
+                     <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 X-ray" fill className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" unoptimized />
+                     {showHeatmap && (
+                       <div className="absolute inset-0 opacity-60 mix-blend-screen pointer-events-none">
+                         <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 Heatmap" fill className="object-cover" unoptimized />
+                       </div>
+                     )}
+                     <div className="absolute top-4 right-4 p-3 bg-white text-primary rounded-2xl font-black text-sm shadow-xl animate-bounce">
+                        {Math.abs(delta).toFixed(1)}% {improving ? "↓" : "↑"}
+                     </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+
+          {/* Expert Assessment - Compacter */}
+          <div className="bg-card rounded-3xl border border-border/50 p-6 shadow-sm space-y-4">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                      <FileText className="h-5 w-5" />
+                   </div>
+                   <h3 className="text-base font-black text-foreground tracking-tight">NHẬN ĐỊNH LÂM SÀNG CỦA BÁC SĨ</h3>
                 </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Badge className={`justify-center text-[12px] font-bold ${improving ? "bg-emerald-500 text-white" : "bg-orange-500 text-white"}`}>
-                  {improving ? "✓ Tiến triển tốt" : "⚠ Cần chú ý"}
-                </Badge>
-                <Button variant="ghost" size="sm" className="text-muted-foreground text-[11px] gap-1 h-7">
-                  <Info className="h-3 w-3" /> Chi tiết thuật toán
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500 italic bg-amber-500/5 px-3 py-1.5 rounded-full border border-amber-500/10">
+                   <AlertTriangle className="h-3 w-3" /> Xác nhận lưu vào hồ sơ bệnh án
+                </div>
+             </div>
+             
+             <textarea 
+               placeholder="Ghi chú về sự thay đổi vùng thâm nhiễm, các khuyến nghị điều trị bổ sung..." 
+               className="w-full min-h-[100px] rounded-2xl bg-muted/10 border border-border/30 p-5 text-sm font-medium focus:outline-none focus:ring-1 focus:ring-primary/20 transition-all resize-none placeholder:text-muted-foreground/40"
+             />
+
+             <div className="flex items-center justify-end gap-3 pt-2">
+                <Button variant="ghost" className="rounded-xl font-bold h-11 px-8 text-muted-foreground hover:bg-muted">Lưu bản nháp</Button>
+                <Button className="rounded-xl px-12 h-11 font-black shadow-xl shadow-primary/20 bg-primary hover:bg-primary/90 items-center gap-2">
+                   XÁC NHẬN KẾT QUẢ <ChevronRight className="h-4 w-4" />
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Side-by-side X-ray cards */}
-          <div className="grid gap-5 lg:grid-cols-2">
-            {/* Visit A: Before */}
-            <div className="bg-card rounded-[20px] shadow-sm border border-border/50 overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-6 py-4 bg-slate-900 text-white">
-                <div>
-                  <p className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Lần 1 · Cơ sở</p>
-                  <h3 className="text-[17px] font-black text-white">Trước điều trị</h3>
-                  <p className="text-[12px] text-slate-400 mt-0.5">Ngày {formatDate(sortedVisits.first?.visitDate, "HH:mm:ss DD/MM/YYYY")}</p>
-                </div>
-                <div className={`flex items-center gap-1.5 text-[13px] font-bold px-3 py-1.5 rounded-full border ${getRiskBg(riskFirst)} ${getRiskColor(riskFirst)}`}>
-                  <span className={`w-2 h-2 rounded-full ${riskFirst > 70 ? "bg-red-500" : riskFirst > 40 ? "bg-amber-500" : "bg-emerald-500"}`} />
-                  {getRiskLabel(riskFirst)}
-                </div>
-              </div>
-              <div className="p-5 flex-1 space-y-5">
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-950">
-                  <Image
-                    src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || "https://via.placeholder.com/800x1000?text=No+Image"}
-                    width={800} height={1000}
-                    className="w-full h-full object-cover"
-                    alt="XRay A" unoptimized
-                  />
-                  <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                    X-Ray Cơ sở
-                  </div>
-                </div>
-                <div className="flex items-center justify-center bg-muted/30 rounded-2xl p-5">
-                  <RiskGauge riskScore={riskFirst} riskLevel={getRiskLabel(riskFirst)} label="Nguy cơ AI" />
-                </div>
-              </div>
-            </div>
-
-            {/* Visit B: After */}
-            <div className="bg-card rounded-[20px] shadow-sm border border-border/50 overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between px-6 py-4 bg-primary text-white">
-                <div>
-                  <p className="text-[13px] font-bold text-primary-foreground/60 uppercase tracking-wider">Lần 2 · Đối chiếu</p>
-                  <h3 className="text-[17px] font-black text-white">Sau điều trị</h3>
-                  <p className="text-[12px] text-primary-foreground/70 mt-0.5">Ngày {formatDate(sortedVisits.second?.visitDate, "HH:mm:ss DD/MM/YYYY")}</p>
-                </div>
-                <div className={`flex items-center gap-1.5 text-[13px] font-bold px-3 py-1.5 rounded-full bg-card border border-border shadow-sm ${getRiskColor(riskSecond)}`}>
-                  <span className={`w-2 h-2 rounded-full ${riskSecond > 70 ? "bg-red-500" : riskSecond > 40 ? "bg-amber-500" : "bg-emerald-500"}`} />
-                  {getRiskLabel(riskSecond)}
-                </div>
-              </div>
-              <div className="p-5 flex-1 space-y-5">
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-slate-950">
-                  <Image
-                    src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || "https://via.placeholder.com/800x1000?text=No+Image"}
-                    width={800} height={1000}
-                    className="w-full h-full object-cover"
-                    alt="XRay B" unoptimized
-                  />
-                  <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                    X-Ray Đối chiếu
-                  </div>
-                  {improving && (
-                    <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-                      ↓ Cải thiện {Math.abs(delta).toFixed(1)}%
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center justify-center bg-primary/5 rounded-2xl p-5">
-                  <RiskGauge riskScore={riskSecond} riskLevel={getRiskLabel(riskSecond)} label="Nguy cơ AI" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Disclaimer */}
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-5 py-4 flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-[12px] text-amber-500 font-medium leading-relaxed">
-              Kết quả phân tích tiến triển dựa trên dữ liệu AI mang tính tham khảo. Bác sĩ cần đánh giá toàn diện lâm sàng trước khi điều chỉnh phác đồ.
-            </p>
+             </div>
           </div>
         </div>
       )}
