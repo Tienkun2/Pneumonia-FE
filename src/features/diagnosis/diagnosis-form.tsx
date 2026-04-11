@@ -1,21 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  setImagePreview,
-  setPredictionResult,
-  setMultimodalResult,
-} from "@/store/slices/diagnosisSlice";
-import { AiService } from "@/services/ai-service";
-import { toast } from "sonner";
+import { useDiagnosis } from "@/hooks/use-diagnosis";
+import { RISKS_MAP, SYMPTOM_LABELS, getBarColor } from "@/constants/diagnosis";
+import { AnimatedScore } from "@/components/diagnosis/animated-score";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
-import { PatientService } from "@/services/patient-service";
-import { VisitService } from "@/services/visit-service";
-import { Patient } from "@/types/patient";
-import { Visit } from "@/types/diagnosis";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -37,279 +27,49 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-/* ─── Constants ─────────────────────────────────────────────────── */
-const RISKS_MAP: Record<string, { label: string; color: string; bg: string; dot: string; border: string }> = {
-  LOW: { label: "Nguy cơ thấp", color: "text-emerald-500", bg: "bg-emerald-500/10 dark:bg-emerald-500/5", dot: "bg-emerald-500", border: "border-emerald-500/20" },
-  MEDIUM: { label: "Nguy cơ trung bình", color: "text-amber-500", bg: "bg-amber-500/10 dark:bg-amber-500/5", dot: "bg-amber-500", border: "border-amber-500/20" },
-  HIGH: { label: "Nguy cơ cao", color: "text-red-500", bg: "bg-red-500/10 dark:bg-red-500/5", dot: "bg-red-500", border: "border-red-500/20" },
-  Unknown: { label: "Chưa xác định", color: "text-slate-500", bg: "bg-slate-500/10", dot: "bg-slate-400", border: "border-slate-500/20" },
-};
-
-const SYMPTOM_LABELS: Record<string, string> = {
-  chills: "Rét run",
-  fatigue: "Mệt mỏi",
-  cough: "Ho",
-  high_fever: "Sốt cao",
-  breathlessness: "Khó thở",
-  phlegm: "Đờm",
-  chest_pain: "Đau ngực",
-  fast_heart_rate: "Nhịp tim nhanh",
-  rusty_sputum: "Đờm màu gỉ sắt",
-  malaise: "Uể oải",
-};
-
-const getBarColor = (score: number) => {
-  if (score > 0.7) return "bg-red-500";
-  if (score > 0.4) return "bg-amber-500";
-  return "bg-blue-600";
-};
-
-function AnimatedScore({ value, className }: { value: number; className?: string }) {
-  const [displayValue, setDisplayValue] = useState(0);
-
-  useEffect(() => {
-    const duration = 1000;
-    const steps = 60;
-    const increment = value / steps;
-    let current = 0;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setDisplayValue(value);
-        clearInterval(timer);
-      } else {
-        setDisplayValue(current);
-      }
-    }, duration / steps);
-    return () => clearInterval(timer);
-  }, [value]);
-
-  return <span className={className}>{(displayValue * 100).toFixed(0)}%</span>;
-}
-
-/* ─── Main Component ────────────────────────────────────────────── */
 export function DiagnosisForm() {
-  const dispatch = useAppDispatch();
-  const diagnosisData = useAppSelector((state) => state.diagnosis);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [note, setNote] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [showOverlay, setShowOverlay] = useState(false);
-  const [isSymptomEditing, setIsSymptomEditing] = useState(false);
-
-  // Patient Selection State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [patientVisits, setPatientVisits] = useState<Visit[]>([]);
-  const [isLoadingVisits, setIsLoadingVisits] = useState(false);
-  const [showHistory, setShowHistory] = useState(false); 
-
-  // Infinite Scroll & Dropdown State
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  // Handle clicking outside to close Dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const lastPatientElementRef = useCallback((node: HTMLButtonElement | null) => {
-    if (isSearching) return;
-    if (observerRef.current) observerRef.current.disconnect();
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore) {
-        setPage(prevPage => prevPage + 1);
-      }
-    }, { rootMargin: '100px' });
-    if (node) observerRef.current.observe(node);
-  }, [isSearching, hasMore]);
-
-  // Handle Auto-select Patient from query params
-  const searchParams = useSearchParams();
-  const patientIdFromUrl = searchParams.get("patientId");
-
-  useEffect(() => {
-    if (patientIdFromUrl && !selectedPatient) {
-      const fetchInitialPatient = async () => {
-        try {
-          const patientData = await PatientService.getPatientById(patientIdFromUrl);
-          setSelectedPatient(patientData);
-        } catch (error) {
-          console.error("Failed to auto-select patient:", error);
-        }
-      };
-      fetchInitialPatient();
-    }
-  }, [patientIdFromUrl, selectedPatient]);
-
-  // Fetch Patients
-  const fetchPatients = useCallback(async (currentPage: number, qs: string, append = false) => {
-    try {
-      if (currentPage === 1) setIsSearching(true);
-      const data = await PatientService.getPatients(currentPage, 10, { search: qs });
-      const newItems = data.data || [];
-      setPatients(prev => append ? [...prev, ...newItems] : newItems);
-      setHasMore(currentPage < (data.totalPages || 1) && newItems.length > 0);
-    } catch (error) {
-      console.error("Failed to fetch patients:", error);
-      if (!append) setPatients([]);
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
-
-  // Debounce Search Logic
-  useEffect(() => {
-    if (!isDropdownOpen) return;
-
-    // Only debounce if there's actual typing
-    const delay = searchQuery ? 800 : 0;
-
-    const timer = setTimeout(() => {
-      setPage(1);
-      fetchPatients(1, searchQuery, false);
-    }, delay);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery, isDropdownOpen, fetchPatients]);
-
-  // Pagination Logic (Infinite Scroll)
-  useEffect(() => {
-    if (!isDropdownOpen || page <= 1) return;
-    fetchPatients(page, searchQuery, true);
-  }, [page, isDropdownOpen, searchQuery, fetchPatients]);
-
-  useEffect(() => {
-    const fetchSymptoms = async () => {
-      try {
-        const symptoms = await AiService.getSymptoms();
-        setAvailableSymptoms(symptoms);
-      } catch {
-        toast.error("Không thể tải danh sách triệu chứng từ AI");
-      }
-    };
-    fetchSymptoms();
-  }, []);
-
-  // Fetch Patient Visits on Selection
-  useEffect(() => {
-    if (selectedPatient) {
-      const fetchVisits = async () => {
-        try {
-          setIsLoadingVisits(true);
-          const visits = await VisitService.getPatientVisits(selectedPatient.id);
-          setPatientVisits(visits);
-        } catch (error) {
-          console.error("Failed to fetch visits:", error);
-          // toast.error("Không thể tải lịch sử khám");
-        } finally {
-          setIsLoadingVisits(false);
-        }
-      };
-      fetchVisits();
-    } else {
-      setPatientVisits([]);
-      setShowHistory(false);
-    }
-  }, [selectedPatient]);
-
-  const onDrop = (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setSelectedFile(file);
-      dispatch(setImagePreview(URL.createObjectURL(file)));
-    }
-  };
+  const {
+    diagnosisData,
+    isSubmitting,
+    isSaving,
+    note,
+    setNote,
+    availableSymptoms,
+    selectedSymptoms,
+    showOverlay,
+    setShowOverlay,
+    isSymptomEditing,
+    setIsSymptomEditing,
+    searchQuery,
+    setSearchQuery,
+    patients,
+    isSearching,
+    selectedPatient,
+    setSelectedPatient,
+    patientVisits,
+    isLoadingVisits,
+    showHistory,
+    setShowHistory,
+    isDropdownOpen,
+    setIsDropdownOpen,
+    dropdownRef,
+    lastPatientElementRef,
+    handleDrop,
+    handleSubmit,
+    clearImage,
+    toggleSymptom,
+    handleSaveVisit,
+    canSubmit,
+  } = useDiagnosis();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
+    onDrop: handleDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".dcm"] },
     maxFiles: 1,
   });
-
-  const handleSubmit = async () => {
-    if (!selectedFile) {
-      toast.error("Vui lòng tải lên ảnh X-quang để phân tích");
-      return;
-    }
-    try {
-      setIsSubmitting(true);
-      const result = await AiService.predictMultimodal(selectedFile, selectedSymptoms.join(","));
-      dispatch(setMultimodalResult(result));
-      toast.success("Phân tích đa phương thức thành công!");
-    } catch {
-      toast.error("Có lỗi xảy ra khi phân tích đa phương thức");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const clearImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSelectedFile(null);
-    dispatch(setImagePreview(undefined));
-    dispatch(setPredictionResult(null));
-  };
-
-  const toggleSymptom = (symptom: string, checked: boolean) => {
-    setSelectedSymptoms(prev =>
-      checked ? [...prev, symptom] : prev.filter(s => s !== symptom)
-    );
-  };
-
-  const handleSaveVisit = async () => {
-    if (!selectedPatient) {
-      toast.error("Vui lòng chọn bệnh nhân trước khi lưu");
-      return;
-    }
-
-    if (!diagnosisData.multimodalResult) {
-      toast.error("Vui lòng thực hiện chẩn đoán trước khi lưu");
-      return;
-    }
-
-    try {
-      setIsSaving(true)
-      await VisitService.createMultimodalVisit({
-        patientId: selectedPatient.id,
-        symptoms: selectedSymptoms.map(s => SYMPTOM_LABELS[s] || s).join(", "),
-        note: note,
-        imageUrl: diagnosisData.multimodalResult.heatmap || "",
-        imageType: "XRAY",
-        result: diagnosisData.multimodalResult.risk_level === "HIGH" ? "PNEUMONIA" : "NORMAL",
-        confidenceScore: diagnosisData.multimodalResult.final_score,
-        modelVersion: "v1.0"
-      });
-
-      toast.success("Đã lưu kết quả chẩn đoán vào hồ sơ bệnh nhân!");
-      setNote("");
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Lỗi khi lưu kết quả chẩn đoán";
-      toast.error(message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const canSubmit = !!selectedFile && !isSubmitting;
 
   return (
     <div className="space-y-6 pb-6 animate-in fade-in duration-500">
@@ -352,8 +112,8 @@ export function DiagnosisForm() {
               <Input
                 placeholder="Tìm bệnh nhân (mã hoặc tên)..."
                 value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-                onFocus={() => { setIsDropdownOpen(true); setPage(1); }}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsDropdownOpen(true)}
                 className="pl-9 h-10 border-border/60 rounded-xl bg-card focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:border-primary/40 text-[13px] font-medium placeholder:text-muted-foreground/40 w-full shadow-sm transition-all"
               />
               {isDropdownOpen && (

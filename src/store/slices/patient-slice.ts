@@ -1,18 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { Patient, CreatePatientPayload } from "@/types/patient";
+import { Patient, CreatePatientPayload, PatientState } from "@/types/patient";
 import { PageResponse } from "@/types/api";
 import { PatientService } from "@/services/patient-service";
-
-interface PatientState {
-  patients: Patient[];
-  selectedPatient: Patient | null;
-  isLoading: boolean;
-  error: string | null;
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}
 
 const initialState: PatientState = {
   patients: [],

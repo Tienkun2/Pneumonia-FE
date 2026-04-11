@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { createVisitThunk, updateVisitThunk } from "@/store/slices/visitSlice";
+import { createVisitThunk, updateVisitThunk } from "@/store/slices/visit-slice";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";

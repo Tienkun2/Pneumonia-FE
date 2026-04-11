@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { PatientService } from "@/services/patient-service";
 import { Patient } from "@/types/patient";
 import { toast } from "sonner";
-import { usePatientTable } from "@/features/patients/patient-table/use-patient-table";
+import { usePatientTable } from "@/hooks/use-patient-table";
 
 export function usePatientListing() {
   const [patients, setPatients] = useState<Patient[]>([]);

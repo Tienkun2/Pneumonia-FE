@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { userSchema, UserFormValues } from "@/utils/user-schemas";
 import { User, CreateUserPayload, UpdateUserPayload } from "@/types/user";
 import { useDispatch } from "react-redux";
-import { createUser, updateUserThunk } from "@/store/slices/userSlice";
+import { createUser, updateUserThunk } from "@/store/slices/user-slice";
 import { AppDispatch } from "@/store/store";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";

@@ -9,45 +9,37 @@ export default function AuthBranding() {
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-teal-500/20 rounded-full blur-3xl opacity-30" />
 
         <Image
-          src="/images/background.png"
+          src="/images/background_new.png"
           alt="Medical background"
           fill
           className="object-cover opacity-10 mix-blend-overlay"
           priority
         />
       </div>
-      <div className="relative z-20 flex items-center gap-3 text-lg font-medium">
-        <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/10">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 text-white"
-          >
-            <path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.3.3 0 1 0 .2.3" />
-            <path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4" />
-            <circle cx="20" cy="10" r="2" />
-          </svg>
+      <div className="relative z-20 flex items-center gap-4 text-lg font-medium">
+        <div className="h-12 w-12 bg-white rounded-xl p-1.5 shadow-2xl border border-white/20 relative group overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-white to-slate-100" />
+          <Image 
+            src="/images/PlumoX_Logo.png" 
+            alt="PlumoX Logo" 
+            fill 
+            className="object-contain p-1 relative z-10"
+            unoptimized
+            priority
+          />
         </div>
         <div>
-          <h1 className="text-xl font-bold leading-none">Chẩn đoán Phổi</h1>
-          <p className="text-xs text-blue-100/80 font-medium tracking-wide mt-0.5">
-            HỆ THỐNG ĐA ĐỘ TUỔI
+          <h1 className="text-2xl font-black leading-none tracking-tighter uppercase drop-shadow-sm">PlumoX</h1>
+          <p className="text-[9px] text-blue-100/60 font-bold tracking-[0.2em] mt-1.5 leading-none">
+            HỆ THỐNG CHẨN ĐOÁN THÔNG MINH
           </p>
         </div>
       </div>
       <div className="relative z-20 mt-auto">
         <blockquote className="space-y-4">
-          <p className="text-xl font-light italic leading-relaxed text-blue-50">
-            &ldquo;Chăm sóc hơi thở cho trẻ là sứ mệnh của chúng tôi. Hệ thống CDSS hỗ trợ bác sĩ đưa ra quyết định chính xác nhất.&rdquo;
+          <p className="text-xl font-light italic leading-relaxed text-blue-50/90 max-w-md">
+            &ldquo;Tận tâm chăm sóc sức khỏe hô hấp cho mọi thế hệ. Hệ thống hỗ trợ bác sĩ đưa ra quyết định chẩn đoán chính xác và kịp thời.&rdquo;
           </p>
-          <footer className="text-sm font-semibold flex items-center gap-2">
-            <div className="h-0.5 w-8 bg-white/50" /> Bệnh viện Đa khoa Quốc tế
-          </footer>
         </blockquote>
       </div>
     </div>

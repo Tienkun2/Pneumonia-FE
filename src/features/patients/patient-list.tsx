@@ -3,52 +3,24 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchPatients, deletePatientThunk } from "@/store/slices/patientSlice";
+import { fetchPatients, deletePatientThunk } from "@/store/slices/patient-slice";
 
-import { usePatientTable } from "./patient-table/use-patient-table";
+import { PatientDialogs } from "./components/patient-dialogs";
+import { usePatientTable } from "@/hooks/use-patient-table";
 import { PatientTable } from "./patient-table/patient-table";
-import { QuickAddPatientDialog } from "@/components/patients/quick-add-patient-dialog";
-
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-
-import {
-  Loader2,
-  Upload,
-  Download,
-  Users,
-  X,
-  UserPlus,
-  Search,
-  SlidersHorizontal,
-  AlertCircle,
+import { 
+  Loader2, Upload, Download, Users, X, UserPlus, Search, SlidersHorizontal, AlertCircle 
 } from "lucide-react";
 import { toast } from "sonner";
 import { Patient } from "@/types/patient";
 import { DateRange } from "react-day-picker";
-
 import { PageHeader } from "@/components/layout/page-header";
-
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
 import { format } from "date-fns";
 
-const PATIENT_COLUMN_LABELS = {
-  code: "Mã BN",
-  fullName: "Họ tên",
-  age: "Tuổi",
-  gender: "Giới tính",
-  phone: "Số điện thoại",
-  address: "Địa chỉ",
-  STT: "STT",
-};
+import { PATIENT_COLUMN_LABELS } from "@/constants/patient";
 
 export function PatientList() {
   const dispatch = useDispatch<AppDispatch>();
@@ -91,6 +63,13 @@ export function PatientList() {
   function handleDeleteClick(patient: Patient) {
     setPatientToDelete(patient);
   }
+
+  const handleRefresh = () => {
+    dispatch(fetchPatients({
+      page: pagination.pageIndex + 1,
+      size: pagination.pageSize,
+    }));
+  };
 
   useEffect(() => {
     setPagination(prev => prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 });
@@ -243,41 +222,16 @@ export function PatientList() {
       )}
 
       {/* ── Dialogs ──────────────────────────────── */}
-      <QuickAddPatientDialog
-        open={showFormDialog}
-        onOpenChange={setShowFormDialog}
-        patient={editingPatient}
-        onSuccess={() => {
-          dispatch(fetchPatients({
-            page: pagination.pageIndex + 1,
-            size: pagination.pageSize,
-          }));
-        }}
+      <PatientDialogs
+        showFormDialog={showFormDialog}
+        setShowFormDialog={setShowFormDialog}
+        editingPatient={editingPatient}
+        onFormSuccess={handleRefresh}
+        patientToDelete={patientToDelete}
+        setPatientToDelete={setPatientToDelete}
+        isDeleting={isDeleting}
+        onConfirmDelete={confirmDelete}
       />
-
-      <Dialog open={!!patientToDelete} onOpenChange={(open) => !open && setPatientToDelete(null)}>
-        <DialogContent className="rounded-2xl max-w-sm">
-          <DialogHeader>
-            <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2">
-              <AlertCircle className="h-6 w-6 text-destructive" />
-            </div>
-            <DialogTitle className="text-[17px]">Xác nhận xóa hồ sơ</DialogTitle>
-            <DialogDescription className="text-[13px]">
-              Bạn có chắc chắn muốn xóa bệnh nhân <strong className="text-foreground">{patientToDelete?.fullName}</strong>?
-              Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 gap-2">
-            <Button variant="outline" onClick={() => setPatientToDelete(null)} disabled={isDeleting} className="flex-1 rounded-xl">
-              Hủy bỏ
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting} className="flex-1 rounded-xl">
-              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isDeleting ? "Đang xóa..." : "Xóa hồ sơ"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { flexRender, Table as ReactTable, ColumnDef } from "@tanstack/react-table";
-import { Role } from "@/types/user";
+import { Role } from "@/types/role";
 import {
   Table,
   TableBody,

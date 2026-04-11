@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function MedicalPage() {
-  return null;
+  redirect("/medical/patient-mgmt/patient-list");
 }

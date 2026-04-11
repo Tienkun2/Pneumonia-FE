@@ -157,21 +157,21 @@ export function Header({ isCollapsed, setIsCollapsed }: { isCollapsed?: boolean;
                     return (
                         <div 
                           key={notif.id} 
-                          className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer border-b border-border flex gap-3 relative ${!notif.isRead ? 'bg-primary/5' : ''}`}
+                          className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer border-b border-border flex gap-3 relative ${!notif.read ? 'bg-primary/5' : ''}`}
                           onClick={() => dispatch(markOneReadApi(notif.id))}
                         >
                            <div className={`h-10 w-10 rounded-xl shrink-0 flex items-center justify-center ${colorClasses}`}>
                               <Icon className="h-5 w-5" />
                            </div>
                            <div className="space-y-1 flex-1 min-w-0">
-                              <p className={`text-sm leading-tight truncate ${notif.isRead ? 'text-muted-foreground font-medium' : 'text-foreground font-black'}`}>
+                              <p className={`text-sm leading-tight truncate ${notif.read ? 'text-muted-foreground font-medium' : 'text-foreground font-black'}`}>
                                 {notif.content}
                               </p>
                               <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                                  <Clock className="h-2.5 w-2.5" /> {notif.formattedTime}
                               </span>
                            </div>
-                           {!notif.isRead && (
+                           {!notif.read && (
                              <span className="absolute top-4 right-4 h-1.5 w-1.5 rounded-full bg-primary" />
                            )}
                         </div>

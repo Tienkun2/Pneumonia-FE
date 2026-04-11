@@ -19,3 +19,14 @@ export interface CreatePatientPayload {
   phone?: string;
   address?: string;
 }
+
+export interface PatientState {
+  patients: Patient[];
+  selectedPatient: Patient | null;
+  isLoading: boolean;
+  error: string | null;
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}

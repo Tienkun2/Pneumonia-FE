@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
-import { createPatientThunk, updatePatientThunk } from "@/store/slices/patientSlice";
+import { createPatientThunk, updatePatientThunk } from "@/store/slices/patient-slice";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";

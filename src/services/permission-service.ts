@@ -1,5 +1,5 @@
 import { api } from "@/services/api-client";
-import { Permission, PermissionTreeNode } from "@/types/user";
+import { Permission, PermissionTreeNode } from "@/types/permission";
 
 export const PermissionService = {
   getPermissions: () => api.get<Permission[]>("/permissions"),

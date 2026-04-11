@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchAllVisits } from "@/store/slices/visitSlice";
-import { fetchPatients } from "@/store/slices/patientSlice";
+import { fetchAllVisits } from "@/store/slices/visit-slice";
+import { fetchPatients } from "@/store/slices/patient-slice";
 
 import { ResultTable } from "./result-table/result-table";
 import { useResultTable } from "./result-table/use-result-table";

@@ -1,17 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { User, CreateUserPayload } from "@/types/user";
+import { User, CreateUserPayload, UserState } from "@/types/user";
 import { PageResponse } from "@/types/api";
 import { UserService } from "@/services/user-service";
-
-interface UserState {
-  users: User[];
-  isLoading: boolean;
-  error: string | null;
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}
 
 const initialState: UserState = {
   users: [],

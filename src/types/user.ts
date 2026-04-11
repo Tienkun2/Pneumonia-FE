@@ -1,24 +1,4 @@
-export interface Permission {
-  name: string;
-  description: string;
-}
-
-export interface PermissionTreeNode {
-  name: string;
-  description: string;
-  isChecked: boolean;
-  status?: string;
-  createdAt?: string;
-  children?: PermissionTreeNode[];
-}
-
-export interface Role {
-  name: string;
-  description: string;
-  permissions: Permission[];
-  status?: string;
-  createdAt?: string;
-}
+import { Role } from "./role";
 
 export interface User {
   id: string;
@@ -50,3 +30,14 @@ export interface UpdateUserPayload {
   status?: string;
   roles?: string[];
 }
+
+export interface UserState {
+  users: User[];
+  isLoading: boolean;
+  error: string | null;
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+}
+

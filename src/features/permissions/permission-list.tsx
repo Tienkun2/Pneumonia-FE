@@ -9,8 +9,6 @@ import { PageHeader } from "@/components/layout/page-header";
 import { 
   Plus, 
   Search, 
-  Loader2, 
-  AlertCircle, 
   ChevronRight, 
   CheckCircle,
   Home,
@@ -18,18 +16,10 @@ import {
   SlidersHorizontal,
   X
 } from "lucide-react";
+import { PermissionDialogs } from "./components/permission-dialogs";
+import { PERMISSION_COLUMN_LABELS } from "@/constants/permission";
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
 
@@ -44,28 +34,18 @@ export function PermissionList() {
     columnFilters,
     showAddDialog,
     setShowAddDialog,
-    newPermission,
-    setNewPermission,
     isSubmitting,
     permissionToDelete,
     setPermissionToDelete,
     handleNavigateUp,
     navigateToSegment,
-    handleCreate,
     handleDelete,
+    fetchData,
   } = usePermissionListing();
 
   const hasActiveFilters = columnFilters.length > 0 || !!globalFilter;
 
-  const PERMISSION_COLUMN_LABELS = {
-    name: "Tên chức năng",
-    description: "Mô tả nghiệp vụ",
-    level: "Cấp độ",
-    createdAt: "Ngày tạo",
-    status: "Trạng thái",
-    STT: "STT",
-  };
-
+  const currentParentName = currentPath.length > 0 ? currentPath[currentPath.length - 1].name : undefined;
 
   return (
     <div className="space-y-5 pb-6">
@@ -198,74 +178,17 @@ export function PermissionList() {
         />
       </div>
 
-      {/* Action Dialogs */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
-          <DialogHeader className="p-8 border-b border-border/40 bg-muted/10 text-left">
-            <DialogTitle className="text-lg font-black uppercase tracking-tight">Thêm quyền mới</DialogTitle>
-            <DialogDescription className="font-medium text-[13px]">Khởi tạo một mã định danh quyền truy cập mới trong hệ thống.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 p-8 bg-background">
-            <div className="space-y-2">
-              <Label className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">Mã quyền <span className="text-destructive">*</span></Label>
-              <Input
-                placeholder="VD: SYST_ROOT, USER_READ..."
-                value={newPermission.name}
-                onChange={(e) => setNewPermission({ ...newPermission, name: e.target.value.toUpperCase() })}
-                className="h-11 rounded-xl border-border/50 font-bold text-[13px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">Mô tả nghiệp vụ</Label>
-              <Input
-                placeholder="Mô tả chức năng của quyền này..."
-                value={newPermission.description}
-                onChange={(e) => setNewPermission({ ...newPermission, description: e.target.value })}
-                className="h-11 rounded-xl border-border/50 font-medium text-[13px]"
-              />
-            </div>
-          </div>
-          <DialogFooter className="p-8 border-t border-border/40 bg-muted/5 gap-3">
-            <Button variant="outline" onClick={() => setShowAddDialog(false)} className="h-10 rounded-xl flex-1 font-bold">Hủy</Button>
-            <Button onClick={handleCreate} disabled={isSubmitting} className="h-10 rounded-xl flex-1 bg-primary text-white shadow-lg shadow-primary/20 font-bold">
-              {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Plus className="h-3.5 w-3.5 mr-2" />}
-              Lưu lại
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!permissionToDelete} onOpenChange={(open) => !open && setPermissionToDelete(null)}>
-        <DialogContent className="max-w-sm rounded-2xl text-center p-8 border-none shadow-2xl">
-          <DialogHeader className="mb-4">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2 animate-pulse">
-              <AlertCircle className="h-7 w-7 text-destructive" />
-            </div>
-            <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
-            <DialogDescription className="text-center font-medium opacity-70">
-              Quyền <strong className="text-foreground">{permissionToDelete}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-col gap-2">
-            <Button 
-                variant="destructive" 
-                onClick={handleDelete} 
-                disabled={isSubmitting} 
-                className="h-12 rounded-xl w-full font-black uppercase text-[12px] tracking-widest shadow-xl shadow-destructive/20 active:scale-[0.98]"
-            >
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Tôi chắc chắn, hãy xóa ngay
-            </Button>
-            <Button 
-                variant="outline" 
-                onClick={() => setPermissionToDelete(null)} 
-                className="h-12 rounded-xl w-full font-black uppercase text-[12px] tracking-widest"
-            >
-                Quay lại
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PermissionDialogs
+        showAddDialog={showAddDialog}
+        setShowAddDialog={setShowAddDialog}
+        parentName={currentParentName}
+        onFormSuccess={fetchData}
+        permissionToDelete={permissionToDelete}
+        setPermissionToDelete={setPermissionToDelete}
+        isSubmitting={isSubmitting}
+        onConfirmDelete={handleDelete}
+      />
     </div>
   );
 }
+

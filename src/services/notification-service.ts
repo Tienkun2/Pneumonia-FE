@@ -4,7 +4,7 @@ import { ApiResponse, PageResponse } from "@/types/api";
 export interface NotificationDto {
   id: string;
   content: string;
-  isRead: boolean;
+  read: boolean;
   createdAt: string; // ISO 8601 UTC
 }
 
@@ -48,6 +48,26 @@ export const NotificationService = {
     const data: ApiResponse<unknown> = await res.json();
     if (!res.ok || (data.code !== 0 && data.code !== 1000)) {
       throw new Error(data.message || "Failed to mark notification as read");
+    }
+  },
+
+  async deleteOne(id: string): Promise<void> {
+    const res = await apiClient(`/notifications/${id}`, {
+      method: "DELETE",
+    });
+    const data: ApiResponse<unknown> = await res.json();
+    if (!res.ok || (data.code !== 0 && data.code !== 1000)) {
+      throw new Error(data.message || "Failed to delete notification");
+    }
+  },
+
+  async deleteAll(): Promise<void> {
+    const res = await apiClient("/notifications", {
+      method: "DELETE",
+    });
+    const data: ApiResponse<unknown> = await res.json();
+    if (!res.ok || (data.code !== 0 && data.code !== 1000)) {
+      throw new Error(data.message || "Failed to delete all notifications");
     }
   },
 };

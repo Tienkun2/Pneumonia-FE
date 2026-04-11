@@ -69,7 +69,7 @@ export function useWebSockets() {
         return {
           id: Date.now().toString(),
           content: body,
-          isRead: false,
+          read: false,
           createdAt: new Date().toISOString(),
         };
       };

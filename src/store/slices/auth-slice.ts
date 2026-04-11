@@ -8,19 +8,20 @@ const initialState: AuthState = {
   token: null,
   isAuthenticated: false,
   isLoading: false,
+  isInfoLoading: false,
   error: null,
   user: null,
   hasFetchedUser: false
 }
 
 export const login = createAsyncThunk<
-  LoginResponse,
+  LoginResponse & { remember?: boolean },
   LoginRequest,
   { rejectValue: string }
->("auth/login", async ({ username, password }, { rejectWithValue }) => {
+>("auth/login", async ({ username, password, remember }, { rejectWithValue }) => {
   try {
     const result = await AuthService.login(username, password)
-    return result
+    return { ...result, remember }
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Đăng nhập thất bại"
@@ -93,8 +94,16 @@ const authSlice = createSlice({
       state.isAuthenticated = true
 
       if (typeof globalThis !== "undefined" && globalThis.localStorage) {
-        globalThis.localStorage.setItem("token", action.payload)
-        document.cookie = `token=${action.payload}; path=/; max-age=86400; SameSite=Lax`
+        const hasPersistentToken = !!globalThis.localStorage.getItem("token")
+
+        if (hasPersistentToken) {
+          globalThis.localStorage.setItem("token", action.payload)
+          // Maintain 7 days for persistent sessions
+          document.cookie = `token=${action.payload}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+        } else {
+          // Stay in session-only mode
+          document.cookie = `token=${action.payload}; path=/; SameSite=Lax`
+        }
       }
     },
 
@@ -107,8 +116,6 @@ const authSlice = createSlice({
       if (typeof globalThis !== "undefined" && globalThis.localStorage) {
         globalThis.localStorage.removeItem("token")
         document.cookie = "token=; Max-Age=0; path=/"
-        // Xóa cache menu động để lần login sau fetch lại theo quyền mới
-        sessionStorage.removeItem("dynamic_menus")
       }
     }
   },
@@ -123,9 +130,19 @@ const authSlice = createSlice({
         state.isLoading = false
         state.token = action.payload.token
         state.isAuthenticated = true
+
         if (typeof globalThis !== "undefined" && globalThis.localStorage) {
-          globalThis.localStorage.setItem("token", action.payload.token)
-          document.cookie = `token=${action.payload.token}; path=/; max-age=86400; SameSite=Lax`
+          const { token, remember } = action.payload;
+
+          if (remember) {
+            globalThis.localStorage.setItem("token", token)
+            // 7 days expiration
+            document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+          } else {
+            // Session only - clear any old persistent token and set a session cookie (no max-age)
+            globalThis.localStorage.removeItem("token")
+            document.cookie = `token=${token}; path=/; SameSite=Lax`
+          }
         }
       })
       .addCase(login.rejected, (state, action) => {
@@ -154,20 +171,20 @@ const authSlice = createSlice({
       .addCase(logoutThunk.fulfilled, (state) => {
       })
       .addCase(fetchMyInfo.pending, (state) => {
-        state.isLoading = true
+        state.isInfoLoading = true
         state.hasFetchedUser = true
         state.error = null
       })
       .addCase(fetchMyInfo.fulfilled, (state, action) => {
-        state.isLoading = false
+        state.isInfoLoading = false
         state.user = action.payload
       })
       .addCase(fetchMyInfo.rejected, (state, action) => {
-        state.isLoading = false
+        state.isInfoLoading = false
         state.error = action.payload || "Lỗi tải thông tin cá nhân"
       })
   }
 })
 
-export const { setToken, logout } = authSlice.actions
+export const { setToken, logout } = authSlice.actions;
 export default authSlice.reducer

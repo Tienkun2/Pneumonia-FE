@@ -1,17 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { Visit, CreateVisitPayload } from "@/types/diagnosis";
+import { Visit, CreateVisitPayload, VisitState } from "@/types/diagnosis";
 import { PageResponse } from "@/types/api";
 import { VisitService } from "@/services/visit-service";
-
-interface VisitState {
-  visits: Visit[];
-  isLoading: boolean;
-  error: string | null;
-  totalElements: number;
-  totalPages: number;
-  currentPage: number;
-  pageSize: number;
-}
 
 const initialState: VisitState = {
   visits: [],

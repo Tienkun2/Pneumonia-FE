@@ -1,7 +1,7 @@
 "use client";
 
 import { flexRender, Table as ReactTable, ColumnDef } from "@tanstack/react-table";
-import { PermissionTreeNode } from "@/types/user";
+import { PermissionTreeNode } from "@/types/permission";
 import {
   Table,
   TableBody,

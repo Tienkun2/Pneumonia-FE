@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { PermissionTreeNode } from "@/types/user";
+import { PermissionTreeNode } from "@/types/permission";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoreVertical } from "lucide-react";

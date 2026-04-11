@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { PermissionTreeNode } from "@/types/user";
+import { Role } from "@/types/role";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronRight, MoreVertical } from "lucide-react";
+import { Edit, Trash2, Settings, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,20 +20,20 @@ import {
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
 
-interface UsePermissionTableProps {
-  data: PermissionTreeNode[];
-  currentLevel: number;
-  onNavigateDown: (permission: PermissionTreeNode) => void;
-  onDeleteClick: (permissionName: string) => void;
+interface UseRoleTableProps {
+  data: Role[];
+  onEdit: (role: Role) => void;
+  onPermissionClick: (role: Role) => void;
+  onDeleteClick: (roleName: string) => void;
 }
 
-export function usePermissionTable({ 
+export function useRoleTable({ 
   data, 
-  currentLevel,
-  onNavigateDown, 
+  onEdit, 
+  onPermissionClick, 
   onDeleteClick 
-}: Readonly<UsePermissionTableProps>) {
-  const columns: ColumnDef<PermissionTreeNode>[] = useMemo(() => [
+}: Readonly<UseRoleTableProps>) {
+  const columns: ColumnDef<Role>[] = useMemo(() => [
     {
       id: "STT",
       header: "STT",
@@ -43,24 +43,46 @@ export function usePermissionTable({
     },
     {
       accessorKey: "name",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Tên chức năng" />,
-      cell: ({ row }) => <span className="font-extrabold text-foreground">{row.original.name}</span>
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Tên vai trò" />,
+      cell: ({ row }) => <span className="font-extrabold uppercase tracking-tight">{row.original.name}</span>
     },
     {
       accessorKey: "description",
-      header: ({ column }) => <DataTableColumnHeader column={column} title="Mô tả nghiệp vụ" />,
-      cell: ({ row }) => <span className="text-muted-foreground font-medium">{row.original.description || "—"}</span>
+      header: ({ column }) => <DataTableColumnHeader column={column} title="Mô tả" />,
+      cell: ({ row }) => <span className="text-muted-foreground/80 font-medium">{row.original.description || "—"}</span>
     },
     {
-      id: "level",
-      header: "Cấp độ",
-      cell: () => <span className="font-bold text-primary">Cấp {currentLevel}</span>
+      accessorKey: "status",
+      header: "Trạng thái",
+      filterFn: (row, id, value) => {
+        if (!value || value.length === 0) return true;
+        const status = row.original.status || "ACTIVE";
+        return value.includes(status);
+      },
+      cell: ({ row }) => {
+        const status = row.original.status || "ACTIVE";
+        const getStatusLabel = () => {
+          if (status === "ACTIVE") return "Đang hoạt động";
+          if (status === "INACTIVE") return "Ngừng hoạt động";
+          return "Chờ kích hoạt";
+        };
+        return (
+          <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0 pointer-events-none shadow-none font-bold px-3 py-1 rounded-full text-[11px]">
+            {getStatusLabel()}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "userCount",
+      header: "Số người dùng",
+      cell: () => <span className="font-bold opacity-60">5</span>
     },
     {
       accessorKey: "createdAt",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Ngày tạo" />,
       filterFn: (row, id, filterValue) => {
-        if (!filterValue?.from) return true;
+        if (!filterValue || !filterValue.from) return true;
         const rowDateStr = row.getValue(id) as string;
         if (!rowDateStr) return false;
         const rowDate = new Date(rowDateStr);
@@ -77,7 +99,7 @@ export function usePermissionTable({
       },
       cell: ({ row }) => {
         const dateStr = row.original.createdAt;
-        if (!dateStr) return <span className="font-bold opacity-60">04/11/2025</span>;
+        if (!dateStr) return <span className="font-bold opacity-60">03/07/2026</span>; // Fallback if API hasn't been updated yet
         
         try {
           const date = new Date(dateStr);
@@ -88,41 +110,12 @@ export function usePermissionTable({
       }
     },
     {
-      accessorKey: "status",
-      header: "Trạng thái",
-      filterFn: (row, id, value) => {
-        if (!value || value.length === 0) return true;
-        const status = row.original.status || "active";
-        return value.includes(status);
-      },
-      cell: ({ row }) => {
-        const status = row.original.status || "active";
-        return (
-          <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-bold text-[11px] rounded-full">
-            {status === "active" ? "Đang hoạt động" : "Ngừng hoạt động"}
-          </Badge>
-        );
-      },
-    },
-    {
       id: "actions",
-      header: "Thao tác",
+      header: "",
       cell: ({ row }) => {
-        const permission = row.original;
+        const role = row.original;
         return (
-          <div className="flex items-center justify-end gap-1">
-             {currentLevel < 3 && (
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-xl hover:bg-primary/10 hover:text-primary transition-all p-0"
-                    onClick={() => onNavigateDown(permission)}
-                    title="Xem quyền con"
-                >
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
-            )}
-            <div className="w-px h-4 bg-border/40 mx-1" />
+          <div className="text-right">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0 opacity-40 hover:opacity-100 hover:bg-muted/60 rounded-lg transition-all">
@@ -132,12 +125,20 @@ export function usePermissionTable({
               <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border w-[180px]">
                 <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem onClick={() => onPermissionClick(role)} className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-muted-foreground hover:text-primary">
+                  <Settings className="h-4 w-4 opacity-70" />
+                  <span>Quản lý quyền</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(role)} className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-muted-foreground hover:text-blue-600">
+                  <Edit className="h-4 w-4 opacity-70" />
+                  <span>Cập nhật</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => onDeleteClick(permission.name)}
+                  onClick={() => onDeleteClick(role.name)}
                   className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-destructive focus:bg-destructive/10 focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
-                  <span>Xóa quyền</span>
+                  <span>Xóa vai trò</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -145,7 +146,7 @@ export function usePermissionTable({
         );
       },
     },
-  ], [currentLevel, onNavigateDown, onDeleteClick]);
+  ], [onEdit, onPermissionClick, onDeleteClick]);
 
   const { table, globalFilter, setGlobalFilter, columnFilters, setColumnFilters, columnVisibility, setColumnVisibility } = useDataTable({
     data,

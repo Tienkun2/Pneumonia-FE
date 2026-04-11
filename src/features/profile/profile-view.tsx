@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchMyInfo } from "@/store/slices/auth-slice";
-import { updateUserThunk } from "@/store/slices/userSlice";
+import { updateUserThunk } from "@/store/slices/user-slice";
 import { UserService } from "@/services/user-service";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 export function ProfileView() {
   const dispatch = useAppDispatch();
-  const { user, isLoading: isAuthLoading } = useAppSelector((state) => state.auth);
+  const { user, isInfoLoading } = useAppSelector((state) => state.auth);
 
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPass, setIsChangingPass] = useState(false);
@@ -122,7 +122,7 @@ export function ProfileView() {
     }
   }, [dispatch]);
 
-  if (isAuthLoading && !user) {
+  if (isInfoLoading && !user) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

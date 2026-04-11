@@ -1,9 +1,9 @@
 import { api } from "@/services/api-client";
-import { Role } from "@/types/user";
+import { Role } from "@/types/role";
 
 export interface CreateRolePayload {
   name: string;
-  description: string;
+  description?: string;
   permissions: string[]; // List of permission names
 }
 

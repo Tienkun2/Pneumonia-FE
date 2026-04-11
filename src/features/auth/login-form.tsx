@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
 import { login } from "@/store/slices/auth-slice";
 
 const formSchema = z.object({
@@ -48,7 +49,8 @@ export function LoginForm() {
         await dispatch(
         login({
             username: values.username,
-            password: values.password
+            password: values.password,
+            remember: values.remember
         })
         ).unwrap()
 
@@ -70,7 +72,7 @@ export function LoginForm() {
         <p className="mt-2 text-sm text-muted-foreground">
           Đăng nhập để truy cập hệ thống{" "}
           <span className="font-semibold text-primary">
-            Chẩn đoán Phổi
+            PlumoX
           </span>
         </p>
       </div>
@@ -139,6 +141,25 @@ export function LoginForm() {
                     </div>
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Remember Me */}
+            <FormField
+              control={form.control}
+              name="remember"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormLabel className="text-sm font-medium leading-none cursor-pointer">
+                    Ghi nhớ đăng nhập
+                  </FormLabel>
                 </FormItem>
               )}
             />

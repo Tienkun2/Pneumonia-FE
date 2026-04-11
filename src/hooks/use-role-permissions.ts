@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { RoleService } from "@/services/role-service";
 import { PermissionService } from "@/services/permission-service";
-import { PermissionTreeNode } from "@/types/user";
+import { PermissionTreeNode } from "@/types/permission";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { usePermissionTable } from "@/features/roles/role-table/use-permission-table";
+import { usePermissionTable } from "@/hooks/use-role-permission-table";
 
 export function useRolePermissions(roleName: string) {
   const router = useRouter();

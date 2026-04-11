@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { RoleService } from "@/services/role-service";
-import { Role } from "@/types/user";
+import { Role } from "@/types/role";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useRoleTable } from "@/features/roles/role-table/use-role-table";
+import { useRoleTable } from "@/hooks/use-role-table";
 
 export function useRoleListing() {
   const router = useRouter();
@@ -14,10 +14,6 @@ export function useRoleListing() {
   
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  const [rolePayload, setRolePayload] = useState<{ name: string; description: string }>({
-    name: "",
-    description: "",
-  });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [roleToDelete, setRoleToDelete] = useState<string | null>(null);
@@ -40,16 +36,11 @@ export function useRoleListing() {
 
   const handleOpenAdd = useCallback(() => {
     setEditingRole(null);
-    setRolePayload({ name: "", description: "" });
     setShowFormDialog(true);
   }, []);
 
   const handleEditBasic = useCallback((role: Role) => {
     setEditingRole(role);
-    setRolePayload({
-      name: role.name,
-      description: role.description,
-    });
     setShowFormDialog(true);
   }, []);
 
@@ -69,32 +60,6 @@ export function useRoleListing() {
       onPermissionClick: navigateToPermissions,
       onDeleteClick: (name) => setRoleToDelete(name),
   });
-
-  const handleSubmitBasic = async () => {
-    if (!rolePayload.name) {
-      toast.warning("Vui lòng nhập tên vai trò");
-      return;
-    }
-    try {
-      setIsSubmitting(true);
-      if (editingRole) {
-        await RoleService.updateRole(editingRole.name, {
-          description: rolePayload.description,
-          permissions: editingRole.permissions?.map(p => p.name) || []
-        });
-        toast.success("Cập nhật vai trò thành công");
-      } else {
-        await RoleService.createRole({ ...rolePayload, permissions: [] });
-        toast.success("Thêm vai trò mới thành công");
-      }
-      setShowFormDialog(false);
-      fetchData();
-    } catch (error: unknown) {
-      toast.error("Thao tác thất bại");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!roleToDelete) return;
@@ -123,12 +88,10 @@ export function useRoleListing() {
     showFormDialog,
     setShowFormDialog,
     editingRole,
-    rolePayload,
-    setRolePayload,
     roleToDelete,
     setRoleToDelete,
     handleOpenAdd,
-    handleSubmitBasic,
     handleDelete,
+    fetchData,
   };
 }

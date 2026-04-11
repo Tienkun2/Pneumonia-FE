@@ -1,50 +1,11 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { PneumoniaPredictionResponse, ClinicalDiagnosisResponse, FusionPredictionResponse, MultimodalPredictionResponse } from "@/types/diagnosis";
-
-export interface DiagnosisFormData {
-  patientId?: string;
-  patientName?: string;
-  patientAge?: number;
-  patientGender?: "male" | "female" | "other";
-  symptoms: {
-    cough: boolean;
-    fever: boolean;
-    shortnessOfBreath: boolean;
-    chestPain: boolean;
-    fatigue: boolean;
-    other?: string;
-  };
-  vitals: {
-    temperature?: number;
-    heartRate?: number;
-    bloodPressure?: string;
-    oxygenSaturation?: number;
-  };
-  labTests: {
-    wbc?: number;
-    crp?: number;
-    procalcitonin?: number;
-    other?: string;
-  };
-  imagePreview?: string;
-
-  currentStep: number;
-  predictionResult?: PneumoniaPredictionResponse | null;
-
-  clinicalData: {
-    age_months: number;
-    chest_indrawing: boolean;
-    cough: boolean;
-    danger_sign: boolean;
-    feeding_difficulty: boolean;
-    fever: boolean;
-    respiratory_rate: number;
-    spO2: number;
-  };
-  clinicalPredictionResult?: ClinicalDiagnosisResponse | null;
-  fusionResult?: FusionPredictionResponse | null;
-  multimodalResult?: MultimodalPredictionResponse | null;
-}
+import { 
+  PneumoniaPredictionResponse, 
+  ClinicalDiagnosisResponse, 
+  FusionPredictionResponse, 
+  MultimodalPredictionResponse,
+  DiagnosisFormData
+} from "@/types/diagnosis";
 
 const initialState: DiagnosisFormData = {
   symptoms: {

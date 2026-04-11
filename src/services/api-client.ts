@@ -29,10 +29,13 @@ export const apiClient = async (
   options: ApiOptions = {}
 ) => {
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("token")
-      : null
+  let token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  
+  // Fallback to cookie if localStorage is empty (for session-only auth)
+  if (!token && typeof document !== "undefined") {
+    const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
+    if (match) token = match[2];
+  }
 
   const { withAuth = true, ...fetchOptions } = options
   const isFormData = fetchOptions.body instanceof FormData;
@@ -87,6 +90,11 @@ export const apiClient = async (
              
              isRefreshing = false;
              onRefreshed(newToken);
+
+             // Notify the rest of the app (Redux) about the new token
+             if (typeof window !== "undefined") {
+                 window.dispatchEvent(new CustomEvent('auth:token-refreshed', { detail: { token: newToken } }));
+             }
              
              res = await fetch(`${API_URL}${endpoint}`, {
                  ...fetchOptions,
@@ -107,6 +115,8 @@ export const apiClient = async (
     if (typeof window !== "undefined") {
         localStorage.removeItem("token");
         document.cookie = "token=; Max-Age=0; path=/";
+        // Notify Redux to clear state
+        window.dispatchEvent(new CustomEvent('auth:logout'));
         window.location.href = "/auth/login";
     }
   }

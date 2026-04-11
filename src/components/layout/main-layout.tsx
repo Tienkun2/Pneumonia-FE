@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { useBreadcrumb } from "@/hooks/use-breadcrumb";
-import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function MainLayout({ children }: { readonly children: React.ReactNode }) {
    const breadcrumbs = useBreadcrumb();
@@ -27,13 +27,15 @@ export function MainLayout({ children }: { readonly children: React.ReactNode })
                      return (
                         <li key={item.href} className="flex items-center gap-2">
                            {index > 0 && <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />}
-                           <Link
-                              href={item.href}
-                              className={`text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${isLast ? "text-primary pointer-events-none" : "text-muted-foreground hover:text-primary"}`}
+                           <div
+                              className={cn(
+                                 "text-xs sm:text-sm font-semibold flex items-center gap-1.5 whitespace-nowrap select-none",
+                                 isLast ? "text-primary" : "text-muted-foreground"
+                              )}
                            >
                               {isHome && <Home className="h-3.5 w-3.5 shrink-0" />}
                               {item.label}
-                           </Link>
+                           </div>
                         </li>
                      );
                   })}

@@ -1,6 +1,7 @@
 export interface LoginRequest {
   username: string
   password: string
+  remember?: boolean
 }
 
 export interface LoginResponse {
@@ -14,6 +15,7 @@ export interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  isInfoLoading: boolean
   error: string | null
   user: User | null
   hasFetchedUser: boolean

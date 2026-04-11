@@ -26,3 +26,13 @@ export interface KnowledgeArticle {
   date: string;
   tags: string[];
 }
+
+export * from "./api";
+export * from "./auth";
+export * from "./diagnosis";
+export * from "./menu";
+export * from "./patient";
+export * from "./permission";
+export * from "./role";
+export * from "./user";
+

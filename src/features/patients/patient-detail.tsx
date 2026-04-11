@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchPatientById } from "@/store/slices/patientSlice";
-import { fetchPatientVisits, deleteVisitThunk } from "@/store/slices/visitSlice";
+import { fetchPatientById } from "@/store/slices/patient-slice";
+import { fetchPatientVisits, deleteVisitThunk } from "@/store/slices/visit-slice";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

@@ -41,16 +41,20 @@ export function useBreadcrumb(): BreadcrumbItem[] {
     // Split pathname into segments 
     const pathSegments = asPathWithoutQuery.split("/").filter((v) => v.length > 0);
 
-    // Initial breadcrumb element (Empty for now, will add based on path)
-    const breadcrumbArray: BreadcrumbItem[] = [];
+    // Initial breadcrumb element (Always start with Home)
+    const breadcrumbArray: BreadcrumbItem[] = [
+      { label: "Trang chủ", href: "/dashboard" }
+    ];
 
     if (pathSegments.length === 0) {
-        breadcrumbArray.push({ label: "Trang chủ", href: "/" });
+        return breadcrumbArray;
     }
 
     // Build the path up for each segment
     let currentLink = "";
     pathSegments.forEach((segment) => {
+      if (segment === "dashboard") return;
+      
       currentLink += `/${segment}`;
 
       let label = ROUTE_LABELS[segment] || segment;

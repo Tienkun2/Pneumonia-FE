@@ -34,6 +34,22 @@ export const markOneReadApi = createAsyncThunk(
   }
 );
 
+export const deleteOneApi = createAsyncThunk(
+  "notifications/deleteOneApi",
+  async (id: string, { dispatch }) => {
+    await NotificationService.deleteOne(id);
+    dispatch(fetchUnreadCount());
+    return id;
+  }
+);
+
+export const deleteAllApi = createAsyncThunk(
+  "notifications/deleteAllApi",
+  async () => {
+    await NotificationService.deleteAll();
+  }
+);
+
 // --- Types ---
 export interface NotificationItem extends NotificationDto {
   formattedTime: string;
@@ -79,8 +95,8 @@ const notificationSlice = createSlice({
     },
     markAsRead: (state, action: PayloadAction<string>) => {
       const item = state.items.find(n => n.id === action.payload);
-      if (item && !item.isRead) {
-        item.isRead = true;
+      if (item && !item.read) {
+        item.read = true;
         state.unreadCount = Math.max(0, state.unreadCount - 1);
       }
     },
@@ -111,13 +127,20 @@ const notificationSlice = createSlice({
         state.unreadCount = action.payload;
       })
       .addCase(markAllReadApi.fulfilled, (state) => {
-        state.items.forEach(n => n.isRead = true);
+        state.items.forEach(n => n.read = true);
         state.unreadCount = 0;
       })
       .addCase(markOneReadApi.fulfilled, (state, action) => {
         const item = state.items.find(n => n.id === action.payload);
-        if (item) item.isRead = true;
+        if (item) item.read = true;
         // unreadCount will be refreshed from server via fetchUnreadCount
+      })
+      .addCase(deleteOneApi.fulfilled, (state, action) => {
+        state.items = state.items.filter(n => n.id !== action.payload);
+      })
+      .addCase(deleteAllApi.fulfilled, (state) => {
+        state.items = [];
+        state.unreadCount = 0;
       });
   },
 });

@@ -1,10 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-import diagnosisReducer from "./slices/diagnosisSlice";
-import patientReducer from "./slices/patientSlice";
+import diagnosisReducer from "./slices/diagnosis-slice";
+import patientReducer from "./slices/patient-slice";
 import authReducer from "./slices/auth-slice";
-import userReducer from "./slices/userSlice";
-import roleReducer from "./slices/roleSlice";
-import visitReducer from "./slices/visitSlice";
+import userReducer from "./slices/user-slice";
+import roleReducer from "./slices/role-slice";
+import visitReducer from "./slices/visit-slice";
 import notificationReducer from "./slices/notification-slice";
 
 export const store = configureStore({

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SidebarMenuItem } from "./sidebar-menu-item";
 import { useMenus } from "@/hooks/use-menus";
 import Image from "next/image";
+import Link from "next/link";
 
 const SKELETON_WIDTHS = ["75%", "90%", "65%", "80%", "85%", "70%"];
 
@@ -42,7 +43,7 @@ export function Sidebar({ isCollapsed = false }: { isCollapsed?: boolean }) {
       >
         {/* Logo Header */}
         <div className={cn("flex h-20 shrink-0 items-center border-b border-border/10 justify-center", isCollapsed ? "px-2" : "px-6")}>
-          <div className="flex items-center justify-center w-full group">
+          <Link href="/dashboard" className="flex items-center justify-center w-full group">
             <div className={cn("relative flex items-center justify-center shrink-0 transition-all duration-500 ease-in-out", isCollapsed ? "h-12 w-12" : "h-16 w-full max-w-[180px]")}>
                <Image 
                  src="/images/PlumoX_Logo.png" 
@@ -53,7 +54,7 @@ export function Sidebar({ isCollapsed = false }: { isCollapsed?: boolean }) {
                  priority
                />
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Dynamic Navigation */}

@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchPatients } from "@/store/slices/patientSlice";
-import { fetchPatientVisits } from "@/store/slices/visitSlice";
-
+import { useComparison } from "@/hooks/use-comparison";
+import { getRiskLabel, getRiskColor, getRiskBg } from "@/constants/diagnosis";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -28,83 +25,40 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { formatDate, cn } from "@/lib/utils";
-import { Visit } from "@/types/diagnosis";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
 
-const getVisitRisk = (visit: Visit | undefined) => {
-  const diag = visit?.diagnoses?.[0];
-  if (!diag) return 0;
-  return diag.confidenceScore * 100;
-};
-
-const getRiskLabel = (risk: number) => risk > 70 ? "Cao" : risk > 40 ? "Trung bình" : "Thấp";
-const getRiskColor = (risk: number) => risk > 70 ? "text-red-500" : risk > 40 ? "text-amber-500" : "text-emerald-500";
-const getRiskBg = (risk: number) => risk > 70 ? "bg-red-500/10" : risk > 40 ? "bg-amber-500/10" : "bg-emerald-500/10";
-
 export function ComparisonView() {
-  const dispatch = useAppDispatch();
-  const patients = useAppSelector((state) => state.patient.patients);
-  const { visits, isLoading: isVisitsLoading } = useAppSelector((state) => state.visit);
-
-  const [selectedPatientId, setSelectedPatientId] = useState<string>("");
-  const [comboboxOpen, setComboboxOpen] = useState(false);
-  const [visitAId, setVisitAId] = useState<string>("");
-  const [visitBId, setVisitBId] = useState<string>("");
-  const [isComparing, setIsComparing] = useState(false);
-  const [showHeatmap, setShowHeatmap] = useState(true);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const pageRef = useRef(page);
-  const { totalPages, isLoading: isPatientsLoading } = useAppSelector((state) => state.patient);
-
-  useEffect(() => { pageRef.current = page; }, [page]);
-  useEffect(() => {
-    const t = setTimeout(() => { setDebouncedSearch(search); setPage(1); }, 500);
-    return () => clearTimeout(t);
-  }, [search]);
-  
-  useEffect(() => {
-    dispatch(fetchPatients({ page, size: 10, filters: { search: debouncedSearch } }));
-  }, [dispatch, page, debouncedSearch]);
-
-  useEffect(() => {
-    if (selectedPatientId) {
-      dispatch(fetchPatientVisits(selectedPatientId));
-      setVisitAId(""); setVisitBId(""); setIsComparing(false);
-    }
-  }, [selectedPatientId, dispatch]);
-
-  const visitA = useMemo(() => visits.find((v) => v.id === visitAId), [visits, visitAId]);
-  const visitB = useMemo(() => visits.find((v) => v.id === visitBId), [visits, visitBId]);
-
-  const sortedVisits = useMemo(() => {
-    if (!visitA || !visitB) return { first: visitA, second: visitB };
-    const dateA = new Date(visitA.visitDate).getTime();
-    const dateB = new Date(visitB.visitDate).getTime();
-    return dateA <= dateB ? { first: visitA, second: visitB } : { first: visitB, second: visitA };
-  }, [visitA, visitB]);
-
-  const riskFirst = getVisitRisk(sortedVisits.first);
-  const riskSecond = getVisitRisk(sortedVisits.second);
-  const delta = riskSecond - riskFirst;
-  const improving = delta <= 0;
-
-  const observer = useRef<IntersectionObserver | null>(null);
-  const lastItemRef = useCallback((node: HTMLDivElement | null) => {
-    if (isPatientsLoading) return;
-    if (observer.current) observer.current.disconnect();
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && pageRef.current < totalPages) setPage(prev => prev + 1);
-    });
-    if (node) observer.current.observe(node);
-  }, [isPatientsLoading, totalPages]);
-
-  const selectedPatient = patients.find(p => p.id === selectedPatientId);
-  const canCompare = !!visitAId && !!visitBId;
+  const {
+    patients,
+    visits,
+    isVisitsLoading,
+    selectedPatientId,
+    setSelectedPatientId,
+    comboboxOpen,
+    setComboboxOpen,
+    visitAId,
+    setVisitAId,
+    visitBId,
+    setVisitBId,
+    isComparing,
+    setIsComparing,
+    showHeatmap,
+    setShowHeatmap,
+    search,
+    setSearch,
+    isPatientsLoading,
+    selectedPatient,
+    canCompare,
+    sortedVisits,
+    riskFirst,
+    riskSecond,
+    delta,
+    improving,
+    lastItemRef,
+  } = useComparison();
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-20 animate-in fade-in duration-500">
@@ -158,7 +112,10 @@ export function ComparisonView() {
                           </CommandItem>
                         ))}
                       </CommandGroup>
-                      {!isPatientsLoading && page < totalPages && <div ref={lastItemRef} className="h-4" />}
+                      {/* Using the lastItemRef from our hook for infinite scroll */}
+                      {!isPatientsLoading && (
+                        <div ref={lastItemRef} className="h-4" />
+                      )}
                       {isPatientsLoading && <div className="p-4 text-center text-xs text-muted-foreground italic">Đang tải...</div>}
                     </CommandList>
                   </Command>

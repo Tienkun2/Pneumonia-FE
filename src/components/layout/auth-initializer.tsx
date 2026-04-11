@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { restoreSession, fetchMyInfo, setToken, logout } from "@/store/slices/auth-slice";
 import { useWebSockets } from "@/hooks/use-websockets";
@@ -8,10 +9,19 @@ import { fetchUnreadCount, fetchNotifications } from "@/store/slices/notificatio
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+  const pathname = usePathname();
   const { token, isAuthenticated, user, hasFetchedUser } = useAppSelector((state) => state.auth);
 
   // Real-time Notifications via WebSocket
   useWebSockets();
+
+  // Redirect if already authenticated and on an auth page
+  useEffect(() => {
+    if (isAuthenticated && pathname?.startsWith("/auth") && !pathname?.startsWith("/auth/activate")) {
+       router.push("/dashboard");
+    }
+  }, [isAuthenticated, pathname, router]);
 
   useEffect(() => {
     dispatch(restoreSession());

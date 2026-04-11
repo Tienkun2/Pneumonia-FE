@@ -1,3 +1,5 @@
-export default function KnowledgePagePlaceholder() {
-  return null;
+import { redirect } from "next/navigation";
+
+export default function KnowledgePage() {
+  redirect("/knowledge/library/clinical-data");
 }

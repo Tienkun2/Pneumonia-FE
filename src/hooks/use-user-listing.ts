@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { fetchUsers, deleteUserThunk, updateUserThunk } from "@/store/slices/userSlice";
+import { fetchUsers, deleteUserThunk, updateUserThunk } from "@/store/slices/user-slice";
 import { User, UpdateUserPayload } from "@/types/user";
 import { toast } from "sonner";
 import { USER_STATUS } from "@/constants/user";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
-import { useUserTable } from "@/features/users/user-table/use-user-table";
+import { useUserTable } from "@/hooks/use-user-table";
 
 export function useUserListing() {
   const dispatch = useDispatch<AppDispatch>();
