@@ -23,7 +23,7 @@ interface PermissionTableProps {
 export function PermissionTable({ table, columns, globalFilter, isLoading }: PermissionTableProps) {
   const hasRows = table.getRowModel().rows?.length > 0;
   return (
-    <div className="rounded-[20px] bg-card border border-border/20 shadow-sm flex flex-col overflow-hidden relative">
+    <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 relative">
       {/* Loading bar at the top of the table component */}
       {isLoading && (
         <div className="absolute top-0 left-0 right-0 z-50">

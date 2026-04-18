@@ -2,16 +2,18 @@
 
 import * as React from "react";
 import { useRolePermissions } from "@/hooks/use-role-permissions";
+import { cn } from "@/lib/utils";
+import { FORM_STYLES } from "@/utils/styles";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
-import { 
-  Shield, 
-  Search, 
-  Save, 
-  ArrowLeft, 
-  Loader2,
-  Filter,
+import {
+  Shield,
+  Search,
+  ArrowLeft,
 } from "lucide-react";
+import { AddButton } from "@/components/ui/add-button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -22,6 +24,7 @@ import {
 import { useRouter } from "next/navigation";
 import { PermissionTable } from "./role-table/permission-table";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
+import { AddPermissionDialog } from "./components/add-permission-dialog";
 
 interface RolePermissionViewProps {
   readonly roleName: string;
@@ -32,126 +35,129 @@ export function RolePermissionView({ roleName }: RolePermissionViewProps) {
   const {
     actualRoleName,
     isLoading,
-    isSubmitting,
     roots,
     currentL2Options,
     selectedL1,
     setSelectedL1,
     selectedL2,
     setSelectedL2,
-    checkedPermissions,
     table,
     columns,
     globalFilter,
     setGlobalFilter,
-    handleSave,
+    showAddDialog,
+    setShowAddDialog,
+    displayRows,
+    handleToggle,
   } = useRolePermissions(roleName);
 
   return (
     <div className="space-y-5 pb-6 w-full overflow-x-hidden">
       <PageHeader
-        title={`Thiết lập quyền: ${actualRoleName || "..."}`}
-        subtitle={`Chế độ Lazy Loading: Đang quản lý ${checkedPermissions.length} quyền hạn`}
+        title={`Quản lý quyền của vai trò "${actualRoleName || "..."}"`}
         icon={Shield}
-
       >
-        <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => router.back()} 
-            className="h-9 rounded-xl gap-1.5 border-border/50 bg-card shadow-sm text-[13px] font-semibold text-muted-foreground hover:bg-muted/50 transition-all"
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.back()}
+          className="h-9 rounded-xl gap-1.5 border-border/50 bg-card shadow-sm text-[13px] font-semibold text-muted-foreground hover:bg-muted/50 transition-all"
         >
           <ArrowLeft className="h-4 w-4" /> Quay lại
         </Button>
-        <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSubmitting}
-            className="h-9 rounded-xl gap-1.5 shadow-md shadow-primary/20 text-[13px] font-semibold"
-        >
-            {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Lưu thay đổi
-        </Button>
+        <AddButton
+          label="Chức năng"
+          onClick={() => setShowAddDialog(true)}
+          className="bg-[#2563eb] hover:bg-[#1d4ed8] rounded-full h-9 px-5 shadow-md shadow-blue-500/10 text-white transition-all active:scale-95 text-[13px]"
+        />
       </PageHeader>
 
-      <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
-            <input
-              value={globalFilter}
-              onChange={e => setGlobalFilter(e.target.value)}
-              placeholder="Tìm kiếm chức năng..."
-              className="h-9 w-full rounded-xl border border-border/40 bg-muted/20 pl-9 pr-4 text-[13px] font-medium placeholder:text-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
-            />
+      <div className="bg-card/60 backdrop-blur-xl rounded-2xl shadow-xl shadow-primary/5 border border-border/40 p-6 space-y-6">
+        {/* Filters Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-2.5">
+            <Label className={FORM_STYLES.label}>Nhóm chức năng cấp 1</Label>
+            <Select value={selectedL1} onValueChange={setSelectedL1}>
+              <SelectTrigger className={cn(FORM_STYLES.input, "rounded-xl bg-background border-border/60 font-bold text-foreground transition-all hover:bg-muted/30 h-11")}>
+                <SelectValue placeholder="Chọn nhóm chức năng cấp 1" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-border/60 shadow-2xl">
+                {roots.map(n => (
+                  <SelectItem key={n.name} value={n.name} className="font-semibold">{n.description || n.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center">
-                <div className="h-9 px-3 rounded-l-xl bg-[#eef2ff] border border-r-0 border-primary/20 flex items-center gap-1.5">
-                    <Filter className="h-3.5 w-3.5 text-primary opacity-60" />
-                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.1em] whitespace-nowrap">CẤP 1</span>
-                </div>
-                <Select value={selectedL1} onValueChange={setSelectedL1}>
-                    <SelectTrigger className="h-9 min-w-[180px] rounded-l-none rounded-r-xl bg-white border-primary/20 font-black text-[13px] text-primary focus:ring-0 shadow-sm">
-                        <SelectValue placeholder="Chọn module" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-border/60 shadow-xl">
-                        {roots.map(n => (
-                            <SelectItem key={n.name} value={n.name} className="font-bold">{n.description || n.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="flex items-center">
-                <div className="h-9 px-3 rounded-l-xl bg-[#eef2ff] border border-r-0 border-primary/20 flex items-center gap-1.5">
-                    <Filter className="h-3.5 w-3.5 text-primary opacity-60" />
-                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.1em] whitespace-nowrap">CẤP 2</span>
-                </div>
-                <Select value={selectedL2} onValueChange={setSelectedL2}>
-                    <SelectTrigger className="h-9 min-w-[180px] rounded-l-none rounded-r-xl bg-white border-primary/20 font-black text-[13px] text-primary focus:ring-0 shadow-sm">
-                        <SelectValue placeholder="Chọn nhóm" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-border/60 shadow-xl">
-                        {currentL2Options.map(n => (
-                            <SelectItem key={n.name} value={n.name} className="font-bold">{n.description || n.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-          </div>
-
-          <div className="ml-auto hidden lg:block">
-              <DataTableViewOptions
-                  table={table}
-                  columnLabels={{
-                      STT: "STT",
-                      description: "Chức năng",
-                      status: "Trạng thái",
-                      view: "Xem",
-                      create: "Thêm",
-                      update: "Sửa",
-                      delete: "Xóa",
-                  }}
-              />
+          <div className="space-y-2.5">
+            <Label className={FORM_STYLES.label}>Nhóm chức năng cấp 2</Label>
+            <Select value={selectedL2} onValueChange={setSelectedL2}>
+              <SelectTrigger className={cn(FORM_STYLES.input, "rounded-xl bg-background border-border/60 font-bold text-foreground transition-all hover:bg-muted/30 h-11")}>
+                <SelectValue placeholder="Chọn nhóm chức năng cấp 2" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-border/60 shadow-2xl">
+                {currentL2Options.map(n => (
+                  <SelectItem key={n.name} value={n.name} className="font-semibold">{n.description || n.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
+        {/* Search and Options Row */}
+        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-border/20">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none z-10" />
+            <Input
+              value={globalFilter}
+              onChange={e => setGlobalFilter(e.target.value)}
+              placeholder="Tìm kiếm nhanh chức năng..."
+              className={cn(FORM_STYLES.input, "rounded-xl border-border/40 bg-muted/10 pl-9 pr-4 font-medium transition-all focus:ring-primary/10")}
+            />
+          </div>
 
+          <div className="ml-auto flex items-center gap-4">
+            <DataTableViewOptions
+              table={table}
+              columnLabels={{
+                STT: "STT",
+                description: "Chức năng",
+                assign: "Chọn",
+                view: "Xem",
+                create: "Tạo",
+                update: "Sửa",
+                delete: "Xóa",
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="relative">
-        <PermissionTable table={table} columns={columns} globalFilter={globalFilter || ""} />
-        {isLoading && (
-            <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center rounded-2xl z-10">
-                <div className="bg-white p-4 rounded-2xl shadow-2xl border border-border/40 flex items-center gap-3">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    <span className="text-[13px] font-bold text-muted-foreground">Đang đồng bộ dữ liệu...</span>
-                </div>
-            </div>
-        )}
+        <PermissionTable
+          table={table}
+          columns={columns}
+          globalFilter={globalFilter || ""}
+          isLoading={isLoading}
+        />
       </div>
+
+      {/* Add Permission Dialog */}
+      <AddPermissionDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        roleName={actualRoleName}
+        roots={roots}
+        currentL2Options={currentL2Options}
+        selectedL1={selectedL1}
+        setSelectedL1={setSelectedL1}
+        selectedL2={selectedL2}
+        setSelectedL2={setSelectedL2}
+        data={displayRows}
+        onToggle={(name, ck) => handleToggle(name, ck, selectedL2)}
+        onSave={() => setShowAddDialog(false)}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

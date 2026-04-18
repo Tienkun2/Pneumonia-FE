@@ -9,8 +9,8 @@ import { PatientDialogs } from "./components/patient-dialogs";
 import { usePatientTable } from "@/hooks/use-patient-table";
 import { PatientTable } from "./patient-table/patient-table";
 import { Button } from "@/components/ui/button";
-import { 
-  Loader2, Upload, Download, Users, X, Search, AlertCircle 
+import {
+  Upload, Download, Users, X, Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { Patient } from "@/types/patient";
@@ -31,7 +31,7 @@ export function PatientList() {
     setIsMounted(true);
   }, []);
 
-  const { patients, isLoading, error, totalElements, totalPages } = useSelector((state: RootState) => state.patient);
+  const { patients, isLoading, totalElements, totalPages } = useSelector((state: RootState) => state.patient);
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -143,7 +143,7 @@ export function PatientList() {
       </PageHeader>
 
       {/* ── Toolbar (Search + Filters) ─────────────── */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">
+      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 p-4">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -193,19 +193,12 @@ export function PatientList() {
       </div>
 
       {/* ── Table ─────────────────────────────────── */}
-      {isLoading && patients.length === 0 ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-[13px] font-semibold text-muted-foreground">Đang tải dữ liệu bệnh nhân...</p>
-        </div>
-      ) : error && !patients.length ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-3">
-          <AlertCircle className="h-10 w-10 text-destructive" />
-          <p className="text-[13px] font-semibold text-destructive">{error}</p>
-        </div>
-      ) : (
-        <PatientTable table={table} columns={columns} globalFilter={globalFilter} />
-      )}
+      <PatientTable 
+        table={table} 
+        columns={columns} 
+        globalFilter={globalFilter} 
+        isLoading={isLoading} 
+      />
 
       {/* ── Dialogs ──────────────────────────────── */}
       <PatientDialogs

@@ -3,7 +3,7 @@
 import { useUserListing } from "@/hooks/use-user-listing";
 import { UserDialogs } from "./components/user-dialogs";
 import { UserTable } from "./user-table/user-table";
-import { Loader2, Search, Upload, Download, X, Users, AlertCircle } from "lucide-react";
+import { Search, Upload, Download, X, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
@@ -144,21 +144,12 @@ export function UserListingContentInner() {
 
       </div>
 
-      {isLoading && users.length === 0 ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-[13px] font-semibold text-muted-foreground">
-            Đang tải danh sách tài khoản...
-          </p>
-        </div>
-      ) : users.length === 0 && !isLoading ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-3">
-          <AlertCircle className="h-10 w-10 text-destructive" />
-          <p className="text-[13px] font-semibold text-destructive">Không tìm thấy dữ liệu tài khoản.</p>
-        </div>
-      ) : (
-        <UserTable table={table} columns={columns} globalFilter={globalFilter} />
-      )}
+      <UserTable 
+        table={table} 
+        columns={columns} 
+        globalFilter={globalFilter} 
+        isLoading={isLoading} 
+      />
 
       <UserDialogs
         showFormDialog={showFormDialog}

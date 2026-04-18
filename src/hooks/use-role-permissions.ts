@@ -12,7 +12,7 @@ export function useRolePermissions(roleName: string) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Data hierarchy state
   const [roots, setRoots] = useState<PermissionTreeNode[]>([]);
   const [l2Cache, setL2Cache] = useState<Record<string, PermissionTreeNode[]>>({});
@@ -22,6 +22,7 @@ export function useRolePermissions(roleName: string) {
   const [selectedL1, setSelectedL1] = useState<string>("");
   const [selectedL2, setSelectedL2] = useState<string>("");
   const [checkedPermissions, setCheckedPermissions] = useState<string[]>([]);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const actualRoleName = useMemo(() => decodeURIComponent(roleName || ""), [roleName]);
 
@@ -31,17 +32,17 @@ export function useRolePermissions(roleName: string) {
       setIsLoading(true);
       const rootNodes = await PermissionService.getRoots(actualRoleName);
       setRoots(rootNodes);
-      
+
       const fullTree = await PermissionService.getPermissionTree(actualRoleName);
-      const extractChecked = (nodes: PermissionTreeNode[]): string[] => {
+      const extractCheckedFromTree = (nodes: PermissionTreeNode[]): string[] => {
         let checked: string[] = [];
         nodes.forEach(n => {
-           if (n.isChecked) checked.push(n.name);
-           if (n.children) checked = [...checked, ...extractChecked(n.children)];
+          if (n.isChecked) checked.push(n.name);
+          if (n.children) checked = [...checked, ...extractCheckedFromTree(n.children)];
         });
         return checked;
       };
-      setCheckedPermissions(extractChecked(fullTree));
+      setCheckedPermissions(extractCheckedFromTree(fullTree));
 
       if (rootNodes.length > 0) {
         setSelectedL1(rootNodes[0].name);
@@ -61,21 +62,21 @@ export function useRolePermissions(roleName: string) {
   useEffect(() => {
     if (!selectedL1) return;
     if (l2Cache[selectedL1]) {
-        const cached = l2Cache[selectedL1];
-        if (cached.length > 0) setSelectedL2(cached[0].name);
-        else setSelectedL2("");
-        return;
+      const cached = l2Cache[selectedL1];
+      if (cached.length > 0) setSelectedL2(cached[0].name);
+      else setSelectedL2("");
+      return;
     }
 
     const fetchL2 = async () => {
-        try {
-            const children = await PermissionService.getChildren(selectedL1, actualRoleName);
-            setL2Cache(prev => ({ ...prev, [selectedL1]: children }));
-            if (children.length > 0) setSelectedL2(children[0].name);
-            else setSelectedL2("");
-        } catch (error: unknown) {
-            toast.error("Lỗi khi tải nhóm chức năng");
-        }
+      try {
+        const children = await PermissionService.getChildren(selectedL1, actualRoleName);
+        setL2Cache(prev => ({ ...prev, [selectedL1]: children }));
+        if (children.length > 0) setSelectedL2(children[0].name);
+        else setSelectedL2("");
+      } catch (error: unknown) {
+        toast.error("Lỗi khi tải nhóm chức năng");
+      }
     };
     fetchL2();
   }, [selectedL1, actualRoleName, l2Cache]);
@@ -83,65 +84,102 @@ export function useRolePermissions(roleName: string) {
   // Step 3: Fetch Detailed Permissions (Table Rows) when L2 changes
   useEffect(() => {
     if (!selectedL2) return;
-    if (rowCache[selectedL2]) return;
+    if (rowCache[selectedL2]) {
+      // We still need to mark it as loading to show progress bar if needed
+      return;
+    };
 
     const fetchRows = async () => {
-        try {
-            setIsLoading(true);
-            const children = await PermissionService.getChildren(selectedL2, actualRoleName);
-            setRowCache(prev => ({ ...prev, [selectedL2]: children }));
-        } catch (error: unknown) {
-            toast.error("Lỗi khi tải chi tiết chức năng");
-        } finally {
-            setIsLoading(false);
-        }
+      try {
+        setIsLoading(true);
+        const children = await PermissionService.getChildren(selectedL2, actualRoleName);
+        setRowCache(prev => ({ ...prev, [selectedL2]: children }));
+      } catch (error: unknown) {
+        toast.error("Lỗi khi tải chi tiết chức năng");
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchRows();
   }, [selectedL2, actualRoleName, rowCache]);
 
-  const handleToggle = useCallback((name: string, checked: boolean) => {
-    setCheckedPermissions(prev => {
-        const next = new Set(prev);
-        if (checked) next.add(name);
-        else next.delete(name);
-        return Array.from(next);
-    });
+  const handleToggle = useCallback((name: string, checked: boolean, currentL2: string) => {
+    const updateRecursive = (nodes: PermissionTreeNode[], target: string, ck: boolean, forceChildren: boolean = false): PermissionTreeNode[] => {
+      return nodes.map(n => {
+        let isChecked = n.isChecked;
+        let children = n.children;
 
-    const updateCheckedInCache = (nodes: PermissionTreeNode[], target: string, ck: boolean): PermissionTreeNode[] => {
-        return nodes.map(n => {
-            if (n.name === target) return { ...n, isChecked: ck };
-            if (n.children) return { ...n, children: updateCheckedInCache(n.children, target, ck) };
-            return n;
-        });
+        if (n.name === target || forceChildren) {
+          isChecked = ck;
+          if (n.children) {
+            children = updateRecursive(n.children, target, ck, true);
+          }
+        } else if (n.children) {
+          children = updateRecursive(n.children, target, ck, false);
+        }
+
+        return { ...n, isChecked, children };
+      });
     };
 
-    if (rowCache[selectedL2]) {
-        setRowCache(prev => ({
-            ...prev,
-            [selectedL2]: updateCheckedInCache(prev[selectedL2], name, checked)
-        }));
-    }
-  }, [selectedL2, rowCache]);
+    if (rowCache[currentL2]) {
+      const updatedRows = updateRecursive(rowCache[currentL2], name, checked);
+      setRowCache(prev => ({ ...prev, [currentL2]: updatedRows }));
 
-  const displayRows = useMemo(() => rowCache[selectedL2] || [], [rowCache, selectedL2]);
+      const getAllCheckedNames = (nodes: PermissionTreeNode[]): string[] => {
+        let chk: string[] = [];
+        nodes.forEach(n => {
+          if (n.isChecked) chk.push(n.name);
+          if (n.children) chk = [...chk, ...getAllCheckedNames(n.children)];
+        });
+        return chk;
+      };
+
+      setCheckedPermissions(prev => {
+        const namesInCurrentView = new Set<string>();
+        const findNames = (nodes: PermissionTreeNode[]) => nodes.forEach(n => {
+          namesInCurrentView.add(n.name);
+          if (n.children) findNames(n.children);
+        });
+        findNames(rowCache[currentL2]);
+
+        const filteredPrev = prev.filter(p => !namesInCurrentView.has(p));
+        const newlyChecked = getAllCheckedNames(updatedRows);
+        return Array.from(new Set([...filteredPrev, ...newlyChecked]));
+      });
+    }
+  }, [rowCache]);
+
+  const displayRows = useMemo(() => {
+    const rows = rowCache[selectedL2] || [];
+    // Sync isChecked with global state checkedPermissions
+    const syncWithChecked = (nodes: PermissionTreeNode[]): PermissionTreeNode[] => {
+      return nodes.map(n => ({
+        ...n,
+        isChecked: checkedPermissions.includes(n.name),
+        children: n.children ? syncWithChecked(n.children) : undefined
+      }));
+    };
+    return syncWithChecked(rows);
+  }, [rowCache, selectedL2, checkedPermissions]);
+
   const currentL2Options = useMemo(() => l2Cache[selectedL1] || [], [l2Cache, selectedL1]);
 
   const {
-      table,
-      columns,
-      globalFilter,
-      setGlobalFilter,
-      columnFilters,
+    table,
+    columns,
+    globalFilter,
+    setGlobalFilter,
   } = usePermissionTable({
-      data: displayRows,
-      onToggle: handleToggle,
+    data: displayRows,
+    onToggle: (name, ck) => handleToggle(name, ck, selectedL2),
   });
 
   const handleSave = async () => {
     try {
       setIsSubmitting(true);
       await RoleService.updateRole(actualRoleName, {
-        description: "", 
+        description: "",
         permissions: checkedPermissions
       });
       toast.success("Cập nhật quyền hạn thành công");
@@ -168,7 +206,10 @@ export function useRolePermissions(roleName: string) {
     columns,
     globalFilter,
     setGlobalFilter,
-    columnFilters,
+    showAddDialog,
+    setShowAddDialog,
+    displayRows,
+    handleToggle,
     handleSave,
   };
 }

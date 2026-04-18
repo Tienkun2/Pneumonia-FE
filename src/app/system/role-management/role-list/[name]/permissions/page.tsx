@@ -1,13 +1,14 @@
 import { RolePermissionView } from "@/features/roles/role-permission-view";
 
 interface RolePermissionsPageProps {
-  params: {
+  params: Promise<{
     name: string;
-  };
+  }>;
 }
 
-export default function RolePermissionsPage({ params }: RolePermissionsPageProps) {
-  const roleName = decodeURIComponent(params.name);
+export default async function RolePermissionsPage({ params }: RolePermissionsPageProps) {
+  const resolvedParams = await params;
+  const roleName = decodeURIComponent(resolvedParams.name);
   
   return <RolePermissionView roleName={roleName} />;
 }

@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Shield, 
   Search, 
-  Loader2,
   X
 } from "lucide-react";
 import { RoleDialogs } from "./components/role-dialogs";
@@ -23,7 +22,6 @@ import { ROLE_COLUMN_LABELS } from "@/constants/role";
 
 export function RoleList() {
   const {
-    roles,
     isLoading,
     isSubmitting,
     table,
@@ -56,7 +54,7 @@ export function RoleList() {
         />
       </PageHeader>
 
-      <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">
+      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none opacity-50" />
@@ -106,14 +104,12 @@ export function RoleList() {
 
       </div>
 
-      {isLoading && roles.length === 0 ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" />
-          <p className="text-[13px] font-bold text-muted-foreground opacity-40">Đang tải danh sách vai trò...</p>
-        </div>
-      ) : (
-        <RoleTable table={table} columns={columns} globalFilter={globalFilter || ""} />
-      )}
+      <RoleTable 
+        table={table} 
+        columns={columns} 
+        globalFilter={globalFilter || ""} 
+        isLoading={isLoading} 
+      />
 
       <RoleDialogs
         showFormDialog={showFormDialog}

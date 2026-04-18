@@ -8,7 +8,7 @@ import { fetchPatients } from "@/store/slices/patient-slice";
 import { ResultTable } from "./result-table/result-table";
 import { useResultTable } from "./result-table/use-result-table";
 
-import { Loader2, History, Search, FileText, X } from "lucide-react";
+import { History, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
@@ -62,7 +62,7 @@ export function ResultsList() {
       />
 
       {/* ── Toolbar ──────────────────────────────────── */}
-      <div className="rounded-[20px] bg-card shadow-sm flex flex-col overflow-hidden border border-border/20 p-4">
+      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none opacity-50" />
@@ -117,24 +117,12 @@ export function ResultsList() {
       </div>
 
       {/* ── Table ───────────────────────────────────── */}
-      {isLoading && visits.length === 0 ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-[13px] font-semibold text-muted-foreground">Đang tải lịch sử chẩn đoán...</p>
-        </div>
-      ) : visits.length === 0 && !isLoading ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-            <FileText className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <div className="text-center">
-            <p className="text-[15px] font-bold text-foreground">Chưa có lịch sử chẩn đoán</p>
-            <p className="text-[13px] font-medium text-muted-foreground mt-1">Thực hiện chẩn đoán để xem kết quả ở đây</p>
-          </div>
-        </div>
-      ) : (
-        <ResultTable table={table} columns={table.getAllColumns()} globalFilter={globalFilter} />
-      )}
+      <ResultTable 
+        table={table} 
+        columns={table.getAllColumns()} 
+        globalFilter={globalFilter} 
+        isLoading={isLoading} 
+      />
     </div>
   );
 }

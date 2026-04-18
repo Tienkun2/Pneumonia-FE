@@ -56,7 +56,7 @@ export function PermissionList() {
         />
       </PageHeader>
 
-      <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-4 flex items-center justify-between">
+      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 border border-border/40 p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
             <div 
               className="h-8 w-8 rounded-lg bg-muted/40 flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors"
@@ -90,7 +90,7 @@ export function PermissionList() {
         </div>
       </div>
 
-      <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
+      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 border border-border/40 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none opacity-50" />
