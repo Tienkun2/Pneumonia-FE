@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
 
 interface PatientFormDialogProps {
   open: boolean;
@@ -62,27 +63,15 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
 
   useEffect(() => {
     if (open) {
-      if (patient) {
-        form.reset({
-          code: patient.code,
-          fullName: patient.fullName,
-          dateOfBirth: patient.dateOfBirth?.split("T")[0] || "",
-          gender: patient.gender,
-          guardianName: patient.guardianName || "",
-          phone: patient.phone || "",
-          address: patient.address || "",
-        });
-      } else {
-        form.reset({
-          code: "",
-          fullName: "",
-          dateOfBirth: "",
-          gender: "MALE",
-          guardianName: "",
-          phone: "",
-          address: "",
-        });
-      }
+      form.reset({
+        code: patient?.code ?? "",
+        fullName: patient?.fullName ?? "",
+        dateOfBirth: patient?.dateOfBirth?.split("T")[0] ?? "",
+        gender: patient?.gender ?? "MALE",
+        guardianName: patient?.guardianName ?? "",
+        phone: patient?.phone ?? "",
+        address: patient?.address ?? "",
+      });
     }
   }, [open, patient, form]);
 
@@ -98,18 +87,14 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
       };
 
       if (patient) {
-        // Update
         const updatePayload: Partial<PatientFormValues> = { ...payload };
-        delete updatePayload.code; // Don't update code
-
+        delete updatePayload.code;
         await dispatch(updatePatientThunk({ id: patient.id, payload: updatePayload })).unwrap();
         toast.success("Cập nhật bệnh nhân thành công!");
       } else {
-        // Create
         await dispatch(createPatientThunk(payload)).unwrap();
         toast.success("Thêm bệnh nhân thành công!");
       }
-
       onOpenChange(false);
       onSuccess?.();
     } catch (error: unknown) {
@@ -126,29 +111,35 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-8 border-b border-border/40 bg-muted/10 text-left">
-          <DialogTitle className="text-lg font-black uppercase tracking-tight">
+      <DialogContent className={MODAL_STYLES.contentWide}>
+        <DialogHeader className={MODAL_STYLES.header}>
+          <DialogTitle className={MODAL_STYLES.title}>
             {patient ? "Cập nhật hồ sơ" : "Thêm bệnh nhân mới"}
           </DialogTitle>
-          <DialogDescription className="font-medium text-[13px]">
+          <DialogDescription className={MODAL_STYLES.description}>
             {patient ? "Chỉnh sửa thông tin bệnh nhân." : "Nhập thông tin cơ bản của bệnh nhân."}
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-8 bg-background max-h-[70vh] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-5">
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.bodyWithScroll}>
+            {/* Row 1: Mã BN + Họ tên */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
-                        Mã bệnh nhân <span className="text-destructive">*</span>
+                    <FormLabel className={FORM_STYLES.label}>
+                      Mã bệnh nhân <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="BN-001" {...field} disabled={!!patient} className="h-11 rounded-xl border-border/50 font-bold focus:ring-primary/20 text-[13px]" />
+                      <Input
+                        placeholder="BN-001"
+                        {...field}
+                        disabled={!!patient}
+                        className={FORM_STYLES.inputBold}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -160,25 +151,32 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
-                        Họ và tên <span className="text-destructive">*</span>
+                    <FormLabel className={FORM_STYLES.label}>
+                      Họ và tên <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Nguyễn Văn A" {...field} className="h-11 rounded-xl border-border/50 font-bold focus:ring-primary/20 text-[13px]" />
+                      <Input
+                        placeholder="Nguyễn Văn A"
+                        {...field}
+                        className={FORM_STYLES.inputBold}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
 
+            {/* Row 2: Ngày sinh + Giới tính */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">Ngày sinh</FormLabel>
+                    <FormLabel className={FORM_STYLES.label}>Ngày sinh</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} className="h-11 rounded-xl border-border/50 font-medium focus:ring-primary/20 text-[13px]" />
+                      <Input type="date" {...field} className={FORM_STYLES.input} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -190,12 +188,12 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
-                        Giới tính <span className="text-destructive">*</span>
+                    <FormLabel className={FORM_STYLES.label}>
+                      Giới tính <span className="text-destructive">*</span>
                     </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl border-border/50 font-medium focus:ring-primary/20 text-[13px]">
+                        <SelectTrigger className={FORM_STYLES.input}>
                           <SelectValue placeholder="Chọn giới tính" />
                         </SelectTrigger>
                       </FormControl>
@@ -209,15 +207,22 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                   </FormItem>
                 )}
               />
+            </div>
 
+            {/* Row 3: Người giám hộ + SĐT */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="guardianName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">Tên người giám hộ</FormLabel>
+                    <FormLabel className={FORM_STYLES.label}>Tên người giám hộ</FormLabel>
                     <FormControl>
-                      <Input placeholder="Trần Thị B" {...field} className="h-11 rounded-xl border-border/50 font-medium focus:ring-primary/20 text-[13px]" />
+                      <Input
+                        placeholder="Trần Thị B"
+                        {...field}
+                        className={FORM_STYLES.input}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -229,9 +234,13 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">Số điện thoại</FormLabel>
+                    <FormLabel className={FORM_STYLES.label}>Số điện thoại</FormLabel>
                     <FormControl>
-                      <PhoneInput placeholder="0987xxx..." {...field} defaultCountry="VN" />
+                      <PhoneInput
+                        placeholder="0987xxx..."
+                        {...field}
+                        defaultCountry="VN"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -239,26 +248,36 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
               />
             </div>
 
+            {/* Row 4: Địa chỉ (full width) */}
             <FormField
               control={form.control}
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">Địa chỉ</FormLabel>
+                  <FormLabel className={FORM_STYLES.label}>Địa chỉ</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nhập địa chỉ..." {...field} className="h-11 rounded-xl border-border/50 font-medium focus:ring-primary/20 text-[13px]" />
+                    <Input
+                      placeholder="Nhập địa chỉ..."
+                      {...field}
+                      className={FORM_STYLES.input}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="flex justify-end gap-3 pt-6 border-t border-border/40 bg-muted/5 -mx-8 -mb-8 p-8">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-10 rounded-xl font-bold flex-1 border-border/50 text-[13px]">
+            <div className={MODAL_STYLES.footer + " -mx-6 -mb-5 mt-1"}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className={FORM_STYLES.buttonSecondary}
+              >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSaving} className="h-10 rounded-xl font-bold flex-1 bg-primary text-white shadow-lg shadow-primary/20 text-[13px]">
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving} className={FORM_STYLES.buttonPrimary}>
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isSaving ? "Đang lưu..." : patient ? "Cập nhật" : "Thêm bệnh nhân"}
               </Button>
             </div>

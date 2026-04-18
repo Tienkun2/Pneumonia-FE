@@ -30,6 +30,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 
 
+import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
+
 interface UserRoleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -91,24 +93,24 @@ export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Readonly
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
-        <DialogHeader>
-          <DialogTitle>Phân quyền người dùng</DialogTitle>
-          <DialogDescription>
-            {user ? `Chọn các quyền bảo mật cho tài khoản ${user.username}.` : "Đang tải dữ liệu..."}
+      <DialogContent className={MODAL_STYLES.content}>
+        <DialogHeader className={MODAL_STYLES.header}>
+          <DialogTitle className={MODAL_STYLES.title}>Phân quyền người dùng</DialogTitle>
+          <DialogDescription className={MODAL_STYLES.description}>
+            {user ? `Chọn các vai trò cho tài khoản ${user.username}.` : "Đang tải dữ liệu..."}
           </DialogDescription>
         </DialogHeader>
 
         {rolesLoading ? (
-            <div className="flex justify-center p-4"><Loader2 className="animate-spin text-gray-400" /></div>
+            <div className="flex justify-center p-12"><Loader2 className="animate-spin text-primary h-8 w-8" /></div>
         ) : (
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body}>
                 <FormField
                 control={form.control}
                 name="roles"
                 render={() => (
-                    <FormItem>
+                    <FormItem className="space-y-3">
                     {apiRoles.map((role) => (
                         <FormField
                         key={role.name}
@@ -118,7 +120,7 @@ export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Readonly
                             return (
                             <FormItem
                                 key={role.name}
-                                className="flex flex-row items-start space-x-3 space-y-0 py-2 border-b border-gray-50 last:border-0"
+                              className="flex flex-row items-start space-x-3 space-y-0 py-3 border-b border-border last:border-0"
                             >
                                 <FormControl>
                                 <Checkbox
@@ -133,13 +135,14 @@ export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Readonly
                                             )
                                         )
                                     }}
+                                    className="h-5 w-5 rounded-md border-border/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                                 />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">
-                                    <FormLabel className="font-medium">
+                                    <FormLabel className="font-bold text-[13px] text-foreground">
                                         {role.name}
                                     </FormLabel>
-                                    <p className="text-sm border-l-2 pl-2 text-muted-foreground">
+                                    <p className="text-[12px] text-muted-foreground line-clamp-1">
                                         {role.description}
                                     </p>
                                 </div>
@@ -153,14 +156,14 @@ export function UserRoleDialog({ open, onOpenChange, user, onSuccess }: Readonly
                 )}
                 />
 
-                <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <div className={MODAL_STYLES.footer + " -mx-6 -mb-5 mt-1"}>
+                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className={FORM_STYLES.buttonSecondary}>
                     Hủy
-                </Button>
-                <Button type="submit" disabled={isSaving}>
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {isSaving ? "Đang lưu..." : "Lưu phân quyền"}
-                </Button>
+                  </Button>
+                  <Button type="submit" disabled={isSaving} className={FORM_STYLES.buttonPrimary}>
+                      {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isSaving ? "Đang lưu..." : "Lưu phân quyền"}
+                  </Button>
                 </div>
             </form>
             </Form>

@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { PermissionTreeNode } from "@/types/permission";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trash2, ChevronRight, MoreVertical } from "lucide-react";
 import {
@@ -19,6 +18,7 @@ import {
 
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
+import { getBadgeClass } from "@/utils/styles";
 
 interface UsePermissionTableProps {
   data: PermissionTreeNode[];
@@ -54,7 +54,7 @@ export function usePermissionTable({
     {
       id: "level",
       header: "Cấp độ",
-      cell: () => <span className="font-bold text-primary">Cấp {currentLevel}</span>
+      cell: () => <span className={getBadgeClass("secondary")}>Cấp {currentLevel}</span>
     },
     {
       accessorKey: "createdAt",
@@ -98,9 +98,9 @@ export function usePermissionTable({
       cell: ({ row }) => {
         const status = row.original.status || "active";
         return (
-          <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-none font-bold text-[11px] rounded-full">
+          <span className={getBadgeClass(status === "active" ? "success" : "destructive")}>
             {status === "active" ? "Đang hoạt động" : "Ngừng hoạt động"}
-          </Badge>
+          </span>
         );
       },
     },
@@ -125,16 +125,17 @@ export function usePermissionTable({
             <div className="w-px h-4 bg-border/40 mx-1" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 opacity-40 hover:opacity-100 hover:bg-muted/60 rounded-lg transition-all">
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted/60 rounded-lg">
+                  <span className="sr-only">Mở menu thao tác</span>
                   <MoreVertical className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border w-[180px]">
+              <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border">
                 <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => onDeleteClick(permission.name)}
-                  className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-destructive/10 focus:text-destructive text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                   <span>Xóa quyền</span>

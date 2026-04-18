@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { User } from "@/types/user";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Settings, Power, MoreVertical } from "lucide-react";
 import {
@@ -18,6 +17,7 @@ import {
 import { USER_STATUS } from "@/constants/user";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
+import { getBadgeClass } from "@/utils/styles";
 
 interface UseUserTableProps {
   data: User[];
@@ -84,12 +84,12 @@ export function useUserTable({
       cell: ({ row }) => {
         const status = row.original.status;
         if (status === USER_STATUS.ACTIVE) {
-          return <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0 pointer-events-none shadow-none font-bold">Đang hoạt động</Badge>;
+          return <span className={getBadgeClass("success")}>Đang hoạt động</span>;
         }
         if (status === USER_STATUS.INACTIVE) {
-          return <Badge className="bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 border-0 pointer-events-none shadow-none font-bold">Ngừng hoạt động</Badge>;
+          return <span className={getBadgeClass("destructive")}>Ngừng hoạt động</span>;
         }
-        return <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-0 pointer-events-none shadow-none font-bold">Chờ kích hoạt</Badge>;
+        return <span className={getBadgeClass("warning")}>Chờ kích hoạt</span>;
       },
     },
     {

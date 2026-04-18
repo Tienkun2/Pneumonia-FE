@@ -10,6 +10,7 @@ export interface BreadcrumbItem {
 
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Trang chủ",
+  profile: "Thông tin cá nhân",
   system: "Quản lý hệ thống",
   "user-management": "Quản trị nhân sự",
   "user-list": "Danh sách người dùng",

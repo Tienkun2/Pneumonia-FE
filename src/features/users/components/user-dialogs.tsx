@@ -5,7 +5,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -67,34 +66,36 @@ export function UserDialogs({
         open={!!statusUserToToggle}
         onOpenChange={(open) => !open && setStatusUserToToggle(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl text-center p-8">
-          <DialogHeader className="mb-4">
-            <div className="mx-auto w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-2">
-              <AlertCircle className="h-6 w-6 text-amber-500" />
+        <DialogContent className="max-w-sm rounded-[24px] overflow-hidden border-none shadow-2xl p-0">
+          <div className="p-8 text-center bg-background">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4">
+              <AlertCircle className="h-8 w-8 text-amber-500" />
             </div>
-            <DialogTitle className="text-center font-black uppercase text-lg tracking-tight">Xác nhận thay đổi</DialogTitle>
-            <DialogDescription className="text-center font-medium opacity-70">
-              Bạn có chắc chắn muốn {statusUserToToggle?.status === "ACTIVE" ? "khóa" : "kích hoạt"} tài khoản{" "}
-              <strong className="text-foreground">{statusUserToToggle?.username}</strong> không?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-col gap-2">
-            <Button
-              className="h-11 rounded-xl w-full font-black uppercase text-[11px] tracking-widest shadow-lg shadow-primary/20"
-              onClick={onConfirmToggleStatus}
-              disabled={isTogglingStatus}
-            >
-              {isTogglingStatus ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Xác nhận
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 rounded-xl w-full font-black uppercase text-[11px] tracking-widest"
-              onClick={() => setStatusUserToToggle(null)}
-            >
-                Hủy bỏ
-            </Button>
-          </DialogFooter>
+            <DialogHeader className="p-0 mb-6">
+              <DialogTitle className="text-center font-black uppercase text-xl tracking-tight">Xác nhận thay đổi</DialogTitle>
+              <DialogDescription className="text-center font-medium text-[13px] opacity-70 mt-2">
+                Bạn có chắc chắn muốn {statusUserToToggle?.status === "ACTIVE" ? "khóa" : "kích hoạt"} tài khoản{" "}
+                <strong className="text-foreground">{statusUserToToggle?.username}</strong> không?
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3">
+              <Button
+                className="h-12 rounded-xl w-full font-bold text-[13px] shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-all active:scale-[0.98]"
+                onClick={onConfirmToggleStatus}
+                disabled={isTogglingStatus}
+              >
+                {isTogglingStatus ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Tiếp tục
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12 rounded-xl w-full font-bold text-[13px] border-border/50 transition-all active:scale-[0.98]"
+                onClick={() => setStatusUserToToggle(null)}
+              >
+                  Hủy bỏ
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -102,32 +103,34 @@ export function UserDialogs({
         open={!!userToDelete}
         onOpenChange={(open) => !open && setUserToDelete(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl text-center p-8">
-            <DialogHeader className="mb-4">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2 animate-pulse">
-                <AlertCircle className="h-7 w-7 text-destructive" />
+        <DialogContent className="max-w-sm rounded-[24px] overflow-hidden border-none shadow-2xl p-0">
+          <div className="p-8 text-center bg-background">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4 animate-pulse">
+                <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
-            <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
-            <DialogDescription className="text-center font-medium opacity-70">
-                Tài khoản <strong className="text-foreground">{userToDelete?.username}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.
-            </DialogDescription>
+            <DialogHeader className="p-0 mb-6">
+              <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
+              <DialogDescription className="text-center font-medium text-[13px] opacity-70 mt-2">
+                  Tài khoản <strong className="text-foreground">{userToDelete?.username}</strong> sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.
+              </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex flex-col gap-2">
-            <Button
-                variant="destructive"
-                className="h-12 rounded-xl w-full font-black uppercase text-[12px] tracking-widest shadow-xl shadow-destructive/20 active:scale-[0.98]"
-                onClick={onConfirmDelete}
-            >
-                Tôi chắc chắn, hãy xóa ngay
-            </Button>
-            <Button
-                variant="outline"
-                className="h-12 rounded-xl w-full font-black uppercase text-[12px] tracking-widest"
-                onClick={() => setUserToDelete(null)}
-            >
-                Quay lại
-            </Button>
-            </DialogFooter>
+            <div className="flex flex-col gap-3">
+              <Button
+                  variant="destructive"
+                  className="h-12 rounded-xl w-full font-bold text-[13px] shadow-xl shadow-destructive/20 active:scale-[0.98] transition-all"
+                  onClick={onConfirmDelete}
+              >
+                  Tôi chắc chắn, hãy xóa ngay
+              </Button>
+              <Button
+                  variant="outline"
+                  className="h-12 rounded-xl w-full font-bold text-[13px] border-border/50 active:scale-[0.98] transition-all"
+                  onClick={() => setUserToDelete(null)}
+              >
+                  Quay lại
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

@@ -9,13 +9,13 @@ import { RoleService } from "@/services/role-service";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -25,6 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
 
 interface RoleFormDialogProps {
   open: boolean;
@@ -46,17 +47,10 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
 
   useEffect(() => {
     if (open) {
-      if (role) {
-        form.reset({
-          name: role.name,
-          description: role.description || "",
-        });
-      } else {
-        form.reset({
-          name: "",
-          description: "",
-        });
-      }
+      form.reset({
+        name: role?.name ?? "",
+        description: role?.description ?? "",
+      });
     }
   }, [open, role, form]);
 
@@ -64,21 +58,15 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
     setIsSaving(true);
     try {
       if (role) {
-        // Update
         await RoleService.updateRole(role.name, {
-            description: data.description,
-            permissions: role.permissions?.map(p => p.name) || []
+          description: data.description,
+          permissions: role.permissions?.map((p) => p.name) || [],
         });
         toast.success("Cập nhật vai trò thành công!");
       } else {
-        // Create
-        await RoleService.createRole({
-            ...data,
-            permissions: []
-        });
+        await RoleService.createRole({ ...data, permissions: [] });
         toast.success("Thêm vai trò mới thành công!");
       }
-
       onOpenChange(false);
       onSuccess?.();
     } catch (error: unknown) {
@@ -90,32 +78,29 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-8 border-b border-border/40 bg-muted/10 text-left">
-          <DialogTitle className="text-lg font-black uppercase tracking-tight">
-            {role ? "Cập nhật thông tin" : "Thêm vai trò mới"}
+      <DialogContent className={MODAL_STYLES.content}>
+        <DialogHeader className={MODAL_STYLES.header}>
+          <DialogTitle className={MODAL_STYLES.title}>
+            {role ? "Cập nhật vai trò" : "Thêm vai trò mới"}
           </DialogTitle>
-          <DialogDescription className="font-medium text-[13px]">
-            Chỉnh sửa các thông tin cơ bản của vai trò và mô tả nghiệp vụ.
-          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 p-8 bg-background">
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body}>
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
+                  <FormLabel className={FORM_STYLES.label}>
                     Tên vai trò <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                        placeholder="Ví dụ: ADMIN, DOCTOR..." 
-                        {...field} 
-                        disabled={!!role} 
-                        className="h-11 rounded-xl border-border/50 font-bold focus:ring-primary/20 text-[13px]"
+                    <Input
+                      placeholder="Ví dụ: ADMIN, DOCTOR..."
+                      {...field}
+                      disabled={!!role}
+                      className={FORM_STYLES.inputBold}
                     />
                   </FormControl>
                   <FormMessage />
@@ -128,14 +113,13 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
-                    Mô tả nghiệp vụ
-                  </FormLabel>
+                  <FormLabel className={FORM_STYLES.label}>Mô tả nghiệp vụ</FormLabel>
                   <FormControl>
-                    <Input 
-                        placeholder="Nhập mô tả cho vai trò này..." 
-                        {...field} 
-                        className="h-11 rounded-xl border-border/50 font-medium focus:ring-primary/20 text-[13px]"
+                    <Textarea
+                      placeholder="Nhập mô tả cho vai trò này..."
+                      rows={3}
+                      {...field}
+                      className={FORM_STYLES.input}
                     />
                   </FormControl>
                   <FormMessage />
@@ -143,12 +127,17 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
               )}
             />
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-border/40 bg-muted/5 -mx-8 -mb-8 p-8">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-10 rounded-xl font-bold flex-1 border-border/50 text-[13px]">
+            <div className={MODAL_STYLES.footer + " -mx-6 -mb-5 mt-1"}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className={FORM_STYLES.buttonSecondary}
+              >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSaving} className="h-10 rounded-xl font-bold flex-1 bg-primary text-white shadow-lg shadow-primary/20 text-[13px]">
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isSaving} className={FORM_STYLES.buttonPrimary}>
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isSaving ? "Đang lưu..." : role ? "Cập nhật" : "Tạo mới"}
               </Button>
             </div>

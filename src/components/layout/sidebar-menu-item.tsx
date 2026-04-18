@@ -60,7 +60,7 @@ export function SidebarMenuItem({
           />
           {!isCollapsed && (
             <>
-              <span className="flex-1 text-left text-[14px] truncate">{item.title}</span>
+              <span className="flex-1 text-left text-[14px] whitespace-normal leading-snug pr-2">{item.title}</span>
               <ChevronRight
                 className={cn(
                   "h-4 w-4 shrink-0 transition-transform duration-300 opacity-50",
@@ -119,7 +119,7 @@ export function SidebarMenuItem({
         )}
         {!isCollapsed && (
           <span className={cn(
-            "truncate transition-all",
+            "whitespace-normal leading-snug transition-all",
             depth > 0 && "pl-0.5"
           )}>
             {item.title}

@@ -180,6 +180,7 @@ export function useDiagnosis() {
     setSelectedFile(null);
     dispatch(setImagePreview(undefined));
     dispatch(setPredictionResult(null));
+    dispatch(setMultimodalResult(null));
   };
 
   const toggleSymptom = (symptom: string, checked: boolean) => {
@@ -214,6 +215,15 @@ export function useDiagnosis() {
 
       toast.success("Đã lưu kết quả chẩn đoán vào hồ sơ bệnh nhân!");
       setNote("");
+      setSelectedPatient(null);
+      setSelectedSymptoms([]);
+      setSelectedFile(null);
+      setShowHistory(false);
+      setIsSymptomEditing(false);
+      dispatch(setImagePreview(undefined));
+      dispatch(setMultimodalResult(null));
+      dispatch(setPredictionResult(null));
+      setSearchQuery("");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Lỗi khi lưu kết quả chẩn đoán";
       toast.error(message);

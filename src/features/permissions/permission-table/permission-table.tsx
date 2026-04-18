@@ -38,7 +38,7 @@ export function PermissionTable({ table, columns, globalFilter, isLoading }: Per
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-[12px] font-bold text-foreground h-11 whitespace-nowrap align-middle"
+                    className="text-[12px] font-extrabold text-muted-foreground uppercase tracking-wider py-3.5 whitespace-nowrap align-middle bg-card"
                   >
                     {header.isPlaceholder ? null : (
                       <div className={`flex items-center ${header.id === "actions" ? "justify-end pr-6" : "justify-start"}`}>
@@ -68,12 +68,12 @@ export function PermissionTable({ table, columns, globalFilter, isLoading }: Per
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
-                      className="group transition-colors hover:bg-muted/5 h-14 border-b border-border/50 last:border-0 animate-in fade-in duration-500"
+                      className="hover:bg-muted/40 transition-colors border-b border-border/30 last:border-0 animate-in fade-in duration-500"
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell 
                             key={cell.id} 
-                            className={`py-2 text-[13px] align-middle whitespace-nowrap ${cell.column.id === "STT" ? "text-center font-bold text-muted-foreground/50" : ""}`}
+                            className={`py-3.5 text-[13px] text-foreground/90 font-semibold align-middle whitespace-nowrap ${cell.column.id === "STT" ? "text-center opacity-50" : ""}`}
                         >
                           <div className={`${cell.column.id === "actions" ? "pr-6" : ""}`}>
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}

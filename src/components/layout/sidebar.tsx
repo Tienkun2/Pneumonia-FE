@@ -36,7 +36,7 @@ export function Sidebar({ isCollapsed = false }: { isCollapsed?: boolean }) {
       <aside
         className={cn(
           "fixed left-0 top-0 z-40 h-screen border-r border-border/50 shadow-sm transition-all duration-300 lg:translate-x-0",
-          isCollapsed ? "w-20" : "w-64",
+          isCollapsed ? "w-20" : "w-[280px]",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           "bg-sidebar text-sidebar-foreground flex flex-col"
         )}
@@ -46,10 +46,10 @@ export function Sidebar({ isCollapsed = false }: { isCollapsed?: boolean }) {
           <Link href="/dashboard" className="flex items-center justify-center w-full group">
             <div className={cn("relative flex items-center justify-center shrink-0 transition-all duration-500 ease-in-out", isCollapsed ? "h-12 w-12" : "h-16 w-full max-w-[180px]")}>
                <Image 
-                 src="/images/PlumoX_Logo.png" 
+                 src={mounted && theme === "dark" ? "/images/PlumoX_Logo_Dark.png" : "/images/PlumoX_Logo.png"} 
                  alt="PlumoX" 
                  fill 
-                 className="object-contain drop-shadow-[0_0_8px_rgba(0,0,0,0.02)] transition-transform duration-500 group-hover:scale-105 dark:invert dark:hue-rotate-180"
+                 className="object-contain transition-transform duration-500 group-hover:scale-105"
                  unoptimized
                  priority
                />

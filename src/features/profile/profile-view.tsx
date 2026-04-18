@@ -142,8 +142,8 @@ export function ProfileView() {
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/10 to-transparent" />
 
         <div className="relative flex flex-col items-center gap-6 md:flex-row">
-        <div className="group relative">
-          <div className="relative overflow-hidden rounded-full border-4 border-card shadow-xl transition-transform duration-500 group-hover:scale-105 h-32 w-32 bg-card">
+          <div className="group relative">
+            <div className="relative overflow-hidden rounded-full border-4 border-card shadow-xl transition-transform duration-500 group-hover:scale-105 h-32 w-32 bg-card">
               <Avatar className="h-full w-full">
                 <AvatarImage src={optimisticAvatar || user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`} />
                 <AvatarFallback className="bg-primary/10 dark:bg-white/20 text-3xl font-bold uppercase text-primary dark:text-white">

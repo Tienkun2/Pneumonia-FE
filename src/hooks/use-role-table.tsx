@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { Role } from "@/types/role";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Settings, MoreVertical } from "lucide-react";
 import {
@@ -19,6 +18,7 @@ import {
 
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
+import { getBadgeClass } from "@/utils/styles";
 
 interface UseRoleTableProps {
   data: Role[];
@@ -66,10 +66,11 @@ export function useRoleTable({
           if (status === "INACTIVE") return "Ngừng hoạt động";
           return "Chờ kích hoạt";
         };
+        const variant = status === "ACTIVE" ? "success" : status === "INACTIVE" ? "destructive" : "warning";
         return (
-          <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-0 pointer-events-none shadow-none font-bold px-3 py-1 rounded-full text-[11px]">
+          <span className={getBadgeClass(variant)}>
             {getStatusLabel()}
-          </Badge>
+          </span>
         );
       },
     },
@@ -118,24 +119,25 @@ export function useRoleTable({
           <div className="text-right">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0 opacity-40 hover:opacity-100 hover:bg-muted/60 rounded-lg transition-all">
+                <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted/60 rounded-lg">
+                  <span className="sr-only">Mở menu thao tác</span>
                   <MoreVertical className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border w-[180px]">
+              <DropdownMenuContent align="end" className="rounded-xl p-1.5 shadow-xl border-border">
                 <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-2 py-2">Thao tác</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <DropdownMenuItem onClick={() => onPermissionClick(role)} className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-muted-foreground hover:text-primary">
-                  <Settings className="h-4 w-4 opacity-70" />
+                 <DropdownMenuItem onClick={() => onPermissionClick(role)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
                   <span>Quản lý quyền</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(role)} className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-muted-foreground hover:text-blue-600">
-                  <Edit className="h-4 w-4 opacity-70" />
+                <DropdownMenuItem onClick={() => onEdit(role)} className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium">
+                  <Edit className="h-4 w-4 text-muted-foreground" />
                   <span>Cập nhật</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => onDeleteClick(role.name)}
-                  className="cursor-pointer rounded-lg gap-2.5 py-2.5 font-bold text-[13px] text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  className="cursor-pointer rounded-lg gap-2 py-2.5 font-medium focus:bg-destructive/10 focus:text-destructive text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                   <span>Xóa vai trò</span>

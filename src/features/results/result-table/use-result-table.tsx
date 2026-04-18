@@ -1,6 +1,5 @@
 import { useMemo, useCallback } from "react";
 import { Visit } from "@/types/diagnosis";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar, Eye } from "lucide-react";
 import {
@@ -10,6 +9,8 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
+import { getBadgeClass } from "@/utils/styles";
+import { getDiagnosisTranslation } from "@/constants/dashboard";
 
 interface PatientInfo {
   id: string;
@@ -47,12 +48,6 @@ export function useResultTable({
     return visit.diagnosisResult || "Thấp";
   }, []);
 
-  const getBadgeStyles = useCallback((risk: string) => {
-    const riskLower = risk.toLowerCase();
-    if (riskLower === "cao" || riskLower === "high") return "bg-red-500/10 text-red-500 border-red-500/20";
-    if (riskLower === "trung bình" || riskLower === "medium") return "bg-amber-500/10 text-amber-500 border-amber-500/20 font-bold";
-    return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-bold";
-  }, []);
 
   const columns: ColumnDef<Visit>[] = useMemo(() => [
     {
@@ -90,11 +85,12 @@ export function useResultTable({
       accessorFn: (row) => getRiskStatus(row),
       header: ({ column }) => <DataTableColumnHeader column={column} title="Mức độ nguy cơ" />,
       cell: ({ row }) => {
-        const risk = row.getValue("riskLevel") as string;
+        const risk = (row.getValue("riskLevel") as string).toUpperCase();
+        const variant = risk === "NORMAL" || risk === "THẤP" ? "success" : risk === "TRUNG BÌNH" ? "warning" : "destructive";
         return (
-          <Badge className={`border-0 pointer-events-none shadow-none font-normal ${getBadgeStyles(risk)}`}>
-            {risk}
-          </Badge>
+          <span className={getBadgeClass(variant)}>
+            {getDiagnosisTranslation(risk)}
+          </span>
         );
       },
       filterFn: (row, id, value) => {
@@ -106,9 +102,9 @@ export function useResultTable({
       id: "status",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Trạng thái" />,
       cell: () => (
-        <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 pointer-events-none shadow-none font-bold text-[11px] px-3 py-1">
+        <span className={getBadgeClass("info")}>
           Đã chẩn đoán
-        </Badge>
+        </span>
       ),
     },
     {
@@ -130,7 +126,7 @@ export function useResultTable({
         </div>
       ),
     },
-  ], [getPatientCode, getPatientName, getRiskStatus, getBadgeStyles]);
+  ], [getPatientCode, getPatientName, getRiskStatus]);
 
   const { table, globalFilter, setGlobalFilter, columnFilters, setColumnFilters, columnVisibility, setColumnVisibility } = useDataTable({
     data,

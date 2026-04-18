@@ -27,6 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
 
 interface UserFormDialogProps {
   open: boolean;
@@ -52,53 +53,41 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
 
   useEffect(() => {
     if (open) {
-      if (user) {
-        form.reset({
-          username: user.username,
-          displayName: user.displayName || "",
-          dob: user.dob || "",
-          phoneNumber: user.phoneNumber || "",
-          email: user.email || "",
-        });
-      } else {
-        form.reset({
-          username: "",
-          displayName: "",
-          dob: "",
-          phoneNumber: "",
-          email: "",
-        });
-      }
+      form.reset({
+        username: user?.username ?? "",
+        displayName: user?.displayName ?? "",
+        dob: user?.dob ?? "",
+        phoneNumber: user?.phoneNumber ?? "",
+        email: user?.email ?? "",
+      });
     }
-  }, [open, user, dispatch, form]);
+  }, [open, user, form]);
 
   const onSubmit = async (data: UserFormValues) => {
     setIsSaving(true);
     try {
       if (user && user.id) {
-          const payload: UpdateUserPayload = {
-            username: data.username,
-            displayName: data.displayName || undefined,
-            dob: data.dob || undefined,
-            email: data.email || undefined,
-            phoneNumber: data.phoneNumber || undefined,
-            status: user.status,
-            roles: user.roles?.map(r => r.name) || [],
-          };
-
-          await dispatch(updateUserThunk({ id: user.id, payload })).unwrap();
-          toast.success("Cập nhật tài khoản thành công!");
+        const payload: UpdateUserPayload = {
+          username: data.username,
+          displayName: data.displayName || undefined,
+          dob: data.dob || undefined,
+          email: data.email || undefined,
+          phoneNumber: data.phoneNumber || undefined,
+          status: user.status,
+          roles: user.roles?.map((r) => r.name) || [],
+        };
+        await dispatch(updateUserThunk({ id: user.id, payload })).unwrap();
+        toast.success("Cập nhật tài khoản thành công!");
       } else {
-          const payload: CreateUserPayload = {
-            username: data.username,
-            email: data.email || "",
-            displayName: data.displayName || undefined,
-            dob: data.dob || undefined,
-          };
-          await dispatch(createUser(payload)).unwrap();
-          toast.success("Thêm mới tài khoản thành công!");
+        const payload: CreateUserPayload = {
+          username: data.username,
+          email: data.email || "",
+          displayName: data.displayName || undefined,
+          dob: data.dob || undefined,
+        };
+        await dispatch(createUser(payload)).unwrap();
+        toast.success("Thêm mới tài khoản thành công!");
       }
-
       onOpenChange(false);
       onSuccess?.();
     } catch (error: unknown) {
@@ -110,64 +99,84 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px]">
-        <DialogHeader>
-          <DialogTitle>{user ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}</DialogTitle>
+      <DialogContent className={MODAL_STYLES.content}>
+        <DialogHeader className={MODAL_STYLES.header}>
+          <DialogTitle className={MODAL_STYLES.title}>
+            {user ? "Cập nhật tài khoản" : "Thêm tài khoản mới"}
+          </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[70vh] px-1 overflow-y-auto">
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.bodyWithScroll}>
+            {/* Username */}
             <FormField
               control={form.control}
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tên đăng nhập</FormLabel>
+                  <FormLabel className={FORM_STYLES.label}>Tên đăng nhập</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nhập tên đăng nhập..." {...field} disabled={!!user} />
+                    <Input
+                      placeholder="Nhập tên đăng nhập..."
+                      {...field}
+                      disabled={!!user}
+                      className={FORM_STYLES.inputBold}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Email */}
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className={FORM_STYLES.label}>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="email@example.com" type="email" {...field} />
+                    <Input
+                      placeholder="email@example.com"
+                      type="email"
+                      {...field}
+                      className={FORM_STYLES.input}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Họ và tên */}
             <FormField
               control={form.control}
               name="displayName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Họ và tên</FormLabel>
+                  <FormLabel className={FORM_STYLES.label}>Họ và tên</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nhập họ và tên..." {...field} />
+                    <Input
+                      placeholder="Nhập họ và tên..."
+                      {...field}
+                      className={FORM_STYLES.input}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Ngày sinh + SĐT */}
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="dob"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Ngày sinh</FormLabel>
+                    <FormLabel className={FORM_STYLES.label}>Ngày sinh</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <Input type="date" {...field} className={FORM_STYLES.input} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -179,9 +188,13 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Số điện thoại</FormLabel>
+                    <FormLabel className={FORM_STYLES.label}>Số điện thoại</FormLabel>
                     <FormControl>
-                      <PhoneInput placeholder="Nhập SĐT..." {...field} defaultCountry="VN" />
+                      <PhoneInput
+                        placeholder="Nhập SĐT..."
+                        {...field}
+                        defaultCountry="VN"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -189,13 +202,18 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <div className={MODAL_STYLES.footer + " -mx-6 -mb-5 mt-1"}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className={FORM_STYLES.buttonSecondary}
+              >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSaving ? "Đang lưu..." : "Lưu tài khoản"}
+              <Button type="submit" disabled={isSaving} className={FORM_STYLES.buttonPrimary}>
+                {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isSaving ? "Đang lưu..." : user ? "Cập nhật" : "Lưu tài khoản"}
               </Button>
             </div>
           </form>

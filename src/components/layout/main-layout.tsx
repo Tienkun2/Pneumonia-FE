@@ -14,7 +14,7 @@ export function MainLayout({ children }: { readonly children: React.ReactNode })
    return (
       <div className="min-h-screen bg-background text-foreground flex transition-colors duration-300">
          <Sidebar isCollapsed={isCollapsed} />
-         <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
+         <div className={`flex-1 flex flex-col min-h-screen min-w-0 transition-all duration-300 ${isCollapsed ? 'lg:ml-20' : 'lg:ml-[280px]'}`}>
             <Header isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
             {/* Breadcrumbs Navigation - Responsive & Premium */}

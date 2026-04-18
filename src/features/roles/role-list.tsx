@@ -7,10 +7,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { 
   Shield, 
-  Plus, 
   Search, 
   Loader2,
-  SlidersHorizontal,
   X
 } from "lucide-react";
 import { RoleDialogs } from "./components/role-dialogs";
@@ -18,6 +16,7 @@ import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filte
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
 import { DateRange } from "react-day-picker";
+import { AddButton } from "@/components/ui/add-button";
 
 import { STATUS_OPTIONS } from "@/constants/common";
 import { ROLE_COLUMN_LABELS } from "@/constants/role";
@@ -48,21 +47,13 @@ export function RoleList() {
     <div className="space-y-5 pb-6 w-full overflow-x-hidden">
       <PageHeader
         title="Quản lý vai trò"
-        subtitle={`Tổng cộng ${roles.length} vai trò trong hệ thống`}
         icon={Shield}
-        stats={[
-          { label: "Tổng vai trò", value: roles.length, color: "text-primary" },
-          { label: "Đang hoạt động", value: roles.length, color: "text-emerald-600" },
-          { label: "Số người dùng", value: roles.length * 5, color: "text-amber-600" },
-        ]}
+
       >
-        <Button
-            onClick={handleOpenAdd}
-            size="sm"
-            className="h-9 rounded-xl gap-1.5 shadow-md shadow-primary/20 text-[13px] font-semibold"
-        >
-            <Plus className="h-3.5 w-3.5" /> Thêm vai trò
-        </Button>
+        <AddButton
+          label="vai trò"
+          onClick={handleOpenAdd}
+        />
       </PageHeader>
 
       <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">
@@ -112,17 +103,7 @@ export function RoleList() {
           </div>
         </div>
 
-        {hasActiveFilters && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[12px] font-semibold text-primary">Đang lọc dữ liệu</span>
-            {globalFilter && (
-                <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
-                    Tìm kiếm: &ldquo;{globalFilter}&rdquo;
-                </span>
-            )}
-          </div>
-        )}
+
       </div>
 
       {isLoading && roles.length === 0 ? (

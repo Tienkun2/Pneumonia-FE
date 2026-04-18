@@ -10,9 +10,7 @@ import {
   Save, 
   ArrowLeft, 
   Loader2,
-  SlidersHorizontal,
   Filter,
-  X
 } from "lucide-react";
 import {
   Select,
@@ -46,11 +44,8 @@ export function RolePermissionView({ roleName }: RolePermissionViewProps) {
     columns,
     globalFilter,
     setGlobalFilter,
-    columnFilters,
     handleSave,
   } = useRolePermissions(roleName);
-
-  const hasActiveFilters = !!globalFilter || columnFilters.length > 0;
 
   return (
     <div className="space-y-5 pb-6 w-full overflow-x-hidden">
@@ -58,11 +53,7 @@ export function RolePermissionView({ roleName }: RolePermissionViewProps) {
         title={`Thiết lập quyền: ${actualRoleName || "..."}`}
         subtitle={`Chế độ Lazy Loading: Đang quản lý ${checkedPermissions.length} quyền hạn`}
         icon={Shield}
-        stats={[
-          { label: "Module đang chọn", value: selectedL1 ? 1 : 0, color: "text-primary" },
-          { label: "Quyền hệ thống", value: checkedPermissions.length, color: "text-emerald-600" },
-          { label: "Nhóm chức năng", value: currentL2Options.length, color: "text-amber-600" },
-        ]}
+
       >
         <Button 
             variant="outline" 
@@ -147,28 +138,7 @@ export function RolePermissionView({ roleName }: RolePermissionViewProps) {
           </div>
         </div>
 
-        {hasActiveFilters && (
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/20">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-primary opacity-60" />
-            <p className="text-[10px] font-black text-primary uppercase tracking-widest opacity-80">ĐANG LỌC DỮ LIỆU</p>
-            {globalFilter && (
-              <span className="inline-flex items-center gap-1.5 bg-primary/5 text-primary text-[11px] font-black px-3 py-1 rounded-full border border-primary/10">
-                  GÕ PHÍM: &ldquo;{globalFilter}&rdquo;
-              </span>
-            )}
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                    setGlobalFilter("");
-                    table.resetColumnFilters();
-                }}
-                className="h-6 px-2 text-[10px] font-black text-muted-foreground/30 hover:text-destructive transition-colors ml-auto flex gap-1"
-            >
-                <X className="h-3 w-3" /> XÓA BỘ LỌC
-            </Button>
-          </div>
-        )}
+
       </div>
 
       <div className="relative">

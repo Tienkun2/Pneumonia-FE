@@ -154,6 +154,21 @@
     color: hsl(var(--primary));
   }
 
+  /* Global Interactive Elements (Senior refactor: reuse cursor globally) */
+  button, 
+  a, 
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"] {
+    @apply cursor-pointer;
+  }
+  
+  button:disabled,
+  [aria-disabled="true"] {
+    @apply cursor-not-allowed;
+  }
+
   /* Modern Scrollbar Optimization for all OSs (especially Windows/Linux) */
   @media (min-width: 768px) {
     ::-webkit-scrollbar {

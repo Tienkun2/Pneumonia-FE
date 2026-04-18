@@ -8,7 +8,7 @@ import { fetchPatients } from "@/store/slices/patient-slice";
 import { ResultTable } from "./result-table/result-table";
 import { useResultTable } from "./result-table/use-result-table";
 
-import { Loader2, History, Search, SlidersHorizontal, FileText, X } from "lucide-react";
+import { Loader2, History, Search, FileText, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
@@ -33,13 +33,13 @@ export function ResultsList() {
   useEffect(() => { setIsMounted(true); }, []);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 12 });
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
 
   useEffect(() => {
     if (!isMounted) return;
     
     const visitsPromise = dispatch(fetchAllVisits({ page: pagination.pageIndex + 1, size: pagination.pageSize }));
-    const patientsPromise = dispatch(fetchPatients({ page: 1, size: 100 }));
+    const patientsPromise = dispatch(fetchPatients({ page: 1, size: 10 }));
     return () => { visitsPromise.abort(); patientsPromise.abort(); };
   }, [dispatch, isMounted, pagination, dateRange]);
 
@@ -50,21 +50,15 @@ export function ResultsList() {
     onPaginationChange: setPagination
   });
 
-  const highRisk = visits.filter(v => v.diagnosisResult === "Cao").length;
-  const lowRisk = visits.filter(v => v.diagnosisResult === "Thấp").length;
+
 
   return (
     <div className="space-y-5 pb-6 w-full">
       {/* ── Header ───────────────────────────────────── */}
       <PageHeader
         title="Lịch sử chẩn đoán"
-        subtitle={`Tra cứu và quản lý toàn bộ ${visits.length} lượt khám đã được ghi nhận`}
         icon={History}
-        stats={[
-          { label: "Tổng lượt khám", value: visits.length, color: "text-primary" },
-          { label: "Nguy cơ cao", value: highRisk, color: "text-red-500" },
-          { label: "Nguy cơ thấp", value: lowRisk, color: "text-emerald-500" },
-        ]}
+
       />
 
       {/* ── Toolbar ──────────────────────────────────── */}
@@ -119,18 +113,7 @@ export function ResultsList() {
           </div>
         </div>
 
-        {/* Active filter indicator */}
-        {(globalFilter || columnFilters.length > 0 || dateRange) && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[12px] font-semibold text-primary">Đang lọc dữ liệu</span>
-            {globalFilter && (
-              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
-                Tìm kiếm: &ldquo;{globalFilter}&rdquo;
-              </span>
-            )}
-          </div>
-        )}
+
       </div>
 
       {/* ── Table ───────────────────────────────────── */}

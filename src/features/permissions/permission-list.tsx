@@ -7,13 +7,10 @@ import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { 
-  Plus, 
   Search, 
   ChevronRight, 
   CheckCircle,
   Home,
-  ChevronLeft,
-  SlidersHorizontal,
   X
 } from "lucide-react";
 import { PermissionDialogs } from "./components/permission-dialogs";
@@ -21,6 +18,7 @@ import { PERMISSION_COLUMN_LABELS } from "@/constants/permission";
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
 import { cn } from "@/lib/utils";
+import { AddButton } from "@/components/ui/add-button";
 import { DateRange } from "react-day-picker";
 
 export function PermissionList() {
@@ -37,7 +35,6 @@ export function PermissionList() {
     isSubmitting,
     permissionToDelete,
     setPermissionToDelete,
-    handleNavigateUp,
     navigateToSegment,
     handleDelete,
     fetchData,
@@ -51,16 +48,12 @@ export function PermissionList() {
     <div className="space-y-5 pb-6">
       <PageHeader
         title="Quản lý chức năng"
-        subtitle="Quản lý hệ thống các chức năng và quyền hạn phân cấp"
         icon={CheckCircle}
       >
-        <Button
+        <AddButton
+          label="quyền mới"
           onClick={() => setShowAddDialog(true)}
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 shadow-md shadow-primary/20 text-[13px] font-semibold"
-        >
-          <Plus className="h-3.5 w-3.5" /> Thêm quyền mới
-        </Button>
+        />
       </PageHeader>
 
       <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-4 flex items-center justify-between">
@@ -95,15 +88,6 @@ export function PermissionList() {
               </React.Fragment>
             ))}
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          disabled={currentPath.length === 0}
-          onClick={handleNavigateUp}
-          className="h-9 rounded-xl gap-1.5 border-border/50 font-bold text-[13px] bg-card hover:bg-muted/50 transition-all"
-        >
-            <ChevronLeft className="h-3.5 w-3.5" /> Quay lại
-        </Button>
       </div>
 
       <div className="bg-card rounded-2xl border border-border/50 shadow-sm p-4">
@@ -156,17 +140,7 @@ export function PermissionList() {
           </div>
         </div>
 
-        {hasActiveFilters && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[12px] font-semibold text-primary">Đang lọc dữ liệu</span>
-            {globalFilter && (
-                <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
-                    Tìm kiếm: &ldquo;{globalFilter}&rdquo;
-                </span>
-            )}
-          </div>
-        )}
+
       </div>
 
       <div className="transition-all duration-300 ease-in-out">

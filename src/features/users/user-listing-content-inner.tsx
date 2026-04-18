@@ -3,13 +3,14 @@
 import { useUserListing } from "@/hooks/use-user-listing";
 import { UserDialogs } from "./components/user-dialogs";
 import { UserTable } from "./user-table/user-table";
-import { Loader2, Search, UserPlus, Upload, Download, X, Users, AlertCircle } from "lucide-react";
+import { Loader2, Search, Upload, Download, X, Users, AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
 import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
+import { AddButton } from "@/components/ui/add-button";
 
 const USER_COLUMN_LABELS = {
   username: "Tên đăng nhập",
@@ -26,7 +27,6 @@ export function UserListingContentInner() {
   const {
     users,
     isLoading,
-    totalElements,
     table,
     columns,
     globalFilter,
@@ -50,8 +50,6 @@ export function UserListingContentInner() {
     handleRefresh,
   } = useUserListing();
 
-  const activeCount = users.filter(u => u.status === "ACTIVE").length;
-  const pendingCount = users.filter(u => u.status === "PENDING").length;
 
   const roleOptions = Array.from(
     new Set((users || []).flatMap((u) => (u.roles || []).map((r) => r.name)))
@@ -63,13 +61,7 @@ export function UserListingContentInner() {
     <div className="space-y-5 pb-6 w-full overflow-x-hidden">
       <PageHeader
         title="Quản lý tài khoản"
-        subtitle={`Tổng cộng ${totalElements ?? "..."} tài khoản trong hệ thống`}
         icon={Users}
-        stats={[
-          { label: "Tổng tài khoản", value: totalElements ?? 0, color: "text-primary" },
-          { label: "Đang hoạt động", value: activeCount, color: "text-emerald-500" },
-          { label: "Chờ kích hoạt", value: pendingCount, color: "text-amber-500" },
-        ]}
       >
         <Button
           variant="outline"
@@ -85,16 +77,13 @@ export function UserListingContentInner() {
         >
           <Download className="h-3.5 w-3.5" /> Nhập
         </Button>
-        <Button
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 shadow-md shadow-primary/20 text-[13px] font-semibold"
+        <AddButton
+          label="tài khoản"
           onClick={() => {
             setEditingUser(null);
             setShowFormDialog(true);
           }}
-        >
-          <UserPlus className="h-3.5 w-3.5" /> Thêm tài khoản
-        </Button>
+        />
       </PageHeader>
 
       <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">

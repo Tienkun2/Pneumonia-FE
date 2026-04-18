@@ -10,7 +10,7 @@ import { usePatientTable } from "@/hooks/use-patient-table";
 import { PatientTable } from "./patient-table/patient-table";
 import { Button } from "@/components/ui/button";
 import { 
-  Loader2, Upload, Download, Users, X, UserPlus, Search, SlidersHorizontal, AlertCircle 
+  Loader2, Upload, Download, Users, X, Search, AlertCircle 
 } from "lucide-react";
 import { toast } from "sonner";
 import { Patient } from "@/types/patient";
@@ -21,6 +21,7 @@ import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-
 import { format } from "date-fns";
 
 import { PATIENT_COLUMN_LABELS } from "@/constants/patient";
+import { AddButton } from "@/components/ui/add-button";
 
 export function PatientList() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,11 +31,11 @@ export function PatientList() {
     setIsMounted(true);
   }, []);
 
-  const { patients, isLoading, error, totalElements, totalPages, currentPage, pageSize } = useSelector((state: RootState) => state.patient);
+  const { patients, isLoading, error, totalElements, totalPages } = useSelector((state: RootState) => state.patient);
 
   const [pagination, setPagination] = useState({
-    pageIndex: currentPage - 1,
-    pageSize: pageSize,
+    pageIndex: 0,
+    pageSize: 10,
   });
 
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -115,12 +116,8 @@ export function PatientList() {
       {/* ── Page Header ────────────────────────────── */}
       <PageHeader
         title="Hồ sơ bệnh nhân"
-        subtitle={`Tổng cộng ${totalElements ?? "..."} bệnh nhân đang được quản lý`}
         icon={Users}
-        stats={[
-          { label: "Tổng bệnh nhân", value: totalElements ?? 0, color: "text-primary" },
-          { label: "Trang hiện tại", value: `${pagination.pageIndex + 1} / ${totalPages || 1}`, color: "text-foreground" },
-        ]}
+
       >
         <Button
           variant="outline"
@@ -136,13 +133,13 @@ export function PatientList() {
         >
           <Download className="h-3.5 w-3.5" /> Nhập
         </Button>
-        <Button
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 shadow-md shadow-primary/20 text-[13px] font-semibold"
-          onClick={() => { setEditingPatient(null); setShowFormDialog(true); }}
-        >
-          <UserPlus className="h-3.5 w-3.5" /> Thêm bệnh nhân
-        </Button>
+        <AddButton
+          label="bệnh nhân"
+          onClick={() => {
+            setEditingPatient(null);
+            setShowFormDialog(true);
+          }}
+        />
       </PageHeader>
 
       {/* ── Toolbar (Search + Filters) ─────────────── */}
@@ -192,18 +189,7 @@ export function PatientList() {
           </div>
         </div>
 
-        {/* Active filter indicator */}
-        {hasActiveFilters && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/30">
-            <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[12px] font-semibold text-primary">Đang lọc dữ liệu</span>
-            {globalFilter && (
-              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-bold px-2 py-0.5 rounded-full">
-                Tìm kiếm: &ldquo;{globalFilter}&rdquo;
-              </span>
-            )}
-          </div>
-        )}
+
       </div>
 
       {/* ── Table ─────────────────────────────────── */}

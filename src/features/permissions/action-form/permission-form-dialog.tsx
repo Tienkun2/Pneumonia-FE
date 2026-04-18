@@ -8,6 +8,7 @@ import { PermissionService } from "@/services/permission-service";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Plus } from "lucide-react";
 import {
   Dialog,
@@ -24,6 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
 
 interface PermissionFormDialogProps {
   open: boolean;
@@ -45,10 +47,7 @@ export function PermissionFormDialog({ open, onOpenChange, parentName, onSuccess
 
   useEffect(() => {
     if (open) {
-      form.reset({
-        name: "",
-        description: "",
-      });
+      form.reset({ name: "", description: "" });
     }
   }, [open, form]);
 
@@ -71,26 +70,32 @@ export function PermissionFormDialog({ open, onOpenChange, parentName, onSuccess
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl p-0 overflow-hidden border-none shadow-2xl">
-        <DialogHeader className="p-8 border-b border-border/40 bg-muted/10 text-left">
-          <DialogTitle className="text-lg font-black uppercase tracking-tight">Thêm quyền mới</DialogTitle>
-          <DialogDescription className="font-medium text-[13px]">
-            Khởi tạo một mã định danh quyền truy cập mới trong hệ thống.
-          </DialogDescription>
+      <DialogContent className={MODAL_STYLES.content}>
+        <DialogHeader className={MODAL_STYLES.header}>
+          <DialogTitle className={MODAL_STYLES.title}>Thêm quyền mới</DialogTitle>
+          {parentName && (
+            <DialogDescription className={MODAL_STYLES.description}>
+              Thuộc nhóm: <span className="font-semibold text-foreground">{parentName}</span>
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-8 bg-background">
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body}>
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
+                  <FormLabel className={FORM_STYLES.label}>
                     Mã quyền <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input placeholder="VD: SYST_ROOT, USER_READ..." {...field} className="h-11 rounded-xl border-border/50 font-bold text-[13px]" />
+                    <Input
+                      placeholder="VD: SYST_ROOT, USER_READ..."
+                      {...field}
+                      className={FORM_STYLES.inputBold}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,24 +107,36 @@ export function PermissionFormDialog({ open, onOpenChange, parentName, onSuccess
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[11px] font-black text-muted-foreground/60 uppercase tracking-widest">
-                    Mô tả nghiệp vụ
-                  </FormLabel>
+                  <FormLabel className={FORM_STYLES.label}>Mô tả nghiệp vụ</FormLabel>
                   <FormControl>
-                    <Input placeholder="Mô tả chức năng của quyền này..." {...field} className="h-11 rounded-xl border-border/50 font-medium text-[13px]" />
+                    <Textarea
+                      placeholder="Mô tả chức năng của quyền này..."
+                      rows={3}
+                      {...field}
+                      className={FORM_STYLES.input}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-border/40 bg-muted/5 -mx-8 -mb-8 p-8">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-10 rounded-xl flex-1 font-bold">
+            <div className={MODAL_STYLES.footer + " -mx-6 -mb-5 mt-1 px-6 py-4"}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                className={FORM_STYLES.buttonSecondary}
+              >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSaving} className="h-10 rounded-xl flex-1 bg-primary text-white shadow-lg shadow-primary/20 font-bold">
-                {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> : <Plus className="h-3.5 w-3.5 mr-2" />}
-                Lưu lại
+              <Button type="submit" disabled={isSaving} className={FORM_STYLES.buttonPrimary}>
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {isSaving ? "Đang lưu..." : "Lưu lại"}
               </Button>
             </div>
           </form>
