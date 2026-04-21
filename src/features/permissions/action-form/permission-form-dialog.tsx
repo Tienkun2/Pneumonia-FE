@@ -25,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
+import { MODAL_STYLES, FORM_STYLES } from "@/constants/styles";
 
 interface PermissionFormDialogProps {
   open: boolean;

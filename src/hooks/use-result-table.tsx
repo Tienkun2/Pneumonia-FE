@@ -9,7 +9,7 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import { useDataTable } from "@/hooks/use-data-table";
-import { getBadgeClass } from "@/utils/styles";
+import { getBadgeClass } from "@/constants/styles";
 import { getDiagnosisTranslation } from "@/constants/dashboard";
 
 interface PatientInfo {

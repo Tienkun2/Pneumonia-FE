@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { PermissionTable } from "../role-table/permission-table";
 import { cn } from "@/lib/utils";
-import { FORM_STYLES } from "@/utils/styles";
+import { FORM_STYLES } from "@/constants/styles";
 import { useAddPermissionTable } from "@/hooks/use-add-permission-table";
 
 interface AddPermissionDialogProps {

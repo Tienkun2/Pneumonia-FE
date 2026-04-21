@@ -11,7 +11,7 @@ import {
 import { useDataTable } from "@/hooks/use-data-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { getBadgeClass } from "@/utils/styles";
+import { getBadgeClass } from "@/constants/styles";
 
 interface UsePermissionTableProps {
   data: PermissionTreeNode[];

@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
+import { MODAL_STYLES, FORM_STYLES } from "@/constants/styles";
 
 interface PatientFormDialogProps {
   open: boolean;

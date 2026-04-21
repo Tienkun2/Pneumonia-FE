@@ -6,7 +6,7 @@ import { fetchAllVisits } from "@/store/slices/visit-slice";
 import { fetchPatients } from "@/store/slices/patient-slice";
 
 import { ResultTable } from "./result-table/result-table";
-import { useResultTable } from "./result-table/use-result-table";
+import { useResultTable } from "@/hooks/use-result-table";
 
 import { History, Search, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
@@ -15,14 +15,7 @@ import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
 import { Button } from "@/components/ui/button";
 import { DateRange } from "react-day-picker";
-
-const RESULT_COLUMN_LABELS = {
-  patientCode: "Mã BN",
-  patientName: "Họ tên bệnh nhân",
-  visitDate: "Ngày khám",
-  riskLevel: "Mức độ nguy cơ",
-  status: "Trạng thái",
-};
+import { RESULT_COLUMN_LABELS } from "@/constants/results";
 
 export function ResultsList() {
   const dispatch = useAppDispatch();
@@ -50,18 +43,13 @@ export function ResultsList() {
     onPaginationChange: setPagination
   });
 
-
-
   return (
     <div className="space-y-5 pb-6 w-full">
-      {/* ── Header ───────────────────────────────────── */}
       <PageHeader
         title="Lịch sử chẩn đoán"
         icon={History}
-
       />
 
-      {/* ── Toolbar ──────────────────────────────────── */}
       <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -112,11 +100,8 @@ export function ResultsList() {
             </div>
           </div>
         </div>
-
-
       </div>
 
-      {/* ── Table ───────────────────────────────────── */}
       <ResultTable 
         table={table} 
         columns={table.getAllColumns()} 

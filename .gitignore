@@ -47,3 +47,5 @@ Thumbs.db
 *.log
 .npm
 .eslintcache
+
+CLAUDE.md

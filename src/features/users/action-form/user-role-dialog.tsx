@@ -30,7 +30,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 
 
-import { MODAL_STYLES, FORM_STYLES } from "@/utils/styles";
+import { MODAL_STYLES, FORM_STYLES } from "@/constants/styles";
 
 interface UserRoleDialogProps {
   open: boolean;

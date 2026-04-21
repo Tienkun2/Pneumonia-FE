@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Panel, SectionTitle } from "./dashboard-ui";
 import { getDiagnosisTranslation } from "@/constants/dashboard";
-import { getBadgeClass } from "@/utils/styles";
+import { getBadgeClass } from "@/constants/styles";
 
 import { Visit } from "@/types/diagnosis";
 

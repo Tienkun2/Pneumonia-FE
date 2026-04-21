@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRolePermissions } from "@/hooks/use-role-permissions";
 import { cn } from "@/lib/utils";
-import { FORM_STYLES } from "@/utils/styles";
+import { FORM_STYLES } from "@/constants/styles";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
