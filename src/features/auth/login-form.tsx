@@ -20,27 +20,28 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
 import { login } from "@/store/slices/auth-slice";
+import { TrustedDevicePrompt } from "@/features/dashboard/components/trusted-device-prompt";
+import { useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   username: z.string().min(1, "Vui lòng nhập tài khoản"),
   password: z.string().min(1, "Vui lòng nhập mật khẩu"),
-  remember: z.boolean().default(false),
 });
 
 export function LoginForm() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>()
+  const queryClient = useQueryClient();
   const { isLoading } = useSelector((state: RootState) => state.auth);
   const [showPassword, setShowPassword] = useState(false);
+  const [showTrustPrompt, setShowTrustPrompt] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       username: "",
       password: "",
-      remember: false,
     },
   });
 
@@ -50,17 +51,21 @@ export function LoginForm() {
         login({
             username: values.username,
             password: values.password,
-            remember: values.remember
         })
         ).unwrap()
 
-        toast.success("Đăng nhập thành công!")
-        router.push("/dashboard")
+        queryClient.invalidateQueries({ queryKey: ["my-devices"] });
+        setShowTrustPrompt(true);
 
     } catch (err) {
         toast.error(err as string)
     }
 }
+
+  const handleComplete = () => {
+    toast.success("Đăng nhập thành công!");
+    router.push("/dashboard");
+  };
 
   return (
     <div className="w-full max-w-md space-y-8">
@@ -145,24 +150,7 @@ export function LoginForm() {
               )}
             />
 
-            {/* Remember Me */}
-            <FormField
-              control={form.control}
-              name="remember"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel className="text-sm font-medium leading-none cursor-pointer">
-                    Ghi nhớ đăng nhập
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
+
 
             {/* Submit */}
             <Button
@@ -182,6 +170,11 @@ export function LoginForm() {
           </form>
         </Form>
       </div>
+
+      <TrustedDevicePrompt 
+        forcedShow={showTrustPrompt} 
+        onComplete={handleComplete} 
+      />
     </div>
   );
 }

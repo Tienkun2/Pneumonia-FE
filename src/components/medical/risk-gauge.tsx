@@ -7,7 +7,7 @@ import { AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RiskGaugeProps {
-  riskScore: number; // 0-100
+  riskScore: number;
   riskLevel: "Cao" | "Trung bình" | "Thấp";
   label?: string;
   showIcon?: boolean;

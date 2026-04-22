@@ -19,7 +19,6 @@ export function usePatientListing() {
     try {
       setIsLoading(true);
       const data = await PatientService.getPatients();
-      // Extract data from PageResponse
       setPatients(data.data || []);
     } catch (error: unknown) {
       toast.error("Không thể tải danh sách bệnh nhân");

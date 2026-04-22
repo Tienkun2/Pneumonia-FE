@@ -11,6 +11,8 @@ export interface User {
   avatar?: string;
   createdAt?: string;
   roles: Role[];
+  deviceCount?: number;
+  sessionCount?: number;
 }
 
 export interface CreateUserPayload {

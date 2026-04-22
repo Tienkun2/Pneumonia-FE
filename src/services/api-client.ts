@@ -1,6 +1,14 @@
+import { toast } from "sonner";
+
+declare global {
+  interface Window {
+    isHandling401?: boolean;
+  }
+}
+
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
-  "https://pneumonia-backend-1-0.onrender.com/api/v1"
+  "http://localhost:8080/api/v1"
 
 export interface ApiResponse<T> {
   code: number;
@@ -29,7 +37,9 @@ export const apiClient = async (
   options: ApiOptions = {}
 ) => {
 
-  let token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  let token = typeof window !== "undefined" 
+    ? (localStorage.getItem("token") || sessionStorage.getItem("token")) 
+    : null;
   
   // Fallback to cookie if localStorage is empty (for session-only auth)
   if (!token && typeof document !== "undefined") {
@@ -84,8 +94,14 @@ export const apiClient = async (
         if (refreshData.code === 0 && refreshData.result?.token) {
              const newToken = refreshData.result.token;
              if (typeof window !== "undefined") {
-                localStorage.setItem("token", newToken);
-                document.cookie = `token=${newToken}; path=/; max-age=86400; SameSite=Lax`;
+                const isPersistent = !!localStorage.getItem("token");
+                if (isPersistent) {
+                  localStorage.setItem("token", newToken);
+                  document.cookie = `token=${newToken}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+                } else {
+                  sessionStorage.setItem("token", newToken);
+                  document.cookie = `token=${newToken}; path=/; SameSite=Lax`;
+                }
              }
              
              isRefreshing = false;
@@ -112,12 +128,22 @@ export const apiClient = async (
     isRefreshing = false;
     refreshSubscribers = [];
 
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && !window.isHandling401) {
+        window.isHandling401 = true;
+        toast.error("Phiên làm việc đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.");
         localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
         document.cookie = "token=; Max-Age=0; path=/";
         // Notify Redux to clear state
         window.dispatchEvent(new CustomEvent('auth:logout'));
-        window.location.href = "/auth/login";
+        
+        // Trì hoãn việc chuyển hướng một chút để user kịp đọc thông báo
+        setTimeout(() => {
+          if (typeof window !== "undefined") {
+            window.isHandling401 = false;
+            window.location.href = "/auth/login";
+          }
+        }, 1500);
     }
   }
 
@@ -159,6 +185,17 @@ export const api = {
         
     delete: <T>(endpoint: string, options?: ApiOptions) => 
         apiClient(endpoint, { ...options, method: 'DELETE' }).then(async r => {
+            const data = await r.json() as ApiResponse<T>;
+            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            return data.result;
+        }),
+
+    patch: <T>(endpoint: string, body?: unknown, options?: ApiOptions) => 
+        apiClient(endpoint, { 
+            ...options, 
+            method: 'PATCH', 
+            body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined
+        }).then(async r => {
             const data = await r.json() as ApiResponse<T>;
             if (data.code !== 0) throw new Error(data.message || 'API Error');
             return data.result;

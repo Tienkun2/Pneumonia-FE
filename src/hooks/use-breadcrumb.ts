@@ -17,6 +17,8 @@ const ROUTE_LABELS: Record<string, string> = {
   "role-management": "Phân quyền vai trò",
   "role-list": "Danh sách vai trò",
   "permission-list": "Danh sách quyền",
+  "user-devices": "Quản lý thiết bị",
+  "user-sessions": "Lịch sử hoạt động",
   medical: "Quản lý y tế",
   "patient-mgmt": "Quản lý bệnh nhân",
   "patient-list": "Danh sách bệnh nhân",

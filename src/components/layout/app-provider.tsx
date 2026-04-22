@@ -9,6 +9,16 @@ import { usePathname } from "next/navigation";
 import { AuthInitializer } from "@/components/layout/auth-initializer";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export function AppProvider({ children }: { readonly children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,13 +26,15 @@ export function AppProvider({ children }: { readonly children: React.ReactNode }
 
   return (
     <Provider store={store}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AuthInitializer>
-          {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
-          <Toaster position="top-center" richColors />
-          {!isAuthPage && <CommandPalette />}
-        </AuthInitializer>
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthInitializer>
+            {isAuthPage ? children : <MainLayout>{children}</MainLayout>}
+            <Toaster position="top-center" richColors />
+            {!isAuthPage && <CommandPalette />}
+          </AuthInitializer>
+        </ThemeProvider>
+      </QueryClientProvider>
     </Provider>
   );
 }

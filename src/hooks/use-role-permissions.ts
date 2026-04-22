@@ -13,12 +13,10 @@ export function useRolePermissions(roleName: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Data hierarchy state
   const [roots, setRoots] = useState<PermissionTreeNode[]>([]);
   const [l2Cache, setL2Cache] = useState<Record<string, PermissionTreeNode[]>>({});
   const [rowCache, setRowCache] = useState<Record<string, PermissionTreeNode[]>>({});
 
-  // Selection state
   const [selectedL1, setSelectedL1] = useState<string>("");
   const [selectedL2, setSelectedL2] = useState<string>("");
   const [checkedPermissions, setCheckedPermissions] = useState<string[]>([]);
@@ -26,7 +24,6 @@ export function useRolePermissions(roleName: string) {
 
   const actualRoleName = useMemo(() => decodeURIComponent(roleName || ""), [roleName]);
 
-  // Initial fetch: Roots and current role permissions
   const init = useCallback(async () => {
     try {
       setIsLoading(true);

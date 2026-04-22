@@ -109,7 +109,6 @@ export function usePermissionTable({
 function MatrixCheckbox({ node, onToggle, suffix }: { node: PermissionTreeNode; onToggle: (n: string, c: boolean) => void; suffix: string[] }) {
   const perm = node.children?.find(c => suffix.some(s => c.name.endsWith(s)));
 
-  // If no specific suffix permission exists, we only show for the "VIEW" column (mapped to the node itself if it's a leaf node/has no children)
   if (!perm && suffix[0] !== "_READ") return null;
 
   const targetNode = perm || node;

@@ -11,17 +11,7 @@ import { DataTableViewOptions } from "@/components/ui/data-table-view-options";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table-faceted-filter";
 import { AddButton } from "@/components/ui/add-button";
-
-const USER_COLUMN_LABELS = {
-  username: "Tên đăng nhập",
-  displayName: "Họ và tên",
-  email: "Email",
-  phoneNumber: "Số điện thoại",
-  status: "Trạng thái",
-  roles: "Vai trò",
-  createdAt: "Ngày tạo",
-  STT: "STT",
-};
+import { USER_COLUMN_LABELS } from "@/constants/user";
 
 export function UserListingContentInner() {
   const {

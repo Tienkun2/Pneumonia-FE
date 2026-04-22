@@ -49,14 +49,14 @@ export const activateAccount = createAsyncThunk<
 export const restoreSession = createAsyncThunk<string | null>(
   "auth/restoreSession",
   async () => {
-    if (typeof globalThis === "undefined" || !globalThis.localStorage) return null;
-    let token = globalThis.localStorage.getItem("token");
-    if (!token) {
-      // Fallback: Check cookie if localStorage is empty to sync state with middleware
+    if (typeof globalThis === "undefined") return null;
+    let token = globalThis.localStorage?.getItem("token") || globalThis.sessionStorage?.getItem("token");
+    if (!token && typeof document !== "undefined") {
+      // Fallback: Check cookie if storages are empty
       const match = document.cookie.match(new RegExp('(^| )token=([^;]+)'));
       if (match) {
         token = match[2];
-        localStorage.setItem("token", token);
+        // Don't auto-save to localStorage here as we don't know if it was trusted
       }
     }
     return token;
@@ -93,15 +93,16 @@ const authSlice = createSlice({
       state.token = action.payload
       state.isAuthenticated = true
 
-      if (typeof globalThis !== "undefined" && globalThis.localStorage) {
-        const hasPersistentToken = !!globalThis.localStorage.getItem("token")
+      if (typeof globalThis !== "undefined") {
+        const hasPersistentToken = !!globalThis.localStorage?.getItem("token")
 
         if (hasPersistentToken) {
-          globalThis.localStorage.setItem("token", action.payload)
-          // Maintain 7 days for persistent sessions
-          document.cookie = `token=${action.payload}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
+          globalThis.localStorage?.setItem("token", action.payload)
+          // Maintain 30 days for persistent sessions
+          document.cookie = `token=${action.payload}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
         } else {
           // Stay in session-only mode
+          globalThis.sessionStorage?.setItem("token", action.payload)
           document.cookie = `token=${action.payload}; path=/; SameSite=Lax`
         }
       }
@@ -113,8 +114,10 @@ const authSlice = createSlice({
       state.user = null
       state.hasFetchedUser = false
 
-      if (typeof globalThis !== "undefined" && globalThis.localStorage) {
-        globalThis.localStorage.removeItem("token")
+      if (typeof globalThis !== "undefined") {
+        globalThis.localStorage?.removeItem("token")
+        globalThis.sessionStorage?.removeItem("token")
+        globalThis.sessionStorage?.removeItem("hide-trust-prompt")
         document.cookie = "token=; Max-Age=0; path=/"
       }
     }
@@ -131,18 +134,18 @@ const authSlice = createSlice({
         state.token = action.payload.token
         state.isAuthenticated = true
 
-        if (typeof globalThis !== "undefined" && globalThis.localStorage) {
-          const { token, remember } = action.payload;
-
-          if (remember) {
-            globalThis.localStorage.setItem("token", token)
-            // 7 days expiration
-            document.cookie = `token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`
-          } else {
-            // Session only - clear any old persistent token and set a session cookie (no max-age)
-            globalThis.localStorage.removeItem("token")
-            document.cookie = `token=${token}; path=/; SameSite=Lax`
-          }
+        if (typeof globalThis !== "undefined") {
+          const { token } = action.payload;
+          
+          // By default, store in sessionStorage (per current session)
+          globalThis.sessionStorage?.setItem("token", token)
+          
+          // DO NOT set cookie here to prevent middleware from auto-redirecting
+          // while we are showing the Trusted Device prompt on the Login page.
+          // The cookie will be set in TrustedDevicePrompt or setToken.
+          
+          // Clear any old persistent tokens
+          globalThis.localStorage?.removeItem("token")
         }
       })
       .addCase(login.rejected, (state, action) => {

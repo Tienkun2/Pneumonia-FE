@@ -33,7 +33,6 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 
-// ─── Circular Progress Ring ──────────────────────────────────────────────────
 function ScoreRing({
   value,
   riskLevel,
@@ -111,7 +110,6 @@ function ScoreRing({
   );
 }
 
-// ─── Workflow Step Indicator ─────────────────────────────────────────────────
 function WorkflowStep({
   step,
   label,
