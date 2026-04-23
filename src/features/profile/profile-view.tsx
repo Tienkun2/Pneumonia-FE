@@ -13,9 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { Loader2, User, Shield, Camera, Mail, Phone, Calendar, CheckCircle2, AlertCircle, Laptop } from "lucide-react";
-import { useDevices } from "@/hooks/use-devices";
-import { DeviceItem } from "@/features/devices/components/device-item";
+import { Loader2, User, Shield, Camera, Mail, Phone, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function ProfileView() {
@@ -27,7 +25,7 @@ export function ProfileView() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [optimisticAvatar, setOptimisticAvatar] = useState<string | null>(null);
 
-  const { devices, isLoading: isDevicesLoading, revokeDevice, isRevoking: isRevokingDevice } = useDevices();
+
 
   const [displayName, setDisplayName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -210,12 +208,6 @@ export function ProfileView() {
           >
             <Shield className="h-4 w-4" /> Bảo mật & Tài khoản
           </TabsTrigger>
-          <TabsTrigger
-            value="devices"
-            className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md transition-all gap-2 font-bold"
-          >
-            <Laptop className="h-4 w-4" /> Thiết bị
-          </TabsTrigger>
         </TabsList>
 
         <div className="space-y-8">
@@ -349,40 +341,6 @@ export function ProfileView() {
                     </Button>
                   </div>
                 </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="devices">
-            <Card className="border border-border shadow-xl rounded-2xl overflow-hidden bg-card">
-              <CardHeader className="bg-muted/30 border-b border-border pb-6">
-                <CardTitle className="text-xl font-bold text-foreground">Quản lý thiết bị</CardTitle>
-                <CardDescription>Các thiết bị và trình duyệt hiện đang đăng nhập vào tài khoản của bạn</CardDescription>
-              </CardHeader>
-              <CardContent className="pt-8">
-                <div className="space-y-4">
-                  {isDevicesLoading ? (
-                    <div className="flex flex-col items-center justify-center py-12 gap-3">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
-                      <p className="text-xs font-bold text-muted-foreground/50 uppercase tracking-widest">Đang tải thiết bị...</p>
-                    </div>
-                  ) : devices.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-sm font-bold text-muted-foreground italic">Không có thiết bị nào khác được ghi nhận.</p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {devices.map((device) => (
-                        <DeviceItem 
-                          key={device.id} 
-                          device={device} 
-                          onDelete={revokeDevice}
-                          isDeleting={isRevokingDevice}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
