@@ -1,9 +1,9 @@
-import { api } from "@/services/api-client";
+import { api, ApiOptions } from "@/services/api-client";
 import { UserDevice } from "@/utils/device-schemas";
 
 export const DeviceService = {
-  getMyDevices: async () => {
-    const response = await api.get<UserDevice[]>("/user-devices/my-devices");
+  getMyDevices: async (options?: ApiOptions) => {
+    const response = await api.get<UserDevice[]>("/user-devices/my-devices", options);
     return response;
   },
 
@@ -18,10 +18,10 @@ export const DeviceService = {
   },
 
   trustDevice: async (deviceId: string) => {
-    return api.patch<void>(`/user-devices/${deviceId}/trust`);
+    return api.patch<void>(`/user-devices/${deviceId}/trust`, undefined, { skipAutoLogout: true });
   },
 
   revokeDevice: async (deviceId: string) => {
-    return api.patch<void>(`/user-devices/${deviceId}/revoke`);
+    return api.patch<void>(`/user-devices/${deviceId}/revoke`, undefined, { skipAutoLogout: true });
   }
 };

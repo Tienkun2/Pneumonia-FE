@@ -65,6 +65,8 @@ function parseUA(ua: string) {
   return { browser, device };
 }
 
+import { SESSION_STATUS, SESSION_STATUS_MAP } from "@/constants/session";
+
 export function SessionTable({ 
   sessions, 
   onRevoke, 
@@ -145,13 +147,12 @@ export function SessionTable({
       accessorKey: "status",
       header: "Trạng thái",
       cell: ({ row }) => {
-        const status = row.original.status;
-        const isActive = status === "ACTIVE";
+        const status = row.original.status as keyof typeof SESSION_STATUS_MAP;
+        const statusInfo = SESSION_STATUS_MAP[status] || SESSION_STATUS_MAP[SESSION_STATUS.ACTIVE];
+        
         return (
-          <span className={getBadgeClass(
-            isActive ? "info" : (status === "EXPIRED" ? "secondary" : "destructive")
-          )}>
-            {isActive ? "Đang hoạt động" : status === "EXPIRED" ? "Hết hiệu lực" : "Đã thu hồi"}
+          <span className={getBadgeClass(statusInfo.variant as "success" | "destructive" | "secondary" | "info")}>
+            {statusInfo.label}
           </span>
         );
       }
@@ -161,7 +162,7 @@ export function SessionTable({
       header: () => <div className="text-right">Thao tác</div>,
       cell: ({ row }) => {
         const session = row.original;
-        const isActive = session.status === "ACTIVE";
+        const isActive = session.status === SESSION_STATUS.ACTIVE;
         return (
           <div className="text-right">
             {isActive ? (

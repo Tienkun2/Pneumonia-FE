@@ -4,7 +4,7 @@ export const UserDeviceResponseSchema = z.object({
   id: z.string().uuid(),
   deviceType: z.enum(["PC", "MOBILE", "TABLET", "UNKNOWN"]),
   appName: z.string(),
-  status: z.string(),
+  status: z.enum(["ACTIVE", "REVOKED"]),
   lastAccess: z.string().datetime(),
   firstAccess: z.string().datetime(),
   ipAddress: z.string(),

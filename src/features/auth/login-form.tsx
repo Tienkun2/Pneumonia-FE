@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -62,10 +62,13 @@ export function LoginForm() {
     }
 }
 
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
     toast.success("Đăng nhập thành công!");
-    router.push("/dashboard");
-  };
+    // Thêm một chút delay để đảm bảo cookie được set hoàn tất trước khi navigation
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 100);
+  }, [router]);
 
   return (
     <div className="w-full max-w-md space-y-8">

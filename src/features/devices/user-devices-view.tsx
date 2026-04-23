@@ -76,28 +76,28 @@ export function UserDevicesAdminView() {
           <Button 
             variant="outline" 
             onClick={() => handleSelectUser(null)}
-            className="h-9 rounded-xl font-bold border-border bg-card shadow-sm gap-2"
+            className="h-10 rounded-2xl font-bold border-border bg-card shadow-sm gap-2 px-5 hover:bg-primary/5 hover:text-primary transition-all active:scale-95"
           >
-            <ArrowLeft className="h-4 w-4 text-primary" />
+            <ArrowLeft className="h-4 w-4" />
             QUAY LẠI
           </Button>
         )}
       </PageHeader>
 
       {!selectedUser ? (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4 bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
-             <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 pointer-events-none" />
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card/50 backdrop-blur-md rounded-[28px] border border-border/50 p-5 shadow-sm">
+             <div className="relative flex-1 w-full max-w-sm">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
                 <input 
                     value={globalFilter}
                     onChange={(e) => setGlobalFilter(e.target.value)}
                     placeholder="Tìm kiếm người dùng..."
-                    className="h-9 w-full rounded-xl border border-border/50 bg-card pl-9 pr-4 text-[13px] font-medium placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                    className="h-11 w-full rounded-[18px] border border-border/40 bg-background/50 pl-11 pr-4 text-[13px] font-bold placeholder:text-muted-foreground/40 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
                 />
              </div>
 
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-3 w-full sm:w-auto">
                 <DataTableFacetedFilter
                     column={table.getColumn("status")}
                     title="Trạng thái"
@@ -120,23 +120,25 @@ export function UserDevicesAdminView() {
           />
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
            {isDevicesLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-[100px] w-full rounded-2xl bg-card border border-border/50" />
+                  <Skeleton key={i} className="h-[200px] w-full rounded-[28px] bg-card/50 border border-border/50" />
                 ))}
               </div>
            ) : devices.length === 0 ? (
-            <div className="bg-card/40 backdrop-blur-md rounded-[32px] border border-dashed border-border/60 p-24 text-center">
-               <div className="w-16 h-16 rounded-full bg-primary/5 flex items-center justify-center mx-auto mb-6">
-                  <Smartphone className="h-8 w-8 text-primary/20" />
+            <div className="bg-card/30 backdrop-blur-xl rounded-[40px] border-2 border-dashed border-border/40 p-24 text-center animate-in fade-in zoom-in-95 duration-500">
+               <div className="w-24 h-24 rounded-[32px] bg-primary/5 flex items-center justify-center mx-auto mb-8 border border-primary/5 shadow-inner">
+                  <Smartphone className="h-10 w-10 text-primary/30" />
                </div>
-               <h3 className="text-base font-bold mb-1 text-foreground">Chưa có thiết bị nào</h3>
-               <p className="text-[13px] font-medium text-muted-foreground max-w-sm mx-auto italic">Người dùng này chưa thực hiện đăng nhập trên thiết bị nào hoặc các phiên đã hết hạn.</p>
+               <h3 className="text-xl font-black tracking-tight mb-2 text-foreground">Thiết bị trống</h3>
+               <p className="text-[14px] font-semibold text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                 Người dùng này chưa thực hiện đăng nhập trên thiết bị nào hoặc các phiên đã hết hạn.
+               </p>
             </div>
            ) : (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {devices.map((device) => (
                   <DeviceItem 
                     key={device.id} 

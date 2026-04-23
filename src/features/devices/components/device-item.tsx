@@ -1,9 +1,10 @@
 "use client";
 
 import { UserDevice } from "@/utils/device-schemas";
-import { Laptop, Tablet, Smartphone, HelpCircle, LogOut, MapPin, Clock, Shield } from "lucide-react";
+import { Tablet, Smartphone, HelpCircle, LogOut, MapPin, Clock, Shield, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDate, cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
+import { DEVICE_STATUS, DEVICE_STATUS_MAP } from "@/constants/device";
+
 interface DeviceItemProps {
   device: UserDevice;
   onDelete: (id: string) => void;
@@ -25,100 +28,121 @@ export function DeviceItem({ device, onDelete, isDeleting }: DeviceItemProps) {
   const getIcon = () => {
     switch (device.deviceType) {
       case "PC":
-        return <Laptop className="h-5 w-5" />;
+        return <Monitor className="h-6 w-6" />;
       case "MOBILE":
-        return <Smartphone className="h-5 w-5" />;
+        return <Smartphone className="h-6 w-6" />;
       case "TABLET":
-        return <Tablet className="h-5 w-5" />;
+        return <Tablet className="h-6 w-6" />;
       default:
-        return <HelpCircle className="h-5 w-5" />;
+        return <HelpCircle className="h-6 w-6" />;
     }
   };
 
+  const isRevoked = device.status === DEVICE_STATUS.REVOKED;
+  const statusInfo = DEVICE_STATUS_MAP[device.status as keyof typeof DEVICE_STATUS_MAP] || DEVICE_STATUS_MAP[DEVICE_STATUS.ACTIVE];
+
   return (
-    <div className="flex items-center justify-between p-4 rounded-2xl border border-border/50 bg-card/40 hover:bg-card/80 transition-all group">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/5">
+    <div className={cn(
+      "relative group flex flex-col p-5 rounded-[28px] border transition-all duration-300",
+      "bg-card/50 backdrop-blur-sm border-border/50 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 hover:bg-card hover:border-primary/20",
+      isRevoked && "opacity-60 grayscale-[0.5]"
+    )}>
+      {/* Top Section: Icon & Status */}
+      <div className="flex items-start justify-between mb-5">
+        <div className={cn(
+          "w-14 h-14 rounded-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-110",
+          isRevoked ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary border border-primary/5 shadow-inner"
+        )}>
           {getIcon()}
         </div>
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h4 className="font-bold text-sm text-foreground">{device.appName}</h4>
-            <div className="flex items-center gap-1.5">
-              <span className={cn(
-                "px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tight",
-                device.status === "Bị thu hồi" 
-                  ? "bg-red-500/10 text-red-500 border border-red-500/20" 
-                  : "bg-emerald-500/10 text-emerald-500"
-              )}>
-                {device.status}
-              </span>
-              {device.remembered && (
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 text-[10px] font-black uppercase tracking-tight border border-blue-500/20">
-                  <Shield className="h-2.5 w-2.5" />
-                  Thiết bị tin cậy
-                </span>
-              )}
-              {device.current && (
-                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tight border border-primary/20">
-                  Thiết bị này
-                </span>
-              )}
+
+        <div className="flex flex-col items-end gap-1.5">
+           <Badge 
+              variant={statusInfo.variant as "success" | "destructive"} 
+              className="h-6 px-2.5 rounded-lg text-[10px] font-black"
+           >
+              {statusInfo.label.toUpperCase()}
+           </Badge>
+           
+           {device.current && (
+             <Badge variant="default" className="h-6 px-2.5 rounded-lg text-[10px] font-black bg-primary text-white border-none shadow-sm shadow-primary/20">
+                THIẾT BỊ NÀY
+             </Badge>
+           )}
+        </div>
+      </div>
+
+      {/* Middle Section: App Name & Meta */}
+      <div className="space-y-3 mb-6">
+        <h4 className="text-base font-black tracking-tight text-foreground truncate group-hover:text-primary transition-colors">
+          {device.appName}
+        </h4>
+        
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2.5 text-[13px] font-semibold text-muted-foreground/70">
+            <div className="w-6 h-6 rounded-lg bg-muted/50 flex items-center justify-center">
+              <MapPin className="h-3.5 w-3.5" />
             </div>
+            {device.ipAddress}
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground font-medium">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-3 w-3 opacity-50" /> {device.ipAddress}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-3 w-3 opacity-50" /> 
-              {formatDate(device.lastAccess, "DD/MM/YYYY HH:mm")}
-            </span>
+          <div className="flex items-center gap-2.5 text-[13px] font-semibold text-muted-foreground/70">
+            <div className="w-6 h-6 rounded-lg bg-muted/50 flex items-center justify-center">
+              <Clock className="h-3.5 w-3.5" />
+            </div>
+            {formatDate(device.lastAccess, "DD/MM/YYYY HH:mm")}
           </div>
         </div>
       </div>
 
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-xl hover:bg-red-50 hover:text-red-500 text-muted-foreground transition-colors h-10 w-10 flex-shrink-0"
-            disabled={isDeleting}
-          >
-            <LogOut className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="rounded-2xl border-border shadow-2xl p-6">
-          <DialogHeader className="gap-2">
-            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-3">
-               <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-500">
-                  <Shield className="h-5 w-5" />
-               </div>
-               Thu hồi thiết bị?
-            </DialogTitle>
-            <DialogDescription className="font-semibold text-muted-foreground/80 leading-relaxed">
-              Bạn có chắc chắn muốn <span className="text-red-500 font-bold">thu hồi</span> quyền truy cập của thiết bị này? 
-              Thiết bị sẽ không còn được tin cậy và mọi phiên đăng nhập tự động sẽ bị vô hiệu hóa.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-3 pt-4">
-            <DialogClose asChild>
-              <Button variant="ghost" className="rounded-xl font-bold text-muted-foreground hover:bg-muted min-w-[100px]">
-                Hủy bỏ
-              </Button>
-            </DialogClose>
-            <DialogClose asChild>
+      {/* Bottom Section: Actions & Tags */}
+      <div className="flex items-center justify-between pt-4 border-t border-border/40">
+        <div className="flex items-center gap-2">
+        </div>
+
+        {!isRevoked && (
+          <Dialog>
+            <DialogTrigger asChild>
               <Button
-                onClick={() => onDelete(device.id)}
-                className="rounded-xl font-bold bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20 px-6"
+                variant="ghost"
+                size="sm"
+                className="h-9 px-3 rounded-xl font-bold text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-all gap-2"
+                disabled={isDeleting}
               >
-                Xác nhận thu hồi
+                <LogOut className="h-4 w-4" />
+                <span className="text-[12px]">THU HỒI</span>
               </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </DialogTrigger>
+            <DialogContent className="rounded-[32px] border-border shadow-2xl p-8 max-w-[400px]">
+              <DialogHeader className="gap-4">
+                <div className="w-16 h-16 rounded-[24px] bg-red-50 flex items-center justify-center text-red-500 mx-auto mb-2">
+                   <Shield className="h-8 w-8" />
+                </div>
+                <DialogTitle className="text-2xl font-black tracking-tight text-center">
+                   Xác nhận thu hồi?
+                </DialogTitle>
+                <DialogDescription className="text-center font-semibold text-muted-foreground/80 leading-relaxed">
+                  Thiết bị này sẽ không còn được <span className="text-red-500 font-bold underline underline-offset-4">tin cậy</span> và mọi phiên đăng nhập sẽ bị vô hiệu hóa ngay lập tức.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-6">
+                <DialogClose asChild>
+                  <Button variant="ghost" className="flex-1 rounded-2xl font-bold h-12 text-muted-foreground hover:bg-muted">
+                    Để sau
+                  </Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    onClick={() => onDelete(device.id)}
+                    className="flex-1 rounded-2xl font-bold h-12 bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20"
+                  >
+                    Đồng ý thu hồi
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
     </div>
   );
 }

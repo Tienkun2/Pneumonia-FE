@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DeviceService } from "@/services/device-service";
+import { UserDevice } from "@/utils/device-schemas";
 import { toast } from "sonner";
+import { DEVICE_STATUS } from "@/constants/device";
 
 export function useDevices(userId?: string, forcedEnable?: boolean) {
   const queryClient = useQueryClient();
@@ -9,9 +11,9 @@ export function useDevices(userId?: string, forcedEnable?: boolean) {
 
   const myDevicesQuery = useQuery({
     queryKey: ["my-devices"],
-    queryFn: DeviceService.getMyDevices,
-    staleTime: 0, // Luôn lấy dữ liệu mới nhất
-    refetchInterval: 30 * 1000, // Kiểm tra lại sau mỗi 30 giây
+    queryFn: () => DeviceService.getMyDevices({ skipAutoLogout: true }),
+    staleTime: 0,
+    refetchInterval: 30 * 1000,
     enabled: forcedEnable || (!userId && typeof window !== "undefined" && !!(localStorage.getItem("token") || sessionStorage.getItem("token")))
   });
 
@@ -19,23 +21,20 @@ export function useDevices(userId?: string, forcedEnable?: boolean) {
     if (!userId && myDevicesQuery.data && typeof window !== "undefined") {
       const currentDevice = myDevicesQuery.data.find(d => d.current);
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-      
+
       if (currentDevice && token) {
         const isPersistent = !!localStorage.getItem("token");
-        
-        // Coi như thiết bị mất tin cậy nếu status là "Bị thu hồi" HOẶC remembered là false
-        const isCurrentlyTrusted = currentDevice.remembered && currentDevice.status !== "Bị thu hồi";
 
-        // CHỈ HẠ CẤP PHIÊN (Ghi nhớ -> Phiên), KHÔNG LOGOUT CỨNG
-        // Điều này cho phép user dùng nốt phiên hiện tại nhưng lần sau phải login lại
+        const isCurrentlyTrusted = currentDevice.remembered && currentDevice.status !== DEVICE_STATUS.REVOKED;
+
         if (isPersistent && prevRememberedRef.current === true && !isCurrentlyTrusted) {
           localStorage.removeItem("token");
           sessionStorage.setItem("token", token);
           document.cookie = `token=${token}; path=/; SameSite=Lax`;
-          toast.info("Ghi nhớ đăng nhập đã bị thu hồi. Bạn sẽ cần đăng nhập lại ở phiên sau.");
+          toast.info("Thiết bị này đã bị thu hồi quyền tin cậy. Bạn sẽ cần đăng nhập lại ở lần truy cập sau.");
         }
 
-        prevRememberedRef.current = isCurrentlyTrusted;
+        prevRememberedRef.current = currentDevice.remembered;
       }
     }
   }, [myDevicesQuery.data, userId]);
@@ -49,10 +48,14 @@ export function useDevices(userId?: string, forcedEnable?: boolean) {
 
   const revokeDeviceMutation = useMutation({
     mutationFn: DeviceService.revokeDevice,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["my-devices"] });
       queryClient.invalidateQueries({ queryKey: ["user-devices"] });
-      toast.success("Đã thu hồi thiết bị thành công");
+
+      const currentDevice = queryClient.getQueryData<UserDevice[]>(["my-devices"])?.find(d => d.current);
+      if (currentDevice?.id !== variables) {
+        toast.success("Đã thu hồi thiết bị thành công");
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message);

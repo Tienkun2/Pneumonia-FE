@@ -22,7 +22,11 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
 
   // Redirect if already authenticated and on an auth page
   useEffect(() => {
-    if (isAuthenticated && pathname?.startsWith("/auth") && !pathname?.startsWith("/auth/activate")) {
+    // Only redirect if we have BOTH the Redux state AND the cookie
+    // This avoids redirect loops when we are in the "pending trust" state on the login page
+    const hasTokenCookie = typeof document !== "undefined" && document.cookie.includes("token=");
+
+    if (isAuthenticated && hasTokenCookie && pathname?.startsWith("/auth") && !pathname?.startsWith("/auth/activate")) {
        router.push("/dashboard");
     }
   }, [isAuthenticated, pathname, router]);

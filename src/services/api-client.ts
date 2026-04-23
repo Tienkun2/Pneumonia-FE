@@ -16,8 +16,9 @@ export interface ApiResponse<T> {
   result: T;
 }
 
-type ApiOptions = RequestInit & {
-  withAuth?: boolean
+export type ApiOptions = RequestInit & {
+  withAuth?: boolean;
+  skipAutoLogout?: boolean;
 }
 
 let isRefreshing = false;
@@ -128,22 +129,40 @@ export const apiClient = async (
     isRefreshing = false;
     refreshSubscribers = [];
 
-    if (typeof window !== "undefined" && !window.isHandling401) {
+    const isAuthError = res.status === 401;
+
+    if (typeof window !== "undefined" && !window.isHandling401 && !options.skipAutoLogout && isAuthError) {
         window.isHandling401 = true;
-        toast.error("Phiên làm việc đã hết hạn hoặc bị thu hồi. Vui lòng đăng nhập lại.");
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
-        document.cookie = "token=; Max-Age=0; path=/";
-        // Notify Redux to clear state
-        window.dispatchEvent(new CustomEvent('auth:logout'));
         
-        // Trì hoãn việc chuyển hướng một chút để user kịp đọc thông báo
-        setTimeout(() => {
-          if (typeof window !== "undefined") {
-            window.isHandling401 = false;
-            window.location.href = "/auth/login";
+        const isBackgroundPolling = endpoint.includes('/notifications/unread') || 
+                                    endpoint.includes('/unread-count');
+        
+        if (!isBackgroundPolling) {
+          toast.error("Phiên làm việc đã bị thu hồi hoặc hết hạn.");
+          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
+          document.cookie = "token=; Max-Age=0; path=/";
+          window.dispatchEvent(new CustomEvent('auth:logout'));
+          
+          setTimeout(() => {
+            if (typeof window !== "undefined") {
+              window.isHandling401 = false;
+              window.location.href = "/auth/login";
+            }
+          }, 1000);
+        } else {
+          window.isHandling401 = false;
+        }
+    } else if (options.skipAutoLogout && isAuthError) {
+        // Nếu là lệnh thu hồi chủ động, chỉ hạ cấp token xuống session để dùng nốt
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+          if (token) {
+            localStorage.removeItem("token");
+            sessionStorage.setItem("token", token);
+            document.cookie = `token=${token}; path=/; SameSite=Lax`;
           }
-        }, 1500);
+        }
     }
   }
 
@@ -157,7 +176,16 @@ export const api = {
     get: <T>(endpoint: string, options?: ApiOptions) => 
         apiClient(endpoint, { ...options, method: 'GET' }).then(async r => {
             const data = await r.json() as ApiResponse<T>;
-            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            if (data.code !== 0) {
+                // Xử lý lỗi xác thực im lặng CHỈ cho các request thực sự là background
+                const isAuthError = data.code === 1001 || r.status === 401;
+                const isSilentEndpoint = endpoint.includes('/menus') || endpoint.includes('/unread-count');
+                
+                if (isAuthError && isSilentEndpoint) {
+                    return null as unknown as T;
+                }
+                throw new Error(data.message || 'API Error');
+            }
             return data.result;
         }),
         
@@ -197,7 +225,11 @@ export const api = {
             body: body ? (body instanceof FormData ? body : JSON.stringify(body)) : undefined
         }).then(async r => {
             const data = await r.json() as ApiResponse<T>;
-            if (data.code !== 0) throw new Error(data.message || 'API Error');
+            if (data.code !== 0) {
+                const isAuthError = data.code === 1001 || r.status === 401;
+                if (isAuthError && options?.skipAutoLogout) return null as unknown as T;
+                throw new Error(data.message || 'API Error');
+            }
             return data.result;
         }),
 }

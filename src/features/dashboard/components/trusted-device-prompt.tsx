@@ -8,7 +8,7 @@ import {
   CardTitle, 
   CardFooter 
 } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useDevices } from "@/hooks/use-devices";
 import { UserDevice } from "@/utils/device-schemas";
 
@@ -25,25 +25,32 @@ export function TrustedDevicePrompt({ onComplete, forcedShow }: TrustedDevicePro
   const [isVisible, setIsVisible] = useState(false);
   const { devices, isLoading, trustDevice } = useDevices(undefined, forcedShow);
   const [currentDevice, setCurrentDevice] = useState<UserDevice | null>(null);
+  const completionCalled = useRef(false);
+
+  const safeOnComplete = useCallback(() => {
+    if (completionCalled.current) return;
+    completionCalled.current = true;
+    onComplete?.();
+  }, [onComplete]);
 
   useEffect(() => {
+    // Trường hợp 1: Được yêu cầu hiển thị (vừa mới nhấn nút Đăng nhập xong)
     if (forcedShow && !isLoading && devices.length > 0) {
       const device = devices.find((d) => d.current);
-      
       if (device) {
-        if (device.remembered) {
-          onComplete?.();
-        } else {
-          setCurrentDevice(device);
-          setIsVisible(true);
-        }
+        // Luôn hiển thị bảng hỏi khi vừa login xong để người dùng quyết định 
+        // có muốn "Duy trì đăng nhập" (Tin cậy) cho lần sau hay không.
+        setCurrentDevice(device);
+        setIsVisible(true);
       }
       return;
     }
 
+    // Trường hợp 2: Kiểm tra thụ động (khi user vào trang web mà đã có session)
     if (forcedShow) return;
     if (typeof window !== "undefined" && sessionStorage.getItem("hide-trust-prompt") === "true") return;
 
+    // Nếu đã có token bền vững (localStorage) thì coi như đã tin tưởng, không hỏi nữa
     const hasPersistentToken = typeof window !== "undefined" && !!localStorage.getItem("token");
     if (hasPersistentToken) return;
 
@@ -54,11 +61,11 @@ export function TrustedDevicePrompt({ onComplete, forcedShow }: TrustedDevicePro
         setIsVisible(true);
       }
     }
-  }, [devices, isLoading, forcedShow, onComplete]);
+  }, [devices, isLoading, forcedShow, safeOnComplete]);
 
   const handleTrust = async () => {
     if (!currentDevice) {
-      onComplete?.();
+      safeOnComplete();
       return;
     }
     try {
@@ -74,7 +81,7 @@ export function TrustedDevicePrompt({ onComplete, forcedShow }: TrustedDevicePro
         }
       }
       setIsVisible(false);
-      onComplete?.();
+      safeOnComplete();
     } catch (error) {
     }
   };
@@ -89,7 +96,7 @@ export function TrustedDevicePrompt({ onComplete, forcedShow }: TrustedDevicePro
       }
     }
     setIsVisible(false);
-    onComplete?.();
+    safeOnComplete();
   };
 
   if (!isVisible) return null;
