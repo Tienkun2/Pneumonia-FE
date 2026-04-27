@@ -109,8 +109,8 @@ export default function SettingsView() {
     <div className="space-y-5 max-w-4xl mx-auto pb-10">
       {/* ── Header ────────────────────────────────────── */}
       <PageHeader
-        title="Cài đặt hệ thống"
-        subtitle="Quản lý tài khoản, giao diện, thông báo và bảo mật"
+        title="Cài đặt chung"
+        subtitle="Cấu hình hệ thống theo nhu cầu"
         icon={Settings}
       />
 

@@ -1,6 +1,5 @@
 import { flexRender, Table as ReactTable, ColumnDef } from "@tanstack/react-table";
 import { PermissionTreeNode } from "@/types/permission";
-import { cn } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -11,7 +10,6 @@ import {
 } from "@/components/ui/table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 
 interface PermissionTableProps {
   readonly table: ReactTable<PermissionTreeNode>;
@@ -21,16 +19,9 @@ interface PermissionTableProps {
 }
 
 export function PermissionTable({ table, columns, globalFilter, isLoading }: PermissionTableProps) {
-  const hasRows = table.getRowModel().rows?.length > 0;
   return (
     <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 relative">
-      {/* Loading bar at the top of the table component */}
-      {isLoading && (
-        <div className="absolute top-0 left-0 right-0 z-50">
-          <Progress value={undefined} className="h-0.5 rounded-none bg-transparent [&>div]:bg-primary" />
-        </div>
-      )}
-      <div className={cn("overflow-x-auto overflow-y-auto transition-opacity duration-300", isLoading && hasRows ? "opacity-60 pointer-events-none" : "opacity-100")} style={{ maxHeight: "calc(100vh - 400px)", minHeight: 400 }}>
+      <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: "calc(100vh - 400px)", minHeight: 400 }}>
         <Table className="min-w-[1000px] border-separate border-spacing-0">
           <TableHeader className="bg-card border-b border-border/40 sticky top-0 z-10 shadow-[0_1px_0_0_hsl(var(--border)/0.4)]">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -51,7 +42,7 @@ export function PermissionTable({ table, columns, globalFilter, isLoading }: Per
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading && !hasRows ? (
+            {isLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                     <TableRow key={`skeleton-row-${i}`} className="h-14 border-b border-border/50 last:border-0">
                         {columns.map((col, j) => (

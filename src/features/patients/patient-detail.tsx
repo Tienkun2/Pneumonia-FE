@@ -27,6 +27,7 @@ import { ArrowLeft, PlusCircle, Loader2, MoreVertical, Edit, Trash2, Activity, F
 import Link from "next/link";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
+import { translateGender } from "@/lib/utils";
 import { QuickAddVisitDialog } from "@/components/patients/quick-add-visit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Visit } from "@/types/diagnosis";
@@ -42,14 +43,6 @@ export function PatientDetail({ patientId }: { patientId: string }) {
 
   const { selectedPatient: patient, isLoading: isPatientLoading, error: patientError } = useSelector((state: RootState) => state.patient);
   const { visits, isLoading: isVisitsLoading, error: visitsError } = useSelector((state: RootState) => state.visit);
-
-  const translateGender = useCallback((gender: string) => {
-    switch (gender) {
-      case "MALE": return "Nam";
-      case "FEMALE": return "Nữ";
-      default: return "Khác";
-    }
-  }, []);
 
   const calculateAge = useCallback((dateOfBirth?: string) => {
     if (!dateOfBirth) return "N/A";

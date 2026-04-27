@@ -55,7 +55,7 @@ export function useDiagnosis() {
         const symptoms = await AiService.getSymptoms();
         setAvailableSymptoms(symptoms);
       } catch {
-        toast.error("Không thể tải danh sách triệu chứng từ AI");
+        toast.error("Không thể tải danh sách triệu chứng từ AI", { id: "symptoms-error" });
       }
     };
     fetchSymptoms();

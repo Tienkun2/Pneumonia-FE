@@ -41,3 +41,14 @@ export function formatDate(
     return String(dateInput ?? "-");
   }
 }
+
+export function translateGender(gender?: string): string {
+  switch (gender) {
+    case "MALE":
+      return "Nam";
+    case "FEMALE":
+      return "Nữ";
+    default:
+      return "Khác";
+  }
+}

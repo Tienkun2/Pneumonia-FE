@@ -226,3 +226,27 @@ input::-webkit-credentials-auto-fill-button {
   position: absolute;
   right: 0;
 }
+
+/* --- PRINT STYLES --- */
+@media print {
+  @page { 
+    size: A4 portrait; 
+    margin: 15mm; 
+  }
+  body { 
+    -webkit-print-color-adjust: exact; 
+    print-color-adjust: exact; 
+    background: white !important; 
+    margin: 0; 
+  }
+  .print-container { 
+    width: 100% !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    min-height: auto !important; 
+    box-shadow: none !important;
+  }
+  .page-break-inside-avoid { 
+    page-break-inside: avoid; 
+  }
+}

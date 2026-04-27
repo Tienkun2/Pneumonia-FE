@@ -49,11 +49,11 @@ interface VisitTooltipProps {
 const VisitTooltip = ({ active, payload, label }: VisitTooltipProps) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-popover border border-border rounded-lg shadow-lg px-3.5 py-2.5 text-xs min-w-[120px]">
-      <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-1.5">{label}</p>
-      <div className="flex items-baseline gap-1.5">
-        <span className="text-foreground font-bold text-sm tabular-nums">{payload[0].value}</span>
-        <span className="text-muted-foreground">lượt khám</span>
+    <div className="bg-card border border-border/60 rounded-xl shadow-lg px-4 py-3 min-w-[140px]">
+      <p className="text-muted-foreground text-[11px] uppercase tracking-wider mb-2 font-medium">{label}</p>
+      <div className="flex items-baseline gap-2">
+        <span className="text-foreground font-semibold text-xl tabular-nums">{payload[0].value}</span>
+        <span className="text-muted-foreground text-[13px]">lượt khám</span>
       </div>
     </div>
   );
@@ -77,8 +77,8 @@ const renderActiveShape = (props: unknown) => {
     <Sector
       cx={cx}
       cy={cy}
-      innerRadius={innerRadius - 4}
-      outerRadius={outerRadius + 6}
+      innerRadius={innerRadius}
+      outerRadius={outerRadius + 4}
       startAngle={startAngle}
       endAngle={endAngle}
       fill={fill}
@@ -88,12 +88,13 @@ const renderActiveShape = (props: unknown) => {
 };
 
 const PIE_COLORS: Record<string, string> = {
-  NORMAL: "#10B981",
-  PNEUMONIA: "#EF4444",
+  NORMAL: "#10B981", // Emerald 500
+  PNEUMONIA: "#F87171", // Red 400 (softer red)
 };
 
 export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount }: DashboardChartsProps) {
   const [activeDonutIndex, setActiveDonutIndex] = useState(0);
+  const [timeRange, setTimeRange] = useState("7D");
   
   const onPieEnter = useCallback((_: unknown, index: number) => {
     setActiveDonutIndex(index);
@@ -102,63 +103,85 @@ export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <Panel className="lg:col-span-2 flex flex-col">
-        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-          <div>
-            <SectionTitle>Lượt khám theo ngày</SectionTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Tần suất chẩn đoán 7 ngày gần nhất</p>
+        <div className="px-6 py-5 border-b border-border/40 flex items-start sm:items-center justify-between flex-col sm:flex-row gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <SectionTitle>Lượt khám theo ngày</SectionTitle>
+              <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <TrendingUp className="h-3 w-3" />
+                <span>+12.5%</span>
+              </div>
+            </div>
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-medium">
+              <span>📈</span> Lượt khám tăng nhẹ trong {timeRange === "7D" ? "7 ngày" : timeRange === "30D" ? "30 ngày" : "3 tháng"} qua
+            </p>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full">
-            <TrendingUp className="h-3.5 w-3.5" />
-            <span>+12.5%</span>
+          
+          <div className="flex items-center bg-muted/40 p-1 rounded-lg border border-border/50 shrink-0">
+            {["7D", "30D", "90D"].map(r => (
+               <button 
+                  key={r}
+                  onClick={() => setTimeRange(r)}
+                  className={`px-3.5 py-1.5 text-[11px] font-bold rounded-md transition-all ${
+                    timeRange === r 
+                      ? 'bg-card text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+               >
+                 {r}
+               </button>
+            ))}
           </div>
         </div>
 
-        <div className="p-5 pt-6">
+        <div className="p-6 pt-8 pb-4">
           {isLoading ? (
-            <Skeleton className="h-[220px] w-full rounded-lg" />
+            <Skeleton className="h-[240px] w-full rounded-xl" />
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={trends} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={240}>
+              <AreaChart data={trends} margin={{ top: 10, right: 10, left: -24, bottom: 0 }}>
                 <defs>
                   <linearGradient id="visitGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
                   vertical={false}
                   stroke="hsl(var(--border))"
-                  strokeDasharray="3 3"
-                  opacity={0.5}
+                  strokeDasharray="4 4"
+                  opacity={0.2}
                 />
                 <XAxis
                   dataKey="date"
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(val) => val.split("-").slice(1).reverse().join("/")}
-                  fontSize={11}
+                  fontSize={12}
                   stroke="hsl(var(--muted-foreground))"
-                  tickMargin={10}
-                  interval="preserveStartEnd"
+                  tickMargin={16}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  fontSize={11}
+                  fontSize={12}
                   stroke="hsl(var(--muted-foreground))"
                   allowDecimals={false}
-                  width={28}
+                  width={30}
                 />
-                <Tooltip content={<VisitTooltip />} cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1.5 }} />
-                <Area
+                <Tooltip 
+                  content={<VisitTooltip />} 
+                  cursor={{ stroke: "hsl(var(--border))", strokeWidth: 1, strokeDasharray: "4 4", fill: "transparent" }} 
+                />
+                <Area 
                   type="monotone"
-                  dataKey="visits"
+                  dataKey="visits" 
                   stroke="hsl(var(--primary))"
                   strokeWidth={2.5}
+                  fillOpacity={1}
                   fill="url(#visitGradient)"
-                  dot={false}
-                  activeDot={{ r: 5, strokeWidth: 2, stroke: "hsl(var(--background))", fill: "hsl(var(--primary))" }}
-                  animationDuration={900}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: "hsl(var(--primary))" }}
+                  animationDuration={1000}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -167,12 +190,12 @@ export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount
       </Panel>
 
       <Panel className="flex flex-col">
-        <div className="px-5 py-4 border-b border-border">
+        <div className="px-6 py-5 border-b border-border/40">
           <SectionTitle>Tỷ lệ bệnh lý</SectionTitle>
-          <p className="text-xs text-muted-foreground mt-0.5">Phân loại kết quả chẩn đoán</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5">Phân loại kết quả chẩn đoán</p>
         </div>
 
-        <div className="flex-1 flex flex-col p-5 pt-6 items-center">
+        <div className="flex-1 flex flex-col p-6 items-center">
           {isLoading ? (
             <Skeleton className="h-44 w-44 rounded-full mx-auto" />
           ) : (
@@ -186,9 +209,9 @@ export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount
                       data={diagStats.map((s) => ({ ...s, name: getDiagnosisTranslation(s.label) }))}
                       cx="50%"
                       cy="50%"
-                      innerRadius={58}
+                      innerRadius={55}
                       outerRadius={80}
-                      paddingAngle={3}
+                      paddingAngle={8}
                       dataKey="count"
                       nameKey="name"
                       stroke="none"
@@ -206,11 +229,11 @@ export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount
                   </PieChart>
                 </ResponsiveContainer>
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <p className="text-[32px] font-bold text-foreground tabular-nums leading-none">
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-1">
+                  <p className="text-[42px] font-black text-foreground tabular-nums leading-none tracking-tighter">
                     {diagStats[activeDonutIndex]?.count ?? totalVisitsCount}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
+                  <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-medium">
                     {diagStats[activeDonutIndex]
                       ? getDiagnosisTranslation(diagStats[activeDonutIndex].label)
                       : "Tổng ca"}
@@ -218,7 +241,7 @@ export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount
                 </div>
               </div>
 
-              <div className="mt-2 w-full flex flex-col gap-2">
+              <div className="mt-8 w-full flex flex-col gap-3">
                 {diagStats.map((stat, i) => {
                   const pct = totalVisitsCount > 0
                     ? Math.round((stat.count / totalVisitsCount) * 100)
@@ -229,29 +252,29 @@ export function DashboardCharts({ isLoading, trends, diagStats, totalVisitsCount
                       key={i}
                       type="button"
                       onClick={() => setActiveDonutIndex(i)}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg border transition-all cursor-pointer text-left w-full ${
+                      className={`flex items-center justify-between py-3 px-4 transition-all cursor-pointer text-left w-full rounded-xl ${
                         activeDonutIndex === i
-                          ? "border-border bg-muted/60"
-                          : "border-transparent bg-muted/30 hover:bg-muted/50"
+                          ? "bg-muted/40 shadow-sm border border-border/50"
+                          : "bg-transparent border border-transparent hover:bg-muted/20"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-4">
                         <span
-                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          className="w-3 h-3 rounded-full shrink-0 shadow-sm"
                           style={{ backgroundColor: color }}
                         />
                         <div>
-                          <p className="text-xs font-semibold text-foreground leading-none">
+                          <p className={`text-sm font-semibold leading-none ${activeDonutIndex === i ? 'text-foreground' : 'text-foreground/80'}`}>
                             {getDiagnosisTranslation(stat.label)}
                           </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-1.5">
                             {stat.label === "NORMAL" ? "Ổn định" : "Cần theo dõi"}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-baseline gap-1 shrink-0">
-                        <span className="text-sm font-bold text-foreground tabular-nums">{stat.count}</span>
-                        <span className="text-[10px] text-muted-foreground">({pct}%)</span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="text-[15px] font-bold text-foreground tabular-nums">{stat.count}</span>
+                        <span className="text-xs text-muted-foreground font-medium">{pct}%</span>
                       </div>
                     </button>
                   );

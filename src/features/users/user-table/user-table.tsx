@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/table";
 import { DataTablePagination } from "@/components/ui/data-table-pagination";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 
 interface UserTableProps {
   readonly table: ReactTable<User>;
@@ -21,18 +19,9 @@ interface UserTableProps {
 }
 
 export function UserTable({ table, columns, globalFilter, isLoading }: UserTableProps) {
-  const hasRows = table.getRowModel().rows?.length > 0;
   return (
     <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 flex flex-col overflow-hidden border border-border/40 relative">
-       {/* Top Loading Bar */}
-       {isLoading && (
-        <div className="absolute top-0 left-0 right-0 z-50">
-          <Progress value={undefined} className="h-0.5 rounded-none bg-transparent [&>div]:bg-primary" />
-        </div>
-      )}
-
-      {/* Scrollable table body */}
-      <div className={cn("overflow-x-auto overflow-y-auto transition-all duration-300", isLoading && hasRows ? "opacity-50 pointer-events-none blur-[0.5px]" : "opacity-100")} style={{ maxHeight: "calc(100vh - 340px)", minHeight: 400 }}>
+      <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: "calc(100vh - 340px)", minHeight: 400 }}>
         <Table className="min-w-[1200px] border-separate border-spacing-0">
           <TableHeader className="bg-card border-b border-border/40 sticky top-0 z-10 shadow-[0_1px_0_0_hsl(var(--border)/0.4)]">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -53,7 +42,7 @@ export function UserTable({ table, columns, globalFilter, isLoading }: UserTable
             ))}
           </TableHeader>
           <TableBody>
-            {isLoading && !hasRows ? (
+            {isLoading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                     <TableRow key={`skeleton-row-${i}`} className="h-16 border-b border-border/30 last:border-0 hover:bg-transparent px-8">
                         {columns.map((col, j) => (

@@ -1,12 +1,12 @@
 export function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-sm font-semibold text-foreground">{children}</h2>
+    <h2 className="text-[17px] font-semibold text-foreground tracking-tight">{children}</h2>
   );
 }
 
 export function Panel({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={`bg-card border border-border rounded-xl overflow-hidden ${className}`}>
+    <div className={`bg-card border border-border/50 rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${className}`}>
       {children}
     </div>
   );

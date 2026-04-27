@@ -4,7 +4,7 @@ import { PageLoader } from "@/components/ui/page-loader";
 
 export default function AnalysisPage() {
   return (
-    <Suspense fallback={<PageLoader label="Đang tải chẩn đoán..." />}>
+    <Suspense fallback={<PageLoader />}>
       <DiagnosisForm />
     </Suspense>
   );

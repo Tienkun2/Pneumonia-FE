@@ -11,7 +11,6 @@ import {
   Hospital,
   UserCheck,
   Activity,
-  Loader2,
   Calendar,
   User,
   ShieldAlert,
@@ -24,6 +23,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { ImageViewer } from "@/components/medical/image-viewer";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { VisitService } from "@/services/visit-service";
 import { PatientService } from "@/services/patient-service";
@@ -37,13 +37,14 @@ import { RISK_CONFIG } from "@/constants/results";
 import { ScoreRing } from "./components/score-ring";
 import { StatPill } from "./components/stat-pill";
 import { RecommendItem } from "./components/recommendation-item";
+import { PrintReport } from "./components/print-report";
 
 export function ResultView({ resultId }: { resultId: string }) {
   const [visit, setVisit] = useState<Visit | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showImageViewer, setShowImageViewer] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const patientIdParam = searchParams.get("patientId");
   const fetchedIdRef = useRef<string | null>(null);
@@ -77,7 +78,7 @@ export function ResultView({ resultId }: { resultId: string }) {
   }, [resultId, patientIdParam]);
 
   const handlePrint = useReactToPrint({
-    contentRef,
+    contentRef: printRef,
     documentTitle: `PlumoX_Report_${patient?.fullName || resultId}`,
   });
 
@@ -99,14 +100,38 @@ export function ResultView({ resultId }: { resultId: string }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-40 gap-4">
-        <div className="relative w-14 h-14">
-          <Loader2 className="h-14 w-14 animate-spin text-primary/20" />
-          <BrainCircuit className="h-6 w-6 text-primary absolute inset-0 m-auto" />
+      <div className="max-w-5xl mx-auto space-y-5 pb-20 animate-in fade-in duration-500">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-9 w-9 rounded-xl" />
+            <div className="space-y-1">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-9 w-28 rounded-xl" />
         </div>
-        <p className="text-sm font-bold text-muted-foreground/60 uppercase tracking-widest animate-pulse">
-          Đang tải kết quả chẩn đoán...
-        </p>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Skeleton className="h-16 col-span-2 sm:col-span-1 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-5 space-y-3">
+              <Skeleton className="aspect-square w-full rounded-xl" />
+              <Skeleton className="h-32 w-full rounded-xl" />
+            </div>
+            <div className="lg:col-span-7 flex flex-col gap-4">
+              <Skeleton className="h-40 w-full rounded-xl" />
+              <Skeleton className="h-28 w-full rounded-xl" />
+              <Skeleton className="h-48 w-full rounded-xl" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -136,7 +161,7 @@ export function ResultView({ resultId }: { resultId: string }) {
         </Button>
       </div>
 
-      <div ref={contentRef} className="space-y-4">
+      <div className="space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatPill icon={User} label="Bệnh nhân" value={patient?.fullName || "—"} className="col-span-2 sm:col-span-1" />
           <StatPill icon={FileText} label="Mã BN" value={patient?.code || "—"} />
@@ -257,6 +282,16 @@ export function ResultView({ resultId }: { resultId: string }) {
         </Button>
       </div>
       <ImageViewer src={imageUrl} open={showImageViewer} onOpenChange={setShowImageViewer} />
+
+      {/* Hidden Print Component */}
+      <div className="hidden">
+        <PrintReport
+          ref={printRef}
+          visit={visit}
+          patient={patient}
+          totalWeightedScore={totalWeightedScore}
+        />
+      </div>
     </div>
   );
 }
