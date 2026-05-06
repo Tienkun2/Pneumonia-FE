@@ -86,18 +86,18 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body + " gap-6"}>
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel className={FORM_STYLES.label}>
-                    Tên vai trò <span className="text-destructive">*</span>
+                    Tên vai trò <span className="text-destructive ml-0.5">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Ví dụ: ADMIN, DOCTOR..."
+                      placeholder="ADMIN"
                       {...field}
                       disabled={!!role}
                       className={FORM_STYLES.inputBold}
@@ -112,11 +112,11 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: Readonly
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel className={FORM_STYLES.label}>Mô tả nghiệp vụ</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Nhập mô tả cho vai trò này..."
+                      placeholder="Quản trị viên toàn hệ thống"
                       rows={3}
                       {...field}
                       className={FORM_STYLES.input}

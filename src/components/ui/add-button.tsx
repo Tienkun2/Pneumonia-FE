@@ -12,7 +12,10 @@ export const AddButton = React.forwardRef<HTMLButtonElement, AddButtonProps>(
     return (
       <Button
         ref={ref}
-        className={cn("gap-1.5", className)}
+        className={cn(
+          "gap-1.5 h-9 px-4 rounded-xl shadow-lg shadow-primary/20 active:scale-95 transition-all font-semibold text-[13px]",
+          className
+        )}
         {...props}
       >
         <Plus className="h-4 w-4" /> Thêm {label.toLowerCase()}

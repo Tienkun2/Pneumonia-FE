@@ -36,4 +36,6 @@ export * from "./permission";
 export * from "./role";
 export * from "./user";
 export * from "./dashboard";
+export * from "./setting";
+export * from "./notification";
 

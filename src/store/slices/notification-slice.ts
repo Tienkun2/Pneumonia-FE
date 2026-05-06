@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { NotificationService, NotificationDto } from "@/services/notification-service";
+import { NotificationService } from "@/services/notification-service";
+import { NotificationDto, NotificationItem } from "@/types";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -51,10 +52,6 @@ export const deleteAllApi = createAsyncThunk(
 );
 
 // --- Types ---
-export interface NotificationItem extends NotificationDto {
-  formattedTime: string;
-}
-
 interface NotificationState {
   items: NotificationItem[];
   unreadCount: number;

@@ -1,7 +1,10 @@
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-
 export const generateMedicalReport = async (elementId: string, filename: string) => {
+  // Dynamically import heavy libraries only when needed
+  const [jsPDF, html2canvas] = await Promise.all([
+    import("jspdf").then((m) => m.default),
+    import("html2canvas").then((m) => m.default),
+  ]);
+
   const element = document.getElementById(elementId);
   if (!element) {
     console.error("Report element not found");

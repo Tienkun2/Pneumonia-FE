@@ -26,11 +26,11 @@ import {
   Settings, 
   LogOut, 
   Search, 
-  CheckCircle2, 
-  AlertTriangle, 
   Clock,
   Check,
-  Menu
+  Menu,
+  Stethoscope,
+  ShieldCheck,
 } from "lucide-react";
 
 export function Header({ isCollapsed, setIsCollapsed }: { isCollapsed?: boolean; setIsCollapsed?: (val: boolean) => void }) {
@@ -39,25 +39,23 @@ export function Header({ isCollapsed, setIsCollapsed }: { isCollapsed?: boolean;
   const { user } = useAppSelector((state) => state.auth);
   const { items: notifications, unreadCount } = useAppSelector((state) => state.notifications);
 
-  const getTypeFromContent = (content: string) => {
-    if (content.toLowerCase().includes("pneumonia") || content.toLowerCase().includes("nguy cơ cao") || content.toLowerCase().includes("kết quả")) return 'warning';
-    if (content.toLowerCase().includes("tài khoản") || content.toLowerCase().includes("khởi tạo") || content.toLowerCase().includes("thành công")) return 'success';
-    return 'info';
-  };
-
   const getIconForType = (type: string) => {
     switch(type) {
-      case 'warning': return AlertTriangle;
-      case 'success': return CheckCircle2;
-      default: return Bell;
+      case 'DIAGNOSIS': return Stethoscope;
+      case 'PATIENT':   return User;
+      case 'SECURITY':  return ShieldCheck;
+      case 'SYSTEM':    return Settings;
+      default:          return Bell;
     }
   };
 
   const getColorForType = (type: string) => {
     switch(type) {
-      case 'warning': return "text-amber-500 bg-amber-500/10";
-      case 'success': return "text-emerald-500 bg-emerald-500/10";
-      default: return "text-primary bg-primary/10";
+      case 'DIAGNOSIS': return "text-primary bg-primary/10";
+      case 'PATIENT':   return "text-emerald-500 bg-emerald-500/10";
+      case 'SECURITY':  return "text-red-500 bg-red-500/10";
+      case 'SYSTEM':    return "text-blue-500 bg-blue-500/10";
+      default:          return "text-muted-foreground bg-muted";
     }
   };
 
@@ -152,8 +150,8 @@ export function Header({ isCollapsed, setIsCollapsed }: { isCollapsed?: boolean;
                   </div>
                 ) : (
                   notifications.slice(0, 5).map((notif) => {
-                    const Icon = getIconForType(getTypeFromContent(notif.content));
-                    const colorClasses = getColorForType(getTypeFromContent(notif.content));
+                    const Icon = getIconForType(notif.type);
+                    const colorClasses = getColorForType(notif.type);
                     return (
                         <div 
                           key={notif.id} 

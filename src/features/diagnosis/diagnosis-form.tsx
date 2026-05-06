@@ -1,13 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useDiagnosis } from "@/hooks/use-diagnosis";
 import { RISKS_MAP, SYMPTOM_LABELS, getBarColor } from "@/constants/diagnosis";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
 import { Textarea } from "@/components/ui/textarea";
-import { format } from "date-fns";
-import { vi } from "date-fns/locale";
 import {
   Upload,
   Loader2,
@@ -19,133 +18,24 @@ import {
   X,
   ImageIcon,
   Zap,
-  Search,
-  History,
-  Calendar,
+  Layers,
   ChevronRight,
   FileText,
-  Layers,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
 
-function ScoreRing({
-  value,
-  riskLevel,
-}: {
-  value: number;
-  riskLevel: string;
-}) {
-  const [displayed, setDisplayed] = useState(0);
-  const risk = RISKS_MAP[riskLevel] ?? RISKS_MAP["Unknown"];
-  const pct = Math.round(value * 100);
+// Extracted Components
+import { ScoreRing } from "./components/score-ring";
+import { WorkflowStep } from "./components/workflow-step";
+import { PatientSelector } from "./components/patient-selector";
 
-  useEffect(() => {
-    let frame = 0;
-    const total = 60;
-    const timer = setInterval(() => {
-      frame++;
-      setDisplayed(Math.round((frame / total) * pct));
-      if (frame >= total) clearInterval(timer);
-    }, 1000 / total);
-    return () => clearInterval(timer);
-  }, [pct]);
-
-  const radius = 54;
-  const circ = 2 * Math.PI * radius;
-  const dash = (displayed / 100) * circ;
-
-  const strokeColor =
-    riskLevel === "HIGH"
-      ? "#ef4444"
-      : riskLevel === "MEDIUM"
-      ? "#f59e0b"
-      : "#10b981";
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-3">
-      <div className="relative w-36 h-36">
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
-          <circle
-            cx="70"
-            cy="70"
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="10"
-            className="text-muted/30"
-          />
-          <circle
-            cx="70"
-            cy="70"
-            r={radius}
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={`${dash} ${circ}`}
-            style={{ transition: "stroke-dasharray 0.05s linear", filter: `drop-shadow(0 0 6px ${strokeColor}55)` }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={cn("text-3xl font-black tabular-nums leading-none", risk.color)}>
-            {displayed}%
-          </span>
-          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            Nguy cơ
-          </span>
-        </div>
-      </div>
-      <div className={cn("flex items-center gap-2 px-4 py-1.5 rounded-full border", risk.border, risk.bg)}>
-        <div className={cn("w-2 h-2 rounded-full animate-pulse", risk.dot)} />
-        <span className={cn("text-xs font-black uppercase tracking-wider", risk.color)}>
-          {risk.label}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function WorkflowStep({
-  step,
-  label,
-  done,
-  active,
-}: {
-  step: number;
-  label: string;
-  done: boolean;
-  active: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <div
-        className={cn(
-          "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all",
-          done
-            ? "bg-primary text-primary-foreground shadow-sm shadow-primary/30"
-            : active
-            ? "bg-primary/15 text-primary border-2 border-primary/40"
-            : "bg-muted text-muted-foreground border border-border/60"
-        )}
-      >
-        {done ? <Check className="h-3 w-3" /> : step}
-      </div>
-      <span
-        className={cn(
-          "text-xs font-bold transition-colors",
-          done || active ? "text-foreground" : "text-muted-foreground/50"
-        )}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
+// Dynamic Imports
+const HistoryPanel = dynamic(() => import("./components/history-panel").then(mod => mod.HistoryPanel), {
+  loading: () => <div className="h-40 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary/30" /></div>
+});
 
 export function DiagnosisForm() {
   const {
@@ -220,79 +110,20 @@ export function DiagnosisForm() {
         </div>
 
         {/* Patient Selector */}
-        <div className="relative flex items-center min-w-[300px]" ref={dropdownRef}>
-          {selectedPatient ? (
-            <div className="flex items-center justify-between w-full bg-card border border-border/60 rounded-xl px-3 py-2 shadow-sm animate-in fade-in zoom-in-95 duration-300">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-[11px] font-black">
-                  {selectedPatient.fullName.charAt(0)}
-                </div>
-                <div className="leading-tight">
-                  <p className="text-sm font-bold text-foreground">{selectedPatient.fullName}</p>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{selectedPatient.code}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowHistory(!showHistory)}
-                  className={cn("h-7 w-7 rounded-md", showHistory ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground")}
-                >
-                  <History className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedPatient(null)}
-                  className="h-7 w-7 rounded-md text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/50 pointer-events-none" />
-              <Input
-                placeholder="Tìm bệnh nhân (mã hoặc tên)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsDropdownOpen(true)}
-                className="pl-9 h-10 border-border/60 rounded-xl bg-card focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:border-primary/40 text-sm font-medium placeholder:text-muted-foreground/40 w-full shadow-sm"
-              />
-              {isDropdownOpen && (
-                <div className="absolute top-full mt-2 left-0 w-full bg-popover border border-border shadow-2xl rounded-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1">
-                  <div className="p-2 border-b border-border/40 bg-muted/40">
-                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest px-2">Kết quả tìm kiếm</p>
-                  </div>
-                  <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
-                    {patients.map((patient, index) => (
-                      <button
-                        key={patient.id}
-                        ref={index === patients.length - 1 ? lastPatientElementRef : null}
-                        onClick={() => { setSelectedPatient(patient); setIsDropdownOpen(false); setSearchQuery(""); }}
-                        className="w-full text-left px-4 py-3 hover:bg-muted transition-colors flex items-center justify-between border-b border-border/40 last:border-0"
-                      >
-                        <div>
-                          <p className="text-sm font-bold text-foreground">{patient.fullName}</p>
-                          <p className="text-xs font-semibold text-muted-foreground/70 uppercase">{patient.code} • {patient.phone}</p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] font-bold h-5 border-border/60 bg-muted/30">
-                          {patient.gender === "MALE" ? "NAM" : "NỮ"}
-                        </Badge>
-                      </button>
-                    ))}
-                    {isSearching && <div className="p-4 text-center"><Loader2 className="h-4 w-4 animate-spin mx-auto text-primary" /></div>}
-                    {patients.length === 0 && !isSearching && (
-                      <div className="p-6 text-center text-sm text-muted-foreground font-medium italic">Không tìm thấy bệnh nhân</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <PatientSelector 
+          selectedPatient={selectedPatient}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          isDropdownOpen={isDropdownOpen}
+          setIsDropdownOpen={setIsDropdownOpen}
+          patients={patients}
+          isSearching={isSearching}
+          setSelectedPatient={setSelectedPatient}
+          showHistory={showHistory}
+          setShowHistory={setShowHistory}
+          dropdownRef={dropdownRef}
+          lastPatientElementRef={lastPatientElementRef}
+        />
       </div>
 
       {/* ── Workflow Stepper ─────────────────────────────────────────────── */}
@@ -310,46 +141,12 @@ export function DiagnosisForm() {
 
       {/* ── Patient History Panel ─────────────────────────────────────────── */}
       {showHistory && selectedPatient && (
-        <Card className="animate-in slide-in-from-top-4 duration-500 overflow-hidden border-border/60 shadow-xl bg-card/80 backdrop-blur-xl">
-          <CardHeader className="bg-muted/40 border-b border-border/40 flex flex-row items-center justify-between px-5 py-3">
-            <CardTitle className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
-              <History className="h-4 w-4 text-primary" /> Nhật ký chẩn đoán — {selectedPatient.fullName}
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setShowHistory(false)} className="h-7 w-7 p-0 hover:bg-red-500/10 hover:text-red-500">
-              <X className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="p-4 max-h-[320px] overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {isLoadingVisits ? (
-              <div className="col-span-full py-10 text-center">
-                <Loader2 className="h-7 w-7 animate-spin mx-auto text-primary/30" />
-              </div>
-            ) : patientVisits.length > 0 ? (
-              patientVisits.map((visit) => (
-                <div key={visit.id} className="p-4 rounded-xl border border-border/40 bg-card/40 hover:border-primary/30 hover:bg-card/60 transition-all cursor-default group">
-                  <div className="flex justify-between items-start mb-2.5">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-muted-foreground/50" />
-                      <span className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors">
-                        {format(new Date(visit.visitDate), "dd/MM/yyyy", { locale: vi })}
-                      </span>
-                    </div>
-                    {visit.diagnoses?.[0] && (
-                      <Badge className={cn("text-[9px] font-black uppercase px-2 shadow-none border-none", visit.diagnoses[0].result === "PNEUMONIA" ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500")}>
-                        {visit.diagnoses[0].result}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs font-medium text-muted-foreground group-hover:text-foreground/80 line-clamp-2 italic leading-relaxed transition-colors">
-                    &ldquo;{visit.symptoms || "—"}&rdquo;
-                  </p>
-                </div>
-              ))
-            ) : (
-              <div className="col-span-full py-10 text-center text-muted-foreground/40 font-medium italic text-sm">Chưa có lịch sử khám</div>
-            )}
-          </CardContent>
-        </Card>
+        <HistoryPanel 
+          selectedPatient={selectedPatient}
+          isLoadingVisits={isLoadingVisits}
+          patientVisits={patientVisits}
+          onClose={() => setShowHistory(false)}
+        />
       )}
 
       {/* ── Main 2-Column Layout ──────────────────────────────────────────── */}

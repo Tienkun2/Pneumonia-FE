@@ -61,12 +61,12 @@ export function useDataTable<TData>({
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onSortingChange: setSorting,
-    onPaginationChange: (updater) => {
-        if (onPaginationChange) {
-            const nextPagination = typeof updater === 'function' ? updater(pagination || { pageIndex: 0, pageSize: 10 }) : updater;
-            onPaginationChange(nextPagination);
-        }
-    },
+    ...(onPaginationChange && {
+      onPaginationChange: (updater) => {
+        const nextPagination = typeof updater === 'function' ? updater(pagination || { pageIndex: 0, pageSize: 10 }) : updater;
+        onPaginationChange(nextPagination);
+      }
+    }),
     initialState: {
         pagination: {
             pageSize: 10,

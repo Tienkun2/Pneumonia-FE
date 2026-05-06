@@ -1,17 +1,22 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
 import { fetchPatients, deletePatientThunk } from "@/store/slices/patient-slice";
 
-import { PatientDialogs } from "./components/patient-dialogs";
 import { usePatientTable } from "@/hooks/use-patient-table";
 import { PatientTable } from "./patient-table/patient-table";
 import { Button } from "@/components/ui/button";
 import {
   Upload, Download, Users, X, Search
 } from "lucide-react";
+
+const PatientDialogs = dynamic(() => import("./components/patient-dialogs").then(mod => mod.PatientDialogs), {
+  loading: () => null,
+  ssr: false
+});
 import { toast } from "sonner";
 import { Patient } from "@/types/patient";
 import { DateRange } from "react-day-picker";

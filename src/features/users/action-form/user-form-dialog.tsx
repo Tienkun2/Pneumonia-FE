@@ -107,17 +107,19 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.bodyWithScroll}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.bodyWithScroll + " gap-6"}>
             {/* Username */}
             <FormField
               control={form.control}
               name="username"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={FORM_STYLES.label}>Tên đăng nhập</FormLabel>
+                <FormItem className="space-y-3">
+                  <FormLabel className={FORM_STYLES.label}>
+                    Tên đăng nhập <span className="text-destructive ml-0.5">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Nhập tên đăng nhập..."
+                      placeholder="admin_01"
                       {...field}
                       disabled={!!user}
                       className={FORM_STYLES.inputBold}
@@ -133,8 +135,10 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={FORM_STYLES.label}>Email</FormLabel>
+                <FormItem className="space-y-3">
+                  <FormLabel className={FORM_STYLES.label}>
+                    Email <span className="text-destructive ml-0.5">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="email@example.com"
@@ -153,11 +157,11 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
               control={form.control}
               name="displayName"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel className={FORM_STYLES.label}>Họ và tên</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Nhập họ và tên..."
+                      placeholder="Nguyễn Văn A"
                       {...field}
                       className={FORM_STYLES.input}
                     />
@@ -173,7 +177,7 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
                 control={form.control}
                 name="dob"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>Ngày sinh</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} className={FORM_STYLES.input} />
@@ -187,11 +191,11 @@ export function UserFormDialog({ open, onOpenChange, user, onSuccess }: Readonly
                 control={form.control}
                 name="phoneNumber"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>Số điện thoại</FormLabel>
                     <FormControl>
                       <PhoneInput
-                        placeholder="Nhập SĐT..."
+                        placeholder="0912345678"
                         {...field}
                         defaultCountry="VN"
                       />

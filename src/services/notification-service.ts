@@ -1,12 +1,5 @@
 import { apiClient } from "@/services/api-client";
-import { ApiResponse, PageResponse } from "@/types/api";
-
-export interface NotificationDto {
-  id: string;
-  content: string;
-  read: boolean;
-  createdAt: string; // ISO 8601 UTC
-}
+import { ApiResponse, PageResponse, NotificationDto } from "@/types";
 
 export const NotificationService = {
   async getNotifications(page: number = 1, size: number = 20) {

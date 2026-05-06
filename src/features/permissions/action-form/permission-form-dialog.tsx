@@ -81,18 +81,18 @@ export function PermissionFormDialog({ open, onOpenChange, parentName, onSuccess
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.body + " gap-6"}>
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel className={FORM_STYLES.label}>
-                    Mã quyền <span className="text-destructive">*</span>
+                    Mã quyền <span className="text-destructive ml-0.5">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="VD: SYST_ROOT, USER_READ..."
+                      placeholder="USER_READ"
                       {...field}
                       className={FORM_STYLES.inputBold}
                     />
@@ -106,11 +106,11 @@ export function PermissionFormDialog({ open, onOpenChange, parentName, onSuccess
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel className={FORM_STYLES.label}>Mô tả nghiệp vụ</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Mô tả chức năng của quyền này..."
+                      placeholder="Cho phép xem danh sách người dùng"
                       rows={3}
                       {...field}
                       className={FORM_STYLES.input}

@@ -1,12 +1,6 @@
-import { useEffect, useState, useMemo } from "react";
-import { toast } from "sonner";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DashboardService } from "@/services/dashboard-service";
-import { 
-  Visit, 
-  DashboardSummary, 
-  VisitTrend, 
-  DiagnosisStat 
-} from "@/types";
 import { 
   LayoutDashboard, 
   Clock, 
@@ -15,36 +9,36 @@ import {
 } from "lucide-react";
 
 export function useDashboardData() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [summary, setSummary] = useState<DashboardSummary | null>(null);
-  const [trends, setTrends] = useState<VisitTrend[]>([]);
-  const [diagStats, setDiagStats] = useState<DiagnosisStat[]>([]);
-  const [recentVisits, setRecentVisits] = useState<Visit[]>([]);
+  const summaryQuery = useQuery({
+    queryKey: ["dashboard-summary"],
+    queryFn: () => DashboardService.getSummary(),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [sum, trnd, diag, recent] = await Promise.all([
-          DashboardService.getSummary(),
-          DashboardService.getVisitTrends("7d"),
-          DashboardService.getDiagnosisStats(),
-          DashboardService.getRecentVisits(5),
-        ]);
-        setSummary(sum);
-        setTrends(trnd);
-        setDiagStats(diag);
-        setRecentVisits(recent);
-      } catch (error) {
-        console.error("Dashboard fetch error:", error);
-        toast.error("Không thể tải dữ liệu dashboard");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const trendsQuery = useQuery({
+    queryKey: ["dashboard-trends", "7d"],
+    queryFn: () => DashboardService.getVisitTrends("7d"),
+    staleTime: 5 * 60 * 1000,
+  });
 
-    fetchData();
-  }, []);
+  const diagStatsQuery = useQuery({
+    queryKey: ["dashboard-diag-stats"],
+    queryFn: () => DashboardService.getDiagnosisStats(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const recentVisitsQuery = useQuery({
+    queryKey: ["dashboard-recent-visits"],
+    queryFn: () => DashboardService.getRecentVisits(5),
+    staleTime: 1 * 60 * 1000,
+  });
+
+  const isLoading = summaryQuery.isLoading || trendsQuery.isLoading || diagStatsQuery.isLoading || recentVisitsQuery.isLoading;
+
+  const summary = summaryQuery.data || null;
+  const trends = trendsQuery.data || [];
+  const diagStats = diagStatsQuery.data || [];
+  const recentVisits = recentVisitsQuery.data || [];
 
   const stats = useMemo(() => {
     if (!summary) return [];

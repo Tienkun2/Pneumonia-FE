@@ -2,8 +2,12 @@ import * as z from "zod";
 
 // Schema for creating/updating a user's basic info
 export const userSchema = z.object({
-  username: z.string().min(3, "Username ít nhất 3 ký tự"),
-  displayName: z.string().min(3, "Họ và tên ít nhất 3 ký tự").optional().or(z.literal("")),
+  username: z.string()
+    .min(1, "Vui lòng nhập tên đăng nhập")
+    .min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
+  displayName: z.string()
+    .optional()
+    .or(z.literal("")),
   dob: z.string().refine((val) => {
     if (!val) return true;
     const date = new Date(val);
@@ -18,7 +22,9 @@ export const userSchema = z.object({
     message: "Nhân viên phải từ 18 tuổi trở lên"
   }).optional().or(z.literal("")),
   phoneNumber: z.string().optional(),
-  email: z.string().email("Email không hợp lệ").optional().or(z.literal("")),
+  email: z.string()
+    .min(1, "Vui lòng nhập địa chỉ email")
+    .email("Định dạng email không hợp lệ"),
 });
 
 export type UserFormValues = z.infer<typeof userSchema>;

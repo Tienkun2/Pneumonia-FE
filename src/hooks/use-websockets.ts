@@ -5,7 +5,7 @@ import SockJS from "sockjs-client";
 import { Client, StompSubscription } from "@stomp/stompjs";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { pushNotification, fetchUnreadCount } from "@/store/slices/notification-slice";
-import { NotificationDto } from "@/services/notification-service";
+import { NotificationDto } from "@/types";
 
 const WS_URL = "http://localhost:8080/api/v1/ws";
 
@@ -71,6 +71,7 @@ export function useWebSockets() {
           content: body,
           read: false,
           createdAt: new Date().toISOString(),
+          type: "SYSTEM",
         };
       };
 

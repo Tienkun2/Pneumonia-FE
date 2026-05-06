@@ -122,16 +122,16 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.bodyWithScroll}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className={MODAL_STYLES.bodyWithScroll + " gap-6"}>
             {/* Row 1: Mã BN + Họ tên */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="code"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>
-                      Mã bệnh nhân <span className="text-destructive">*</span>
+                      Mã bệnh nhân <span className="text-destructive ml-0.5">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -150,9 +150,9 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 control={form.control}
                 name="fullName"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>
-                      Họ và tên <span className="text-destructive">*</span>
+                      Họ và tên <span className="text-destructive ml-0.5">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -173,7 +173,7 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 control={form.control}
                 name="dateOfBirth"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>Ngày sinh</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} className={FORM_STYLES.input} />
@@ -187,9 +187,9 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 control={form.control}
                 name="gender"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>
-                      Giới tính <span className="text-destructive">*</span>
+                      Giới tính <span className="text-destructive ml-0.5">*</span>
                     </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
@@ -215,7 +215,7 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 control={form.control}
                 name="guardianName"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>Tên người giám hộ</FormLabel>
                     <FormControl>
                       <Input
@@ -233,11 +233,11 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="space-y-3">
                     <FormLabel className={FORM_STYLES.label}>Số điện thoại</FormLabel>
                     <FormControl>
                       <PhoneInput
-                        placeholder="0987xxx..."
+                        placeholder="0912345678"
                         {...field}
                         defaultCountry="VN"
                       />
@@ -253,11 +253,11 @@ export function PatientFormDialog({ open, onOpenChange, patient, onSuccess }: Re
               control={form.control}
               name="address"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-3">
                   <FormLabel className={FORM_STYLES.label}>Địa chỉ</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Nhập địa chỉ..."
+                      placeholder="Số 123, Đường ABC, Quận XYZ"
                       {...field}
                       className={FORM_STYLES.input}
                     />
