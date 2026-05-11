@@ -1,12 +1,17 @@
 import { api } from "./api-client";
 import { 
-  Visit, 
-  DashboardSummary, 
+  DashboardSummary,
+  DashboardOverview,
   VisitTrend, 
-  DiagnosisStat 
+  DiagnosisStat,
+  DashboardRecentVisit,
 } from "@/types";
 
 export const DashboardService = {
+  getOverview: async () => {
+    return await api.get<DashboardOverview>("/dashboard/overview");
+  },
+
   getSummary: async () => {
     return await api.get<DashboardSummary>("/dashboard/summary");
   },
@@ -20,6 +25,6 @@ export const DashboardService = {
   },
 
   getRecentVisits: async (limit: number = 5) => {
-    return await api.get<Visit[]>(`/dashboard/recent-visits?limit=${limit}`);
+    return await api.get<DashboardRecentVisit[]>(`/dashboard/recent-visits?limit=${limit}`);
   },
 };

@@ -8,11 +8,11 @@ import { Panel, SectionTitle } from "./dashboard-ui";
 import { getDiagnosisTranslation } from "@/constants/dashboard";
 import { getBadgeClass } from "@/constants/styles";
 
-import { Visit } from "@/types/diagnosis";
+import { DashboardRecentVisit } from "@/types";
 
 interface DashboardActivityProps {
   isLoading: boolean;
-  recentVisits: Visit[];
+  recentVisits: DashboardRecentVisit[];
 }
 
 export function DashboardActivity({ isLoading, recentVisits }: DashboardActivityProps) {

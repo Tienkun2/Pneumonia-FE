@@ -9,36 +9,16 @@ import {
 } from "lucide-react";
 
 export function useDashboardData() {
-  const summaryQuery = useQuery({
-    queryKey: ["dashboard-summary"],
-    queryFn: () => DashboardService.getSummary(),
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard-overview"],
+    queryFn: () => DashboardService.getOverview(),
     staleTime: 5 * 60 * 1000,
   });
 
-  const trendsQuery = useQuery({
-    queryKey: ["dashboard-trends", "7d"],
-    queryFn: () => DashboardService.getVisitTrends("7d"),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const diagStatsQuery = useQuery({
-    queryKey: ["dashboard-diag-stats"],
-    queryFn: () => DashboardService.getDiagnosisStats(),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const recentVisitsQuery = useQuery({
-    queryKey: ["dashboard-recent-visits"],
-    queryFn: () => DashboardService.getRecentVisits(5),
-    staleTime: 1 * 60 * 1000,
-  });
-
-  const isLoading = summaryQuery.isLoading || trendsQuery.isLoading || diagStatsQuery.isLoading || recentVisitsQuery.isLoading;
-
-  const summary = summaryQuery.data || null;
-  const trends = trendsQuery.data || [];
-  const diagStats = diagStatsQuery.data || [];
-  const recentVisits = recentVisitsQuery.data || [];
+  const summary = data?.summary ?? null;
+  const trends = data?.trends ?? [];
+  const diagStats = data?.diagnosisStats ?? [];
+  const recentVisits = data?.recentVisits ?? [];
 
   const stats = useMemo(() => {
     if (!summary) return [];
@@ -91,3 +71,4 @@ export function useDashboardData() {
     stats,
   };
 }
+
