@@ -23,13 +23,13 @@ export function DashboardHeader() {
         </p>
       </div>
       <div className="flex items-center gap-3 shrink-0">
-        <Link href="/medical/patient-mgmt/patient-list">
+        <Link href="/medical/patient-mgmt/patient-list" prefetch={false}>
           <Button variant="outline" className="rounded-xl bg-card hover:bg-muted/50 border-border/60 shadow-sm transition-all h-9 px-4 text-sm font-medium">
             <UserPlus className="h-4 w-4 mr-2 text-muted-foreground" />
             Thêm bệnh nhân
           </Button>
         </Link>
-        <Link href="/medical/ai-diagnosis/analysis">
+        <Link href="/medical/ai-diagnosis/analysis" prefetch={false}>
           <Button className="rounded-xl shadow-sm transition-all h-9 px-4 text-sm font-medium">
             <Stethoscope className="h-4 w-4 mr-2" />
             Chẩn đoán mới

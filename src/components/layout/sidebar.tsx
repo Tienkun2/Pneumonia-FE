@@ -43,7 +43,7 @@ export function Sidebar({ isCollapsed = false }: { isCollapsed?: boolean }) {
       >
         {/* Logo Header */}
         <div className={cn("flex h-20 shrink-0 items-center border-b border-border/10 justify-center", isCollapsed ? "px-2" : "px-6")}>
-          <Link href="/dashboard" className="flex items-center justify-center w-full group">
+          <Link href="/dashboard" prefetch={false} className="flex items-center justify-center w-full group">
             <div className={cn("relative flex items-center justify-center shrink-0 transition-all duration-500 ease-in-out", isCollapsed ? "h-12 w-12" : "h-16 w-full max-w-[180px]")}>
                <Image 
                  src={mounted && theme === "dark" ? "/images/PlumoX_Logo_Dark.png" : "/images/PlumoX_Logo.png"} 

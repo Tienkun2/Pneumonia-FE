@@ -21,7 +21,7 @@ export function DashboardActivity({ isLoading, recentVisits }: DashboardActivity
       <Panel className="flex flex-col">
         <div className="flex items-center justify-between px-6 py-5 border-b border-border/40">
           <SectionTitle>Hoạt động mới nhất</SectionTitle>
-          <Link href="/medical/ai-diagnosis/history">
+          <Link href="/medical/ai-diagnosis/history" prefetch={false}>
             <Button variant="ghost" size="sm" className="h-8 px-3 rounded-lg text-[13px] font-medium text-muted-foreground hover:text-foreground transition-all">
               Xem tất cả <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
             </Button>
@@ -82,7 +82,7 @@ export function DashboardActivity({ isLoading, recentVisits }: DashboardActivity
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/medical/ai-diagnosis/history/${visit.id}?patientId=${visit.patientId}`}>
+                        <Link href={`/medical/ai-diagnosis/history/${visit.id}?patientId=${visit.patientId}`} prefetch={false}>
                           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground">
                             <ArrowUpRight className="h-4 w-4" />
                           </Button>
