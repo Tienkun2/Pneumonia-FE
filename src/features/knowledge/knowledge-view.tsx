@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search,
   BookOpen,
@@ -17,12 +18,27 @@ import {
   TrendingUp,
   FileText,
   Star,
-  Info
+  Info,
+  Pencil,
+  Trash2,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
-
-type Article = typeof mockArticles[0];
+import { Article } from "@/types/article";
+import { ArticleService } from "@/services/article-service";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { toast } from "sonner";
+import { ArticleFormDialog } from "./action-form/article-form-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const categories = [
   { id: "all", label: "Tất cả", icon: BookOpen },
@@ -31,83 +47,114 @@ const categories = [
   { id: "research", label: "Nghiên cứu & AI", icon: TrendingUp },
 ];
 
-const mockArticles = [
-  {
-    id: "1",
-    title: "Phân loại mức độ nặng của viêm phổi",
-    category: "diagnosis",
-    categoryLabel: "Chẩn đoán",
-    description: "Tiêu chuẩn đánh giá từ WHO và Bộ Y tế cho mọi lứa tuổi, bao gồm các dấu hiệu rút lõm lồng ngực và thở nhanh.",
-    content: "Nội dung chi tiết...",
-    author: "BS. TS. Nguyễn Thu Hà",
-    readTime: "8 phút",
-    date: "2024-03-15",
-    image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=400",
-    tags: ["WHO", "Nhi khoa", "Phân loại"],
-    isFeatured: true,
-  },
-  {
-    id: "2",
-    title: "Ứng dụng CNN trong phân tích X-quang phổi",
-    category: "research",
-    categoryLabel: "Công nghệ",
-    description: "Khám phá cách mạng của trí tuệ nhân tạo trong việc hỗ trợ bác sĩ chẩn đoán sớm viêm phổi qua hình ảnh X-quang kỹ thuật số.",
-    author: "GS. Lê Hoàng Long",
-    readTime: "12 phút",
-    date: "2024-03-20",
-    image: "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&q=80&w=400",
-    tags: ["AI", "Deep Learning", "X-ray"],
-    isFeatured: false,
-  },
-  {
-    id: "3",
-    title: "Chỉ số CRP và Procalcitonin: Khi nào cần xét nghiệm?",
-    category: "lab",
-    categoryLabel: "Xét nghiệm",
-    description: "Sự khác biệt giữa CRP và Procalcitonin trong việc phân biệt viêm phổi do vi khuẩn và do virus.",
-    author: "BS. Phạm Minh Quân",
-    readTime: "6 phút",
-    date: "2024-03-10",
-    image: "https://images.unsplash.com/photo-1579152276503-3466f286e107?auto=format&fit=crop&q=80&w=400",
-    tags: ["Biomarkers", "Xét nghiệm máu"],
-    isFeatured: false,
-  },
-  {
-    id: "4",
-    title: "Hướng dẫn sử dụng kháng sinh ban đầu",
-    category: "diagnosis",
-    categoryLabel: "Điều trị",
-    description: "Phác đồ lựa chọn kháng sinh kinh nghiệm cho người bị viêm phổi cộng đồng mức độ trung bình.",
-    author: "Bộ Y Tế",
-    readTime: "15 phút",
-    date: "2024-02-28",
-    image: "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=400",
-    tags: ["Kháng sinh", "Điều trị"],
-    isFeatured: false,
-  },
-];
-
 export function KnowledgeView() {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [articles, setArticles] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const filteredArticles = mockArticles.filter((article) => {
-    const matchesTab = activeTab === "all" || article.category === activeTab;
-    const matchesSearch =
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  // Dialog states for CRUD
+  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [articleToDelete, setArticleToDelete] = useState<Article | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const featuredArticle = mockArticles.find(a => a.isFeatured);
+  // Get current user and authorize check
+  const user = useSelector((state: RootState) => state.auth.user);
+  const isAuthorized = user?.roles?.some(
+    (role) =>
+      role.name === "ADMIN" ||
+      role.name === "ROLE_ADMIN" ||
+      role.name === "DOCTOR" ||
+      role.name === "ROLE_DOCTOR"
+  );
+
+  const handleRefresh = () => setRefreshTrigger((prev) => prev + 1);
+
+  const handleFormSuccess = () => {
+    handleRefresh();
+    if (selectedArticle) {
+      // Refresh the currently selected article details in view mode
+      ArticleService.getArticleById(selectedArticle.id)
+        .then((updated) => setSelectedArticle(updated))
+        .catch((err) => console.error("Error refreshing detail view", err));
+    }
+  };
+
+  const handleDeleteArticle = async () => {
+    if (!articleToDelete) return;
+    setIsDeleting(true);
+    try {
+      await ArticleService.deleteArticle(articleToDelete.id);
+      toast.success("Xóa bài viết thành công!");
+      if (selectedArticle?.id === articleToDelete.id) {
+        setSelectedArticle(null);
+      }
+      setArticleToDelete(null);
+      handleRefresh();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Có lỗi xảy ra khi xóa bài viết";
+      toast.error(msg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setIsLoading(true);
+        const data = await ArticleService.getArticles(searchQuery, activeTab);
+        setArticles(data);
+      } catch (err) {
+        console.error("Lỗi khi tải tài liệu từ BE:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchArticles();
+    }, searchQuery ? 500 : 0);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, activeTab, refreshTrigger]);
+
+  const featuredArticle = articles.find(a => a.isFeatured);
 
   if (selectedArticle) {
     return (
-       <div className="space-y-6 max-w-4xl mx-auto">
-          <Button variant="ghost" onClick={() => setSelectedArticle(null)} className="mb-4">
-              Quay lại danh sách
-          </Button>
+       <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300">
+          <div className="flex items-center justify-between mb-4">
+             <Button variant="ghost" onClick={() => setSelectedArticle(null)}>
+                 Quay lại danh sách
+             </Button>
+             {isAuthorized && (
+                <div className="flex items-center gap-2">
+                   <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 font-semibold text-xs h-9 rounded-lg"
+                      onClick={() => {
+                         setEditingArticle(selectedArticle);
+                         setShowFormDialog(true);
+                      }}
+                   >
+                      <Pencil className="h-3.5 w-3.5" /> Sửa bài viết
+                   </Button>
+                   <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-1.5 font-semibold text-xs h-9 rounded-lg"
+                      onClick={() => setArticleToDelete(selectedArticle)}
+                   >
+                      <Trash2 className="h-3.5 w-3.5" /> Xóa bài viết
+                   </Button>
+                </div>
+             )}
+          </div>
           <div className="aspect-video w-full rounded-2xl overflow-hidden mb-8 relative">
              <Image 
                src={selectedArticle.image} 
@@ -126,25 +173,76 @@ export function KnowledgeView() {
              </div>
               <h1 className="text-3xl font-bold tracking-tight text-foreground leading-tight">{selectedArticle.title}</h1>
               <div className="flex items-center gap-3 py-4 border-y border-border">
-                 <div className="h-10 w-10 rounded-full bg-muted" />
+                 <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground uppercase border border-border">
+                    {selectedArticle.author.charAt(0)}
+                 </div>
                  <div>
                     <p className="font-bold text-sm text-foreground">{selectedArticle.author}</p>
                     <p className="text-xs text-muted-foreground">Đăng ngày {selectedArticle.date}</p>
                  </div>
               </div>
-              <div className="prose prose-slate dark:prose-invert max-w-none pt-4">
-                 <p className="text-lg leading-relaxed text-foreground/80">
+              <div className="prose prose-slate dark:prose-invert max-w-none pt-4 text-sm leading-relaxed text-foreground/80 space-y-3">
+                 <p className="text-base font-medium leading-relaxed">
                     {selectedArticle.description}
                  </p>
+                 <div className="whitespace-pre-line text-sm mt-4 bg-muted/20 p-5 rounded-xl border border-border/40 text-foreground">
+                    {selectedArticle.content}
+                 </div>
                  <div className="mt-8 p-6 rounded-2xl bg-primary/5 border border-primary/20 flex gap-4">
                     <Info className="h-6 w-6 text-primary shrink-0" />
                     <div>
                        <h4 className="font-bold text-primary">Ghi chú lâm sàng</h4>
-                       <p className="text-sm text-primary/80 opacity-80">Đây là nội dung tóm lược phục vụ mục đích tham khảo nhanh cho bác sĩ. Vui lòng đối chiếu với phác đồ hiện hành của bệnh viện.</p>
+                       <p className="text-xs text-primary/80 opacity-80 mt-1">Đây là nội dung tóm lược phục vụ mục đích tham khảo nhanh cho bác sĩ. Vui lòng đối chiếu với phác đồ hiện hành của bệnh viện.</p>
                     </div>
                  </div>
               </div>
           </div>
+
+          {/* Article form dialog for create / edit */}
+          <ArticleFormDialog
+             open={showFormDialog}
+             onOpenChange={setShowFormDialog}
+             article={editingArticle}
+             onSuccess={handleFormSuccess}
+          />
+
+          {/* Delete confirmation dialog */}
+          <Dialog
+            open={!!articleToDelete}
+            onOpenChange={(open) => !open && setArticleToDelete(null)}
+          >
+            <DialogContent className="max-w-sm rounded-[24px] overflow-hidden border-none shadow-2xl p-0 bg-background">
+              <div className="p-8 text-center bg-background">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4 animate-pulse">
+                    <AlertCircle className="h-8 w-8 text-destructive" />
+                </div>
+                <DialogHeader className="p-0 mb-6">
+                  <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
+                  <DialogDescription className="text-center font-medium text-[13px] opacity-70 mt-2">
+                      Bài viết <strong className="text-foreground">{articleToDelete?.title}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống kiến thức. Hành động này không thể hoàn tác.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-3">
+                  <Button
+                      variant="destructive"
+                      className="h-12 rounded-xl w-full font-bold text-[13px] shadow-xl shadow-destructive/20 active:scale-[0.98] transition-all"
+                      onClick={handleDeleteArticle}
+                      disabled={isDeleting}
+                  >
+                      {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Tôi chắc chắn, hãy xóa ngay
+                  </Button>
+                  <Button
+                      variant="outline"
+                      className="h-12 rounded-xl w-full font-bold text-[13px] border-border/50 active:scale-[0.98] transition-all"
+                      onClick={() => setArticleToDelete(null)}
+                  >
+                      Quay lại
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
        </div>
     );
   }
@@ -157,19 +255,32 @@ export function KnowledgeView() {
         icon={BookOpen}
         description="Cập nhật phác đồ chẩn đoán và điều trị viêm phổi tổng quát từ WHO và Bộ Y tế"
       >
-        <div className="relative w-full lg:w-[320px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            placeholder="Tìm tài liệu, phác đồ..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 border-border bg-background rounded-lg shadow-sm focus-visible:ring-primary text-sm"
-          />
+        <div className="flex items-center gap-3">
+          <div className="relative w-full lg:w-[280px]">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Tìm tài liệu, phác đồ..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 border-border bg-background rounded-lg shadow-sm focus-visible:ring-primary text-sm"
+            />
+          </div>
+          {isAuthorized && (
+            <Button
+              onClick={() => {
+                setEditingArticle(null);
+                setShowFormDialog(true);
+              }}
+              className="h-9 rounded-lg gap-1.5 font-semibold text-sm shadow-sm shrink-0"
+            >
+              Viết bài mới
+            </Button>
+          )}
         </div>
       </PageHeader>
 
       {/* Featured Section - Clinical Layout */}
-      {featuredArticle && !searchQuery && activeTab === "all" && (
+      {featuredArticle && !searchQuery && activeTab === "all" && !isLoading && (
          <div 
            className="relative group cursor-pointer overflow-hidden rounded-2xl bg-slate-900 h-[320px] shadow-md transition-all duration-300 hover:shadow-lg"
            onClick={() => setSelectedArticle(featuredArticle)}
@@ -229,58 +340,104 @@ export function KnowledgeView() {
         </div>
 
         <TabsContent value={activeTab} className="mt-0">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredArticles.map((article) => (
-              <Card 
-                key={article.id} 
-                className="group cursor-pointer border border-border shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl overflow-hidden flex flex-col bg-card"
-                onClick={() => setSelectedArticle(article)}
-              >
-                <div className="relative h-40 w-full overflow-hidden border-b border-border">
-                   <Image 
-                    src={article.image} 
-                    alt={article.title} 
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105" 
-                    unoptimized
-                   />
-                   <div className="absolute top-3 left-3">
-                      <Badge className="bg-background/95 backdrop-blur-sm text-foreground border border-border font-medium shadow-sm">
-                         {article.categoryLabel}
-                      </Badge>
-                   </div>
-                </div>
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium uppercase tracking-wider mb-2">
-                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {article.readTime}</span>
-                     <span>•</span>
-                     <span>{article.date}</span>
+          {isLoading ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((idx) => (
+                <Card key={idx} className="rounded-2xl overflow-hidden flex flex-col border border-border">
+                  <Skeleton className="h-40 w-full" />
+                  <div className="p-4 space-y-3">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-6 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-6 w-20 mt-4" />
                   </div>
-                  <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-2">
-                    {article.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 pt-0 flex-1 flex flex-col">
-                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
-                    {article.description}
-                  </p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <div className="flex items-center gap-2">
-                       <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground uppercase border border-border">
-                          {article.author.charAt(0)}
-                       </div>
-                       <span className="text-xs font-medium text-muted-foreground">{article.author}</span>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {articles.map((article) => (
+                <Card 
+                  key={article.id} 
+                  className="group cursor-pointer border border-border shadow-sm hover:shadow-md transition-all duration-200 rounded-2xl overflow-hidden flex flex-col bg-card"
+                  onClick={() => setSelectedArticle(article)}
+                >
+                  <div className="relative h-40 w-full overflow-hidden border-b border-border">
+                     <Image 
+                      src={article.image} 
+                      alt={article.title} 
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105" 
+                      unoptimized
+                     />
+                     <div className="absolute top-3 left-3">
+                        <Badge className="bg-background/95 backdrop-blur-sm text-foreground border border-border font-medium shadow-sm">
+                           {article.categoryLabel}
+                        </Badge>
+                     </div>
+                  </div>
+                  <CardHeader className="p-4 pb-2">
+                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium uppercase tracking-wider mb-2">
+                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {article.readTime}</span>
+                       <span>•</span>
+                       <span>{article.date}</span>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors">
-                       <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors leading-tight line-clamp-2">
+                      {article.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0 flex-1 flex flex-col">
+                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
+                      {article.description}
+                    </p>
+                    <div className="flex items-center justify-between mt-auto gap-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2">
+                         <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground uppercase border border-border">
+                            {article.author.charAt(0)}
+                         </div>
+                         <span className="text-xs font-medium text-muted-foreground">{article.author}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                         {isAuthorized && (
+                           <>
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-amber-500 hover:bg-amber-500/10 transition-colors"
+                               onClick={() => {
+                                 setEditingArticle(article);
+                                 setShowFormDialog(true);
+                               }}
+                             >
+                                <Pencil className="h-3.5 w-3.5" />
+                             </Button>
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                               onClick={() => setArticleToDelete(article)}
+                             >
+                                <Trash2 className="h-3.5 w-3.5" />
+                             </Button>
+                           </>
+                         )}
+                         <Button 
+                           variant="ghost" 
+                           size="icon" 
+                           className="h-8 w-8 rounded-lg text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-colors"
+                           onClick={() => setSelectedArticle(article)}
+                         >
+                            <ExternalLink className="h-4 w-4" />
+                         </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
-          {filteredArticles.length === 0 && (
+          {!isLoading && articles.length === 0 && (
              <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-muted/30 rounded-[3rem] border border-dashed border-border">
                 <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
                    <Search className="h-8 w-8 text-muted-foreground/30" />
@@ -306,11 +463,67 @@ export function KnowledgeView() {
              </p>
           </div>
           <div className="flex gap-3 shrink-0">
-             <Button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-9 font-medium shadow-sm">
-               Đóng góp bài viết
+             <Button 
+                onClick={() => {
+                   if (isAuthorized) {
+                      setEditingArticle(null);
+                      setShowFormDialog(true);
+                   } else {
+                      toast.info("Chức năng này dành cho Bác sĩ và Quản trị viên.");
+                   }
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-9 font-medium shadow-sm"
+             >
+                Đóng góp bài viết
              </Button>
           </div>
        </div>
+
+       {/* Article form dialog for create / edit */}
+       <ArticleFormDialog
+          open={showFormDialog}
+          onOpenChange={setShowFormDialog}
+          article={editingArticle}
+          onSuccess={handleFormSuccess}
+       />
+
+       {/* Delete confirmation dialog */}
+       <Dialog
+         open={!!articleToDelete}
+         onOpenChange={(open) => !open && setArticleToDelete(null)}
+       >
+         <DialogContent className="max-w-sm rounded-[24px] overflow-hidden border-none shadow-2xl p-0 bg-background">
+           <div className="p-8 text-center bg-background">
+             <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4 animate-pulse">
+                 <AlertCircle className="h-8 w-8 text-destructive" />
+             </div>
+             <DialogHeader className="p-0 mb-6">
+               <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
+               <DialogDescription className="text-center font-medium text-[13px] opacity-70 mt-2">
+                   Bài viết <strong className="text-foreground">{articleToDelete?.title}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống kiến thức. Hành động này không thể hoàn tác.
+               </DialogDescription>
+             </DialogHeader>
+             <div className="flex flex-col gap-3">
+               <Button
+                   variant="destructive"
+                   className="h-12 rounded-xl w-full font-bold text-[13px] shadow-xl shadow-destructive/20 active:scale-[0.98] transition-all"
+                   onClick={handleDeleteArticle}
+                   disabled={isDeleting}
+               >
+                   {isDeleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                   Tôi chắc chắn, hãy xóa ngay
+               </Button>
+               <Button
+                   variant="outline"
+                   className="h-12 rounded-xl w-full font-bold text-[13px] border-border/50 active:scale-[0.98] transition-all"
+                   onClick={() => setArticleToDelete(null)}
+               >
+                   Quay lại
+               </Button>
+             </div>
+           </div>
+         </DialogContent>
+       </Dialog>
     </div>
   );
 }

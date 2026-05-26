@@ -5,6 +5,7 @@ import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { DashboardHeader } from "./components/dashboard-header";
 import { DashboardStats } from "./components/dashboard-stats";
 import { DashboardActivity } from "./components/dashboard-activity";
+import { EpidemiologicalMap } from "./components/epidemiological-map";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DashboardCharts = dynamic(
@@ -39,6 +40,8 @@ export function DashboardView() {
         diagStats={diagStats}
         totalVisitsCount={totalVisitsCount}
       />
+      
+      <EpidemiologicalMap />
       
       <DashboardActivity 
         isLoading={isLoading}

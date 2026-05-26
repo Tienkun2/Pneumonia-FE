@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useComparison } from "@/hooks/use-comparison";
 import { getRiskLabel, getRiskColor, getRiskBg } from "@/constants/diagnosis";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
   ChevronRight,
   UserCircle2,
   Trash2,
+  Search,
 } from "lucide-react";
 import Image from "next/image";
 import { formatDate, cn } from "@/lib/utils";
@@ -29,8 +31,12 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
+import { ImageViewer } from "@/components/medical/image-viewer";
 
 export function ComparisonView() {
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerSrc, setViewerSrc] = useState<string | undefined>(undefined);
+
   const {
     patients,
     visits,
@@ -196,8 +202,19 @@ export function ComparisonView() {
                          <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 Heatmap" fill className="object-cover" unoptimized />
                        </div>
                      )}
-                     <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm">
+                     <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm flex items-center gap-2 z-10 pointer-events-auto">
                         <Calendar className="h-4 w-4 text-primary" />
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setViewerSrc(sortedVisits.first?.medicalImages?.[0]?.imageUrl);
+                            setViewerOpen(true);
+                          }}
+                          className="bg-black/60 hover:bg-black/80 text-white h-7 text-[10px] font-bold px-2.5 rounded-lg border-none backdrop-blur-sm"
+                        >
+                          <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
+                        </Button>
                      </div>
                   </div>
                </div>
@@ -225,6 +242,19 @@ export function ComparisonView() {
                          <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 Heatmap" fill className="object-cover" unoptimized />
                        </div>
                      )}
+                     <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm flex items-center gap-2 z-10 pointer-events-auto">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setViewerSrc(sortedVisits.second?.medicalImages?.[0]?.imageUrl);
+                            setViewerOpen(true);
+                          }}
+                          className="bg-black/60 hover:bg-black/80 text-white h-7 text-[10px] font-bold px-2.5 rounded-lg border-none backdrop-blur-sm"
+                        >
+                          <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
+                        </Button>
+                     </div>
                      <div className="absolute top-4 right-4 p-3 bg-white text-primary rounded-2xl font-black text-sm shadow-xl animate-bounce">
                         {Math.abs(delta).toFixed(1)}% {improving ? "↓" : "↑"}
                      </div>
@@ -261,6 +291,7 @@ export function ComparisonView() {
           </div>
         </div>
       )}
+      <ImageViewer src={viewerSrc} open={viewerOpen} onOpenChange={setViewerOpen} />
     </div>
   );
 }

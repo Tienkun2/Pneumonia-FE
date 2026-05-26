@@ -6,6 +6,7 @@ import { Header } from "./header";
 import { useBreadcrumb } from "@/hooks/use-breadcrumb";
 import { ChevronRight, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AiChatbot } from "@/components/common/ai-chatbot";
 
 export function MainLayout({ children }: { readonly children: React.ReactNode }) {
    const breadcrumbs = useBreadcrumb();
@@ -47,6 +48,7 @@ export function MainLayout({ children }: { readonly children: React.ReactNode })
                   {children}
                </div>
             </main>
+            <AiChatbot />
          </div>
       </div>
    );

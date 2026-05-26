@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useDiagnosis } from "@/hooks/use-diagnosis";
@@ -21,6 +22,7 @@ import {
   Layers,
   ChevronRight,
   FileText,
+  Search,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -31,6 +33,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScoreRing } from "./components/score-ring";
 import { WorkflowStep } from "./components/workflow-step";
 import { PatientSelector } from "./components/patient-selector";
+import { Curb65Calculator } from "./components/curb65-calculator";
+import { ImageViewer } from "@/components/medical/image-viewer";
 
 // Dynamic Imports
 const HistoryPanel = dynamic(() => import("./components/history-panel").then(mod => mod.HistoryPanel), {
@@ -38,6 +42,9 @@ const HistoryPanel = dynamic(() => import("./components/history-panel").then(mod
 });
 
 export function DiagnosisForm() {
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerSrc, setViewerSrc] = useState<string | undefined>(undefined);
+
   const {
     diagnosisData,
     isSubmitting,
@@ -274,7 +281,23 @@ export function DiagnosisForm() {
                         />
                       </div>
                     )}
-                    <div className="absolute top-2 right-2 z-20">
+                    <div className="absolute top-2 right-2 z-20 flex gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const heatmap = diagnosisData.multimodalResult?.heatmap;
+                          const src = showOverlay && heatmap
+                            ? (heatmap.startsWith("data:") ? heatmap : `data:image/jpeg;base64,${heatmap}`)
+                            : diagnosisData.imagePreview;
+                          setViewerSrc(src);
+                          setViewerOpen(true);
+                        }}
+                        className="bg-black/60 hover:bg-black/80 text-white h-7 text-xs font-bold px-3 rounded-full shadow-sm border-none backdrop-blur-sm"
+                      >
+                        <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
+                      </Button>
                       <Button
                         variant="secondary"
                         size="sm"
@@ -392,7 +415,7 @@ export function DiagnosisForm() {
                 </CardHeader>
                 <CardContent className="p-4 space-y-3">
                   {/* Full-width heatmap image */}
-                  <div className="relative w-full aspect-[16/9] bg-slate-950 rounded-xl overflow-hidden border border-border/30 shadow-lg">
+                  <div className="relative w-full aspect-[16/9] bg-slate-950 rounded-xl overflow-hidden border border-border/30 shadow-lg group">
                     <Image
                       src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`}
                       alt="Grad-CAM Heatmap"
@@ -400,6 +423,22 @@ export function DiagnosisForm() {
                       className="object-contain"
                       unoptimized
                     />
+                    <div className="absolute top-3 right-3 z-10">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const heatmap = diagnosisData.multimodalResult?.heatmap;
+                          if (heatmap) {
+                            setViewerSrc(heatmap.startsWith("data:") ? heatmap : `data:image/jpeg;base64,${heatmap}`);
+                            setViewerOpen(true);
+                          }
+                        }}
+                        className="bg-black/60 hover:bg-black/80 text-white h-7 text-xs font-bold px-3 rounded-full shadow-sm border-none backdrop-blur-sm"
+                      >
+                        <Search className="h-3 w-3 mr-1" /> Phóng to
+                      </Button>
+                    </div>
                   </div>
                   {/* Tip */}
                   <div className="flex items-start gap-2.5 p-3 bg-primary/5 border border-primary/15 rounded-lg">
@@ -410,6 +449,11 @@ export function DiagnosisForm() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Curb65 Calculator */}
+              <Curb65Calculator
+                onApply={(summary) => setNote((prev) => (prev ? prev + summary : summary.trim()))}
+              />
 
               {/* Doctor Notes + Save */}
               <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60">
@@ -479,6 +523,7 @@ export function DiagnosisForm() {
           )}
         </div>
       </div>
+      <ImageViewer src={viewerSrc} open={viewerOpen} onOpenChange={setViewerOpen} />
     </div>
   );
 }
