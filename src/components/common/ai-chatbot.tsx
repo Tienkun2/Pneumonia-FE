@@ -7,15 +7,13 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
-  BrainCircuit,
   MessageSquare,
   X,
   Send,
-  Sparkles,
-  Bot,
   User,
   ShieldCheck,
   PlusCircle,
+  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,7 +79,7 @@ export function AiChatbot() {
     {
       id: "welcome",
       sender: "bot",
-      text: "Chào bác sĩ! Tôi là trợ lý AI chuyên khoa hô hấp PlumoX. Tôi có thể hỗ trợ bác sĩ tra cứu phác đồ điều trị, chẩn đoán hình ảnh phổi hoặc tư vấn lâm sàng. Bác sĩ cần hỗ trợ gì hôm nay?",
+      text: "Chào bác sĩ! Tôi là trợ lý lâm sàng chuyên khoa hô hấp PlumoX. Tôi hỗ trợ bác sĩ tra cứu nhanh phác đồ điều trị, hướng dẫn sử dụng kháng sinh lâm sàng hoặc đối chiếu thông tin y học hô hấp. Bác sĩ cần thông tin gì cho ca bệnh hôm nay?",
       isMarkdown: false
     }
   ]);
@@ -95,7 +93,7 @@ export function AiChatbot() {
     }
   }, [messages, isTyping]);
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
     const userMsg: Message = {
@@ -104,14 +102,43 @@ export function AiChatbot() {
       text: text
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInputValue("");
     setIsTyping(true);
 
-    // AI logic response simulation
-    setTimeout(() => {
-      let responseText = "Tôi xin lỗi, thông tin bác sĩ hỏi nằm ngoài dữ liệu lâm sàng hiện có của tôi. Bác sĩ có thể thử tra cứu phác đồ CAP, phân biệt viêm phổi điển hình/không điển hình hoặc các kháng sinh ban đầu.";
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: text,
+          history: messages
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("API call failed");
+      }
+
+      const data = await response.json();
       
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `bot-${Date.now()}`,
+          sender: "bot",
+          text: data.text || "Xin lỗi bác sĩ, tôi gặp khó khăn khi xử lý yêu cầu này.",
+          isMarkdown: true
+        }
+      ]);
+    } catch (error) {
+      console.error("AI Chatbot error:", error);
+      
+      // Smart client-side fallback if the API fails entirely
+      let responseText = "Xin lỗi bác sĩ, tôi gặp sự cố kết nối mạng. Hãy thử tra cứu thông tin y học thông qua các nút gợi ý câu hỏi nhanh bên dưới.";
       const lowerText = text.toLowerCase();
       if (lowerText.includes("phác đồ") || lowerText.includes("cap") || lowerText.includes("cộng đồng")) {
         responseText = BOT_KNOWLEDGE.cap;
@@ -130,8 +157,9 @@ export function AiChatbot() {
           isMarkdown: true
         }
       ]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -140,13 +168,13 @@ export function AiChatbot() {
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border border-primary/20",
+          "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border border-indigo-500/20",
           isOpen
-            ? "bg-red-500 hover:bg-red-600 text-white rotate-90"
-            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/30 animate-pulse"
+            ? "bg-rose-500 hover:bg-rose-600 text-white rotate-90"
+            : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30 shadow-lg"
         )}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <BrainCircuit className="h-6 w-6" />}
+        {isOpen ? <X className="h-6 w-6" /> : <Stethoscope className="h-6 w-6" />}
       </button>
 
       {/* Chat Window Panel */}
@@ -155,13 +183,12 @@ export function AiChatbot() {
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border-b border-border/50 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-                <Bot className="h-4.5 w-4.5" />
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600">
+                <Stethoscope className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h3 className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-1.5 leading-none">
-                  Trợ lý Y tế AI PlumoX
-                  <Sparkles className="h-3 w-3 text-amber-500 fill-amber-500/30" />
+                <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 leading-none">
+                  Trợ lý Lâm sàng PlumoX
                 </h3>
                 <div className="flex items-center gap-1 mt-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
@@ -190,10 +217,10 @@ export function AiChatbot() {
                       "w-7 h-7 rounded-full flex items-center justify-center shrink-0 border text-[10px] font-bold shadow-sm",
                       msg.sender === "user"
                         ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-600"
-                        : "bg-primary/10 border-primary/20 text-primary"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
                     )}
                   >
-                    {msg.sender === "user" ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                    {msg.sender === "user" ? <User className="h-3.5 w-3.5" /> : <Stethoscope className="h-3.5 w-3.5" />}
                   </div>
 
                   <div
@@ -242,8 +269,8 @@ export function AiChatbot() {
 
               {isTyping && (
                 <div className="flex gap-2.5 items-center max-w-[85%] self-start">
-                  <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0">
-                    <Bot className="h-3.5 w-3.5" />
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Stethoscope className="h-3.5 w-3.5" />
                   </div>
                   <div className="bg-muted/40 border border-border/40 rounded-2xl rounded-tl-none px-4 py-2.5 flex gap-1 items-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />

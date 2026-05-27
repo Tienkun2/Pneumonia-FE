@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { VisitService } from "@/services/visit-service";
 import { PatientService } from "@/services/patient-service";
+import { SettingService } from "@/services/setting-service";
 import { Visit } from "@/types/diagnosis";
 import { Patient } from "@/types/patient";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ import { PrintReport } from "./components/print-report";
 export function ResultView({ resultId }: { resultId: string }) {
   const [visit, setVisit] = useState<Visit | null>(null);
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [hospitalName, setHospitalName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,17 @@ export function ResultView({ resultId }: { resultId: string }) {
       try {
         setIsLoading(true);
         fetchedIdRef.current = resultId;
+
+        // Fetch hospital settings
+        try {
+          const settings = await SettingService.getSystemSettings();
+          if (settings && settings.hospitalName) {
+            setHospitalName(settings.hospitalName);
+          }
+        } catch (se) {
+          console.warn("Failed to fetch system settings", se);
+        }
+
         let visitData: Visit | null = null;
         if (patientIdParam) {
           try {
@@ -290,6 +303,7 @@ export function ResultView({ resultId }: { resultId: string }) {
           visit={visit}
           patient={patient}
           totalWeightedScore={totalWeightedScore}
+          hospitalName={hospitalName}
         />
       </div>
     </div>

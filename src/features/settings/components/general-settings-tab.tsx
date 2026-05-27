@@ -13,6 +13,7 @@ interface GeneralSettingsTabProps {
   userSettings: UserSettings;
   onUpdateSystem: (settings: SystemSettings) => void;
   onUpdateUser: (settings: UserSettings) => void;
+  isAdmin?: boolean;
 }
 
 function SettingSection({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
@@ -44,7 +45,7 @@ function SettingRow({ icon: Icon, iconBg = "bg-muted", iconColor = "text-muted-f
   );
 }
 
-export function GeneralSettingsTab({ systemSettings, userSettings, onUpdateSystem, onUpdateUser }: GeneralSettingsTabProps) {
+export function GeneralSettingsTab({ systemSettings, userSettings, onUpdateSystem, onUpdateUser, isAdmin = false }: GeneralSettingsTabProps) {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -95,6 +96,11 @@ export function GeneralSettingsTab({ systemSettings, userSettings, onUpdateSyste
       </SettingSection>
 
       <SettingSection title="Thông tin đơn vị" description="Cấu hình định danh bệnh viện trên hệ thống">
+        {!isAdmin && (
+          <div className="p-3 mt-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+            Chỉ Quản trị viên (Admin) mới có quyền thay đổi thông tin đơn vị.
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <div className="space-y-3">
             <Label className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider">Tên bệnh viện / Đơn vị</Label>
@@ -103,6 +109,7 @@ export function GeneralSettingsTab({ systemSettings, userSettings, onUpdateSyste
               onChange={(e) => systemSettings && onUpdateSystem({ ...systemSettings, hospitalName: e.target.value })}
               className="h-10 rounded-xl border-border/50 text-[13px] font-semibold"
               placeholder="Bệnh viện Đa khoa Tâm Anh"
+              disabled={!isAdmin}
             />
           </div>
           <div className="space-y-3">
@@ -112,6 +119,7 @@ export function GeneralSettingsTab({ systemSettings, userSettings, onUpdateSyste
               onChange={(e) => systemSettings && onUpdateSystem({ ...systemSettings, systemId: e.target.value })}
               className="h-10 rounded-xl border-border/50 text-[13px] font-semibold"
               placeholder="HOS-TA-01"
+              disabled={!isAdmin}
             />
           </div>
         </div>

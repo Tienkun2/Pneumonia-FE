@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 
 interface Curb65CalculatorProps {
   readonly onApply: (noteSummary: string) => void;
+  readonly onScoreChange?: (score: number) => void;
 }
 
 interface Criterion {
@@ -46,7 +47,7 @@ const CRITERIA: Criterion[] = [
   },
 ];
 
-export function Curb65Calculator({ onApply }: Curb65CalculatorProps) {
+export function Curb65Calculator({ onApply, onScoreChange }: Curb65CalculatorProps) {
   const [selected, setSelected] = useState<Record<string, boolean>>({
     C: false,
     U: false,
@@ -63,6 +64,10 @@ export function Curb65Calculator({ onApply }: Curb65CalculatorProps) {
   };
 
   const score = Object.values(selected).filter(Boolean).length;
+
+  useEffect(() => {
+    onScoreChange?.(score);
+  }, [score, onScoreChange]);
 
   const getRiskDetails = (totalScore: number) => {
     if (totalScore <= 1) {

@@ -31,11 +31,12 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Switch } from "@/components/ui/switch";
-import { ImageViewer } from "@/components/medical/image-viewer";
+import { ImageViewer, ImageComparisonSlider } from "@/components/medical";
 
 export function ComparisonView() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerSrc, setViewerSrc] = useState<string | undefined>(undefined);
+  const [displayMode, setDisplayMode] = useState<"side-by-side" | "slider">("side-by-side");
 
   const {
     patients,
@@ -159,12 +160,34 @@ export function ComparisonView() {
           <div className="w-[1px] h-6 bg-border/50 mx-1 hidden md:block" />
 
           {/* Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+             {isComparing && (
+               <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-lg border border-border/40">
+                 {[
+                   { value: "side-by-side", label: "Song song" },
+                   { value: "slider", label: "Thanh trượt" }
+                 ].map((mode) => (
+                   <button
+                     key={mode.value}
+                     onClick={() => setDisplayMode(mode.value as any)}
+                     className={cn(
+                       "px-2.5 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer",
+                       displayMode === mode.value
+                         ? "bg-background text-foreground shadow-sm"
+                         : "text-muted-foreground hover:text-foreground"
+                     )}
+                   >
+                     {mode.label}
+                   </button>
+                 ))}
+               </div>
+             )}
+
              <div className="flex items-center gap-2">
                 <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest hidden lg:block">Grad-Cam</span>
                 <Switch checked={showHeatmap} onCheckedChange={setShowHeatmap} className="scale-75" />
              </div>
-             <Button onClick={() => setIsComparing(true)} disabled={!canCompare} className="h-10 rounded-xl px-8 font-black text-xs shadow-lg shadow-primary/20 bg-primary hover:primary/90">
+             <Button onClick={() => setIsComparing(true)} disabled={!canCompare} className="h-10 rounded-xl px-8 font-black text-xs shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
                SO SÁNH NGAY
              </Button>
           </div>
@@ -182,86 +205,141 @@ export function ComparisonView() {
         </div>
       ) : (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-5 duration-700">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Visit 1 Card */}
-            <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col">
-               <div className="p-5 border-b border-border/30 bg-muted/10 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Base Diagnosis (T0)</span>
-                    <h3 className="text-base font-black text-foreground">{formatDate(sortedVisits.first?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+          {displayMode === "slider" ? (
+            /* Slider Comparison Layout */
+            <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col p-6 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border/30 pb-4">
+                <div>
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Lượt khám T0</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <h3 className="text-sm font-black text-foreground">{formatDate(sortedVisits.first?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+                    <Badge className={cn("px-2 py-0.5 rounded-md border-none font-black text-[9px] uppercase", getRiskBg(riskFirst), getRiskColor(riskFirst))}>
+                      {getRiskLabel(riskFirst)} • {riskFirst.toFixed(0)}%
+                    </Badge>
                   </div>
-                  <Badge className={cn("px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase", getRiskBg(riskFirst), getRiskColor(riskFirst))}>
-                    {getRiskLabel(riskFirst)} • {riskFirst.toFixed(0)}%
-                  </Badge>
-               </div>
-               <div className="p-4 flex-1">
-                  <div className="relative aspect-square w-full rounded-2xl bg-black overflow-hidden border border-border/10 shadow-inner group">
-                     <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 X-ray" fill className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" unoptimized />
-                     {showHeatmap && (
-                       <div className="absolute inset-0 opacity-60 mix-blend-screen pointer-events-none">
-                         <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 Heatmap" fill className="object-cover" unoptimized />
-                       </div>
-                     )}
-                     <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm flex items-center gap-2 z-10 pointer-events-auto">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            setViewerSrc(sortedVisits.first?.medicalImages?.[0]?.imageUrl);
-                            setViewerOpen(true);
-                          }}
-                          className="bg-black/60 hover:bg-black/80 text-white h-7 text-[10px] font-bold px-2.5 rounded-lg border-none backdrop-blur-sm"
-                        >
-                          <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
-                        </Button>
-                     </div>
-                  </div>
-               </div>
-            </div>
+                </div>
 
-            {/* Visit 2 Card */}
-            <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col">
-               <div className="p-5 border-b border-border/30 bg-primary/5 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-black uppercase text-primary/70 tracking-widest">Follow-up (T1)</span>
-                    <h3 className="text-base font-black text-foreground">{formatDate(sortedVisits.second?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+                <div className="flex flex-col items-center justify-center bg-primary/5 px-4 py-1.5 rounded-xl border border-primary/10">
+                  <span className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none">Chênh lệch</span>
+                  <span className="text-sm font-black text-primary flex items-center gap-1 mt-1 leading-none">
+                    {Math.abs(delta).toFixed(1)}% {improving ? "↓ Giảm" : "↑ Tăng"}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-black uppercase text-primary/70 tracking-widest block text-right">Lượt khám T1</span>
+                  <div className="flex items-center justify-end gap-2 mt-0.5">
+                    <Badge className={cn("px-2 py-0.5 rounded-md border-none font-black text-[9px] uppercase", getRiskBg(riskSecond), getRiskColor(riskSecond))}>
+                      {getRiskLabel(riskSecond)} • {riskSecond.toFixed(0)}%
+                    </Badge>
+                    <h3 className="text-sm font-black text-foreground">{formatDate(sortedVisits.second?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
                   </div>
-                  <div className="flex items-center gap-2">
-                     {improving && <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[10px] flex items-center gap-1"><TrendingDown className="h-3.5 w-3.5" /> TIẾN TRIỂN TỐT</Badge>}
-                     <Badge className={cn("px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase", getRiskBg(riskSecond), getRiskColor(riskSecond))}>
-                        {getRiskLabel(riskSecond)} • {riskSecond.toFixed(0)}%
-                     </Badge>
-                  </div>
-               </div>
-               <div className="p-4 flex-1">
-                  <div className="relative aspect-square w-full rounded-2xl bg-black overflow-hidden border border-border/10 shadow-inner group">
-                     <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 X-ray" fill className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" unoptimized />
-                     {showHeatmap && (
-                       <div className="absolute inset-0 opacity-60 mix-blend-screen pointer-events-none">
-                         <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 Heatmap" fill className="object-cover" unoptimized />
-                       </div>
-                     )}
-                     <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm flex items-center gap-2 z-10 pointer-events-auto">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            setViewerSrc(sortedVisits.second?.medicalImages?.[0]?.imageUrl);
-                            setViewerOpen(true);
-                          }}
-                          className="bg-black/60 hover:bg-black/80 text-white h-7 text-[10px] font-bold px-2.5 rounded-lg border-none backdrop-blur-sm"
-                        >
-                          <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
-                        </Button>
-                     </div>
-                     <div className="absolute top-4 right-4 p-3 bg-white text-primary rounded-2xl font-black text-sm shadow-xl animate-bounce">
-                        {Math.abs(delta).toFixed(1)}% {improving ? "↓" : "↑"}
-                     </div>
-                  </div>
-               </div>
+                </div>
+              </div>
+
+              <div className="relative w-full aspect-video max-h-[500px] rounded-2xl overflow-hidden border border-border/10 shadow-inner bg-black">
+                <ImageComparisonSlider
+                  imageA={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""}
+                  imageB={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""}
+                  labelA={`T0 (${formatDate(sortedVisits.first?.visitDate, "DD.MM.YYYY")})`}
+                  labelB={`T1 (${formatDate(sortedVisits.second?.visitDate, "DD.MM.YYYY")})`}
+                  className="w-full h-full"
+                  aspectRatio="video"
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold pt-2">
+                <span>← Trượt sang trái để xem chi tiết phim T0</span>
+                {improving && (
+                  <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[10px] flex items-center gap-1">
+                    <TrendingDown className="h-3.5 w-3.5" /> TIẾN TRIỂN TỐT
+                  </Badge>
+                )}
+                <span>Trượt sang phải để xem chi tiết phim T1 →</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Visit 1 Card */}
+              <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col">
+                 <div className="p-5 border-b border-border/30 bg-muted/10 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Base Diagnosis (T0)</span>
+                      <h3 className="text-base font-black text-foreground">{formatDate(sortedVisits.first?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+                    </div>
+                    <Badge className={cn("px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase", getRiskBg(riskFirst), getRiskColor(riskFirst))}>
+                      {getRiskLabel(riskFirst)} • {riskFirst.toFixed(0)}%
+                    </Badge>
+                 </div>
+                 <div className="p-4 flex-1">
+                    <div className="relative aspect-square w-full rounded-2xl bg-black overflow-hidden border border-border/10 shadow-inner group">
+                       <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 X-ray" fill className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" unoptimized />
+                       {showHeatmap && (
+                         <div className="absolute inset-0 opacity-60 mix-blend-screen pointer-events-none">
+                           <Image src={sortedVisits.first?.medicalImages?.[0]?.imageUrl || ""} alt="T0 Heatmap" fill className="object-cover" unoptimized />
+                         </div>
+                       )}
+                       <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm flex items-center gap-2 z-10 pointer-events-auto">
+                          <Calendar className="h-4 w-4 text-primary" />
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setViewerSrc(sortedVisits.first?.medicalImages?.[0]?.imageUrl);
+                              setViewerOpen(true);
+                            }}
+                            className="bg-black/60 hover:bg-black/80 text-white h-7 text-[10px] font-bold px-2.5 rounded-lg border-none backdrop-blur-sm"
+                          >
+                            <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
+                          </Button>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+
+              {/* Visit 2 Card */}
+              <div className="bg-card rounded-3xl border border-border/50 overflow-hidden shadow-sm flex flex-col">
+                 <div className="p-5 border-b border-border/30 bg-primary/5 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-black uppercase text-primary/70 tracking-widest">Follow-up (T1)</span>
+                      <h3 className="text-base font-black text-foreground">{formatDate(sortedVisits.second?.visitDate, "DD.MM.YYYY — HH:mm")}</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       {improving && <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black text-[10px] flex items-center gap-1"><TrendingDown className="h-3.5 w-3.5" /> TIẾN TRIỂN TỐT</Badge>}
+                       <Badge className={cn("px-3 py-1 rounded-lg border-none font-black text-[10px] uppercase", getRiskBg(riskSecond), getRiskColor(riskSecond))}>
+                          {getRiskLabel(riskSecond)} • {riskSecond.toFixed(0)}%
+                       </Badge>
+                    </div>
+                 </div>
+                 <div className="p-4 flex-1">
+                    <div className="relative aspect-square w-full rounded-2xl bg-black overflow-hidden border border-border/10 shadow-inner group">
+                       <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 X-ray" fill className="object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" unoptimized />
+                       {showHeatmap && (
+                         <div className="absolute inset-0 opacity-60 mix-blend-screen pointer-events-none">
+                           <Image src={sortedVisits.second?.medicalImages?.[0]?.imageUrl || ""} alt="T1 Heatmap" fill className="object-cover" unoptimized />
+                         </div>
+                       )}
+                       <div className="absolute top-4 left-4 p-2.5 bg-background/80 backdrop-blur-md rounded-xl border border-border shadow-sm flex items-center gap-2 z-10 pointer-events-auto">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setViewerSrc(sortedVisits.second?.medicalImages?.[0]?.imageUrl);
+                              setViewerOpen(true);
+                            }}
+                            className="bg-black/60 hover:bg-black/80 text-white h-7 text-[10px] font-bold px-2.5 rounded-lg border-none backdrop-blur-sm"
+                          >
+                            <Search className="h-3 w-3 mr-1" /> Tinh chỉnh
+                          </Button>
+                       </div>
+                       <div className="absolute top-4 right-4 p-3 bg-white text-primary rounded-2xl font-black text-sm shadow-xl animate-bounce">
+                          {Math.abs(delta).toFixed(1)}% {improving ? "↓" : "↑"}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </div>
+          )}
 
           {/* Expert Assessment - Compacter */}
           <div className="bg-card rounded-3xl border border-border/50 p-6 shadow-sm space-y-4">

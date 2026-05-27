@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
+import { useAppSelector } from "@/store/hooks";
 import { GeneralSettingsTab } from "./components/general-settings-tab";
 import { NotificationSettingsTab } from "./components/notification-settings-tab";
 import { SystemSettings, UserSettings } from "@/types";
@@ -28,6 +29,9 @@ export default function SettingsView() {
     systemSettings, isSystemLoading, updateSystemSettings, isSystemUpdating,
     userSettings, isUserLoading, updateUserSettings, isUserUpdating 
   } = useSettings();
+
+  const { user } = useAppSelector((state) => state.auth);
+  const isAdmin = user?.roles?.some(r => r.name === "ADMIN");
 
   // Local state for pending changes with basic defaults
   const [localSystem, setLocalSystem] = useState<SystemSettings>({
@@ -56,10 +60,15 @@ export default function SettingsView() {
 
   const handleSaveAll = async () => {
     try {
-      await Promise.all([
-        localSystem ? updateSystemSettings(localSystem) : Promise.resolve(),
+      const savePromises = [
         localUser ? updateUserSettings(localUser) : Promise.resolve()
-      ]);
+      ];
+
+      if (isAdmin && localSystem) {
+        savePromises.push(updateSystemSettings(localSystem));
+      }
+
+      await Promise.all(savePromises);
 
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
@@ -119,6 +128,7 @@ export default function SettingsView() {
             userSettings={localUser}
             onUpdateSystem={setLocalSystem}
             onUpdateUser={setLocalUser}
+            isAdmin={isAdmin}
           />
         </TabsContent>
 

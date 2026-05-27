@@ -4,6 +4,18 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useDiagnosis } from "@/hooks/use-diagnosis";
+import { toast } from "sonner";
+
+function renderInlineBold(text: string) {
+  if (!text) return "";
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return <strong key={index} className="font-extrabold text-foreground">{part}</strong>;
+    }
+    return part;
+  });
+}
 import { RISKS_MAP, SYMPTOM_LABELS, getBarColor } from "@/constants/diagnosis";
 import { Button } from "@/components/ui/button";
 import { useDropzone } from "react-dropzone";
@@ -34,7 +46,7 @@ import { ScoreRing } from "./components/score-ring";
 import { WorkflowStep } from "./components/workflow-step";
 import { PatientSelector } from "./components/patient-selector";
 import { Curb65Calculator } from "./components/curb65-calculator";
-import { ImageViewer } from "@/components/medical/image-viewer";
+import { ImageViewer, ImageComparisonSlider } from "@/components/medical";
 
 // Dynamic Imports
 const HistoryPanel = dynamic(() => import("./components/history-panel").then(mod => mod.HistoryPanel), {
@@ -44,6 +56,7 @@ const HistoryPanel = dynamic(() => import("./components/history-panel").then(mod
 export function DiagnosisForm() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerSrc, setViewerSrc] = useState<string | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<"original" | "overlay" | "slider">("original");
 
   const {
     diagnosisData,
@@ -77,6 +90,8 @@ export function DiagnosisForm() {
     toggleSymptom,
     handleSaveVisit,
     canSubmit,
+    curb65Score,
+    setCurb65Score,
   } = useDiagnosis();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -247,39 +262,69 @@ export function DiagnosisForm() {
                   </div>
                 </div>
                 {diagnosisData.multimodalResult && (
-                  <div className="flex items-center gap-2 bg-muted/50 px-2.5 py-1 rounded-full border border-border/40">
-                    <Layers className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Overlay</span>
-                    <Switch checked={showOverlay} onCheckedChange={setShowOverlay} className="scale-75" />
+                  <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/40">
+                    {[
+                      { value: "original", label: "Gốc" },
+                      { value: "overlay", label: "Chồng ảnh" },
+                      { value: "slider", label: "Trượt" }
+                    ].map((mode) => (
+                      <button
+                        key={mode.value}
+                        onClick={() => {
+                          setViewMode(mode.value as any);
+                          setShowOverlay(mode.value === "overlay");
+                        }}
+                        className={cn(
+                          "px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-md transition-all cursor-pointer",
+                          viewMode === mode.value
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
             </CardHeader>
             <CardContent className="p-4">
               <div
-                {...getRootProps()}
                 className={cn(
-                  "relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-dashed flex flex-col items-center justify-center transition-all cursor-pointer",
+                  "relative aspect-[4/3] w-full rounded-xl overflow-hidden border-2 border-dashed flex flex-col items-center justify-center transition-all",
                   diagnosisData.imagePreview
                     ? "border-transparent bg-slate-950"
-                    : "border-border/40 bg-muted/10 hover:bg-muted/30 hover:border-primary/30",
+                    : "border-border/40 bg-muted/10 hover:bg-muted/30 hover:border-primary/30 cursor-pointer",
                   isDragActive && "border-primary bg-primary/5 scale-[0.99]"
                 )}
+                {...(diagnosisData.imagePreview ? {} : getRootProps())}
               >
                 <input {...getInputProps()} />
                 {diagnosisData.imagePreview ? (
                   <>
-                    <Image src={diagnosisData.imagePreview} alt="X-quang gốc" fill className="object-contain" unoptimized />
-                    {showOverlay && diagnosisData.multimodalResult?.heatmap && (
-                      <div className="absolute inset-0 z-10 opacity-70 mix-blend-screen pointer-events-none">
-                        <Image
-                          src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`}
-                          alt="Heatmap Overlay"
-                          fill
-                          className="object-contain"
-                          unoptimized
-                        />
-                      </div>
+                    {viewMode === "slider" && diagnosisData.multimodalResult?.heatmap ? (
+                      <ImageComparisonSlider
+                        imageA={diagnosisData.imagePreview}
+                        imageB={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`}
+                        labelA="Phim X-quang"
+                        labelB="Bản đồ nhiệt AI"
+                        className="w-full h-full"
+                      />
+                    ) : (
+                      <>
+                        <Image src={diagnosisData.imagePreview} alt="X-quang gốc" fill className="object-contain" unoptimized />
+                        {viewMode === "overlay" && diagnosisData.multimodalResult?.heatmap && (
+                          <div className="absolute inset-0 z-10 opacity-70 mix-blend-screen pointer-events-none">
+                            <Image
+                              src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`}
+                              alt="Heatmap Overlay"
+                              fill
+                              className="object-contain"
+                              unoptimized
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                     <div className="absolute top-2 right-2 z-20 flex gap-2">
                       <Button
@@ -288,7 +333,7 @@ export function DiagnosisForm() {
                         onClick={(e) => {
                           e.stopPropagation();
                           const heatmap = diagnosisData.multimodalResult?.heatmap;
-                          const src = showOverlay && heatmap
+                          const src = (viewMode === "overlay" || viewMode === "slider") && heatmap
                             ? (heatmap.startsWith("data:") ? heatmap : `data:image/jpeg;base64,${heatmap}`)
                             : diagnosisData.imagePreview;
                           setViewerSrc(src);
@@ -307,10 +352,16 @@ export function DiagnosisForm() {
                         <X className="h-3 w-3 mr-1" /> Gỡ ảnh
                       </Button>
                     </div>
-                    {showOverlay && (
-                      <div className="absolute bottom-2 left-2 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white flex items-center gap-1.5">
+                    {viewMode === "overlay" && (
+                      <div className="absolute bottom-2 left-2 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white flex items-center gap-1.5 pointer-events-none">
                         <Layers className="h-3 w-3 text-amber-400" />
                         Đang xem Heatmap Overlay
+                      </div>
+                    )}
+                    {viewMode === "slider" && (
+                      <div className="absolute bottom-2 left-2 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[10px] font-bold text-white flex items-center gap-1.5 pointer-events-none">
+                        <Layers className="h-3 w-3 text-blue-400" />
+                        Trượt để đối chiếu phim gốc & bản đồ nhiệt AI
                       </div>
                     )}
                   </>
@@ -326,12 +377,18 @@ export function DiagnosisForm() {
                   </div>
                 )}
               </div>
+              <div className="mt-3 flex items-start gap-2 p-2.5 rounded-lg border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <p className="text-[11px] leading-relaxed font-semibold">
+                  <strong>Lưu ý:</strong> Hệ thống chỉ phân tích ảnh X-quang phổi thẳng (Chest X-ray AP/PA). Mọi định dạng ảnh khác sẽ cho kết quả không chính xác.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
           {/* Analyse Button */}
           <Button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={!canSubmit}
             className={cn(
               "w-full h-12 rounded-xl text-sm font-bold gap-3 shadow-lg transition-all duration-300",
@@ -416,13 +473,23 @@ export function DiagnosisForm() {
                 <CardContent className="p-4 space-y-3">
                   {/* Full-width heatmap image */}
                   <div className="relative w-full aspect-[16/9] bg-slate-950 rounded-xl overflow-hidden border border-border/30 shadow-lg group">
-                    <Image
-                      src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`}
-                      alt="Grad-CAM Heatmap"
-                      fill
-                      className="object-contain"
-                      unoptimized
-                    />
+                    {diagnosisData.multimodalResult.heatmap ? (
+                      <Image
+                        src={diagnosisData.multimodalResult.heatmap.startsWith("data:") ? diagnosisData.multimodalResult.heatmap : `data:image/jpeg;base64,${diagnosisData.multimodalResult.heatmap}`}
+                        alt="Grad-CAM Heatmap"
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : diagnosisData.imagePreview ? (
+                      <Image
+                        src={diagnosisData.imagePreview}
+                        alt="Phim X-quang gốc"
+                        fill
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : null}
                     <div className="absolute top-3 right-3 z-10">
                       <Button
                         variant="secondary"
@@ -453,7 +520,75 @@ export function DiagnosisForm() {
               {/* Curb65 Calculator */}
               <Curb65Calculator
                 onApply={(summary) => setNote((prev) => (prev ? prev + summary : summary.trim()))}
+                onScoreChange={setCurb65Score}
               />
+
+              {/* AI Medical Board Report */}
+              {diagnosisData.multimodalResult.llm_report && (
+                <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60 backdrop-blur-sm animate-in fade-in duration-300">
+                  <CardHeader className="py-3 px-5 border-b border-border/40 bg-muted/30">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-tight">
+                        <BrainCircuit className="h-3.5 w-3.5 text-primary" /> Báo cáo hội đồng chuyên gia AI
+                      </CardTitle>
+                      {diagnosisData.multimodalResult.llm_fallback ? (
+                        <Badge variant="outline" className="text-[9px] font-semibold text-amber-500 border-amber-500/20 bg-amber-500/5">
+                          Mô phỏng (CPU)
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[9px] font-semibold text-emerald-500 border-emerald-500/20 bg-emerald-500/5">
+                          Qwen2.5 GPU
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-xs space-y-2 text-foreground leading-relaxed">
+                      {diagnosisData.multimodalResult.llm_report.split("\n").map((line, idx) => {
+                        const trimmedLine = line.trim();
+                        if (trimmedLine.startsWith("## ") || trimmedLine.startsWith("### ")) {
+                          const text = trimmedLine.replace(/^#{2,3}\s+/, "");
+                          return <h4 key={idx} className="font-bold text-xs text-foreground mt-3 mb-1 border-b border-border/40 pb-1">{text}</h4>;
+                        }
+                        if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
+                          const text = trimmedLine.replace(/^[-*]\s+/, "");
+                          return (
+                            <ul key={idx} className="list-disc pl-4 my-1">
+                              <li>{renderInlineBold(text)}</li>
+                            </ul>
+                          );
+                        }
+                        return <p key={idx} className="my-1">{renderInlineBold(trimmedLine)}</p>;
+                      })}
+                    </div>
+                    
+                    <div className="flex justify-between items-center gap-3 pt-3 border-t border-border/40">
+                      <Button
+                        onClick={() => {
+                          const reportText = `\n\n[Đánh giá của Hội đồng AI]:\n${diagnosisData.multimodalResult.llm_report}`;
+                          setNote((prev) => (prev ? prev + reportText : reportText.trim()));
+                          toast.success("Đã áp dụng báo cáo của Hội đồng AI vào ghi chú bác sĩ!");
+                        }}
+                        size="sm"
+                        className="w-full rounded-xl text-xs font-bold gap-2 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Áp dụng báo cáo AI vào ghi chú
+                      </Button>
+                      
+                      <Button
+                        onClick={() => handleSubmit(curb65Score)}
+                        disabled={isSubmitting}
+                        size="sm"
+                        className="rounded-xl text-xs font-bold gap-2 bg-muted hover:bg-muted/80 border border-border/50 shrink-0 h-9"
+                        title="Gửi điểm CURB-65 hiện tại để cập nhật báo cáo hội đồng AI"
+                      >
+                        {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5 text-amber-500" />}
+                        Cập nhật
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Doctor Notes + Save */}
               <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60">

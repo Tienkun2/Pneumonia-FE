@@ -31,6 +31,7 @@ export function useDiagnosis() {
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [showOverlay, setShowOverlay] = useState(false);
   const [isSymptomEditing, setIsSymptomEditing] = useState(false);
+  const [curb65Score, setCurb65Score] = useState<number>(0);
 
   // Patient Selection State
   const [searchQuery, setSearchQuery] = useState("");
@@ -158,16 +159,21 @@ export function useDiagnosis() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (overrideScore?: number) => {
     if (!selectedFile) {
       toast.error("Vui lòng tải lên ảnh X-quang để phân tích");
       return;
     }
     try {
       setIsSubmitting(true);
-      const result = await AiService.predictMultimodal(selectedFile, selectedSymptoms.join(","));
+      const scoreToSend = overrideScore !== undefined ? overrideScore : curb65Score;
+      const result = await AiService.predictMultimodal(selectedFile, selectedSymptoms.join(","), scoreToSend);
       dispatch(setMultimodalResult(result));
-      toast.success("Phân tích đa phương thức thành công!");
+      if (overrideScore !== undefined) {
+        toast.success("Đã cập nhật báo cáo AI kèm điểm CURB-65!");
+      } else {
+        toast.success("Phân tích đa phương thức thành công!");
+      }
     } catch {
       toast.error("Có lỗi xảy ra khi phân tích đa phương thức");
     } finally {
@@ -242,6 +248,8 @@ export function useDiagnosis() {
     selectedFile,
     availableSymptoms,
     selectedSymptoms,
+    curb65Score,
+    setCurb65Score,
     showOverlay,
     setShowOverlay,
     isSymptomEditing,

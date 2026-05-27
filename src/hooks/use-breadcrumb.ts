@@ -24,6 +24,7 @@ const ROUTE_LABELS: Record<string, string> = {
   medical: "Quản lý y tế",
   "patient-mgmt": "Quản lý bệnh nhân",
   "patient-list": "Danh sách bệnh nhân",
+  "patient-create": "Đăng ký ca bệnh",
   "ai-diagnosis": "Chẩn đoán AI",
   "analysis": "Phân tích chẩn đoán",
   "history": "Lịch sử chẩn đoán",

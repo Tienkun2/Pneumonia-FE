@@ -55,12 +55,15 @@ export const AiService = {
      * @param symptoms Comma-separated symptoms string
      * @returns Consolidated prediction results including risk level and heatmap
      */
-    async predictMultimodal(file: File, symptoms: string): Promise<MultimodalPredictionResponse> {
+    async predictMultimodal(file: File, symptoms: string, curb65Score?: number): Promise<MultimodalPredictionResponse> {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("symptoms", symptoms);
+        if (curb65Score !== undefined && curb65Score !== null) {
+            formData.append("curb65_score", curb65Score.toString());
+        }
 
-        const response = await aiApi.post<MultimodalPredictionResponse>("/predict", formData, {
+        const response = await aiApi.post<MultimodalPredictionResponse>("/report/predict", formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },

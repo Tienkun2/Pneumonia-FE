@@ -9,10 +9,11 @@ interface PrintReportProps {
   visit: Visit;
   patient: Patient | null;
   totalWeightedScore: number;
+  hospitalName?: string;
 }
 
 export const PrintReport = forwardRef<HTMLDivElement, PrintReportProps>(
-  ({ visit, patient, totalWeightedScore }, ref) => {
+  ({ visit, patient, totalWeightedScore, hospitalName }, ref) => {
     const imageUrl = visit.medicalImages?.[0]?.imageUrl || "";
     const symptoms = visit.symptoms?.split(",").map(s => s.trim()).filter(Boolean) || [];
 
@@ -26,8 +27,10 @@ export const PrintReport = forwardRef<HTMLDivElement, PrintReportProps>(
                 <span className="text-[9px] mt-0.5 tracking-widest uppercase">PlumoX</span>
              </div>
              <div>
-                <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Hệ Thống Chẩn Đoán Phổi AI</h1>
-                <p className="text-sm font-semibold text-slate-600 mt-1">Khoa Chẩn đoán Hình ảnh • Phòng khám Đa khoa</p>
+                <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+                  {hospitalName || "Bệnh Viện Phổi Trung Ương"}
+                </h1>
+                <p className="text-sm font-semibold text-slate-600 mt-1">Khoa Chẩn đoán Hình ảnh • Hệ thống chẩn đoán AI PlumoX</p>
              </div>
           </div>
           <div className="text-right">

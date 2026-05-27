@@ -98,6 +98,8 @@ export interface MultimodalPredictionResponse {
   risk_level: "LOW" | "MEDIUM" | "HIGH";
   heatmap: string; 
   message?: string;
+  llm_report?: string;
+  llm_fallback?: boolean;
 }
 
 export interface AIHealthStatus {
