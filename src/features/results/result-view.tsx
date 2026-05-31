@@ -39,6 +39,52 @@ import { ScoreRing } from "./components/score-ring";
 import { StatPill } from "./components/stat-pill";
 import { RecommendItem } from "./components/recommendation-item";
 import { PrintReport } from "./components/print-report";
+import { Slider } from "@/components/ui/slider";
+
+function renderInlineBold(text: string) {
+  if (!text) return "";
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      return <strong key={index} className="font-extrabold text-foreground">{part}</strong>;
+    }
+    return part;
+  });
+}
+
+function renderDoctorNote(noteText: string) {
+  if (!noteText) return null;
+  const lines = noteText.split("\n");
+  const hasMarkdown = lines.some(line => {
+    const t = line.trim();
+    return t.startsWith("## ") || t.startsWith("### ") || t.startsWith("- ") || t.startsWith("* ");
+  });
+  
+  if (!hasMarkdown) {
+    return <p className="text-sm text-foreground/80 italic leading-relaxed whitespace-pre-line">&quot;{noteText}&quot;</p>;
+  }
+  
+  return (
+    <div className="prose prose-slate dark:prose-invert max-w-none text-[11px] space-y-1.5 text-foreground leading-relaxed mt-2">
+      {lines.map((line, idx) => {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith("## ") || trimmedLine.startsWith("### ")) {
+          const text = trimmedLine.replace(/^#{2,3}\s+/, "");
+          return <h4 key={idx} className="font-bold text-xs text-foreground mt-3 mb-1 border-b border-border/40 pb-1">{text}</h4>;
+        }
+        if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* ")) {
+          const text = trimmedLine.replace(/^[-*]\s+/, "");
+          return (
+            <ul key={idx} className="list-disc pl-4 my-1">
+              <li>{renderInlineBold(text)}</li>
+            </ul>
+          );
+        }
+        return <p key={idx} className="my-0.5">{renderInlineBold(trimmedLine)}</p>;
+      })}
+    </div>
+  );
+}
 
 export function ResultView({ resultId }: { resultId: string }) {
   const [visit, setVisit] = useState<Visit | null>(null);
@@ -46,6 +92,8 @@ export function ResultView({ resultId }: { resultId: string }) {
   const [hospitalName, setHospitalName] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [showImageViewer, setShowImageViewer] = useState(false);
+  const [brightness, setBrightness] = useState(100);
+  const [contrast, setContrast] = useState(100);
   const printRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
   const patientIdParam = searchParams.get("patientId");
@@ -194,6 +242,7 @@ export function ResultView({ resultId }: { resultId: string }) {
                 <div
                   className="relative aspect-square bg-slate-950 rounded-xl overflow-hidden border border-border/20 cursor-zoom-in group"
                   onClick={() => setShowImageViewer(true)}
+                  style={{ filter: `brightness(${brightness}%) contrast(${contrast}%)` }}
                 >
                   {imageUrl ? <Image src={imageUrl} alt="X-ray" fill className="object-contain" unoptimized /> : (
                     <div className="flex items-center justify-center h-full text-muted-foreground/20">
@@ -207,6 +256,83 @@ export function ResultView({ resultId }: { resultId: string }) {
                     <p className="text-xs text-white/80 font-bold italic text-center">&quot;{visit.diagnosisResult || visit.diagnoses?.[0]?.result || "—"}&quot;</p>
                   </div>
                 </div>
+
+                {/* Sliding adjustments for PACS Simulation */}
+                <div className="bg-muted/10 border border-border/40 rounded-xl p-3.5 space-y-4 mt-3">
+                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-foreground">
+                    <span>Hiệu chỉnh hình ảnh PACS</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setBrightness(100);
+                        setContrast(100);
+                      }}
+                      className="h-6 text-[10px] font-bold text-primary hover:bg-primary/10 rounded-full px-2.5 transition-all"
+                    >
+                      Khôi phục gốc
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Brightness Slider */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                        <span>Độ sáng (Brightness)</span>
+                        <span className="font-bold text-foreground tabular-nums">{brightness}%</span>
+                      </div>
+                      <Slider
+                        value={[brightness]}
+                        onValueChange={(val) => setBrightness(val[0])}
+                        min={50}
+                        max={150}
+                        step={1}
+                      />
+                    </div>
+
+                    {/* Contrast Slider */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                        <span>Độ tương phản (Contrast)</span>
+                        <span className="font-bold text-foreground tabular-nums">{contrast}%</span>
+                      </div>
+                      <Slider
+                        value={[contrast]}
+                        onValueChange={(val) => setContrast(val[0])}
+                        min={50}
+                        max={150}
+                        step={1}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Preset buttons */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/40">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Bộ lọc nhanh:</span>
+                    {[
+                      { label: "Mặc định", b: 100, c: 100 },
+                      { label: "Chi tiết phổi", b: 105, c: 130 },
+                      { label: "Tương phản xương", b: 90, c: 150 },
+                      { label: "Mô mềm", b: 120, c: 90 }
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => {
+                          setBrightness(preset.b);
+                          setContrast(preset.c);
+                        }}
+                        className={cn(
+                          "px-2.5 py-1 text-[9px] font-bold rounded-full border transition-all cursor-pointer",
+                          brightness === preset.b && contrast === preset.c
+                            ? "bg-primary/10 border-primary/20 text-primary font-extrabold"
+                            : "border-border/50 hover:bg-muted/50 text-muted-foreground"
+                        )}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -214,9 +340,9 @@ export function ResultView({ resultId }: { resultId: string }) {
               <Card className="border-border/60 shadow-sm bg-card/60">
                 <CardContent className="p-4">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5" /> Ghi chú bác sĩ
+                    <FileText className="h-3.5 w-3.5" /> Ghi chú bác sĩ / Báo cáo AI
                   </p>
-                  <p className="text-sm text-foreground/80 italic leading-relaxed">&quot;{visit.note}&quot;</p>
+                  {renderDoctorNote(visit.note)}
                 </CardContent>
               </Card>
             )}
