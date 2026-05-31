@@ -157,6 +157,36 @@ export function ResultView({ resultId }: { resultId: string }) {
     return totalWeightedScore > 70 ? "Cao" : totalWeightedScore > 40 ? "Trung bình" : "Thấp";
   }, [visit, totalWeightedScore]);
 
+  const dynamicRecommendations = useMemo(() => {
+    const HospitalIcon = Hospital;
+    const PillIcon = Pill;
+    const ActivityIcon = Activity;
+    const UserCheckIcon = UserCheck;
+    const FileTextIcon = FileText;
+
+    if (riskStatus === "Cao") {
+      return [
+        { icon: HospitalIcon, text: "Nhập viện điều trị nội trú / ICU khẩn cấp do chỉ số viêm phổi ở mức nguy cơ cao", color: "text-red-500", bg: "bg-red-500/10" },
+        { icon: PillIcon, text: "Bắt đầu điều trị kháng sinh đường tiêm tĩnh mạch theo phác đồ chỉ định khẩn cấp", color: "text-amber-500", bg: "bg-amber-500/10" },
+        { icon: ActivityIcon, text: "Hỗ trợ thở oxy qua mask/gọng kính ngay nếu có dấu hiệu suy hô hấp (SpO₂ < 94%)", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+        { icon: UserCheckIcon, text: "Hội chẩn khẩn cấp với bác sĩ chuyên khoa Hô hấp/Hồi sức cấp cứu", color: "text-blue-500", bg: "bg-blue-500/10" },
+      ];
+    }
+    if (riskStatus === "Trung bình") {
+      return [
+        { icon: UserCheckIcon, text: "Thăm khám trực tiếp tại cơ sở y tế để nghe phổi tìm rale ẩm/rale nổ", color: "text-blue-500", bg: "bg-blue-500/10" },
+        { icon: PillIcon, text: "Sử dụng kháng sinh đường uống ngoại trú theo đơn chỉ định của bác sĩ", color: "text-amber-500", bg: "bg-amber-500/10" },
+        { icon: ActivityIcon, text: "Đo SpO₂ và nhịp thở tại nhà 2 lần/ngày (Nhập viện nếu SpO₂ < 95% hoặc nhịp thở > 22 lần/phút)", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+        { icon: FileTextIcon, text: "Thực hiện xét nghiệm máu (WBC) và CRP định lượng để theo dõi mức độ nhiễm trùng", color: "text-indigo-500", bg: "bg-indigo-500/10" },
+      ];
+    }
+    return [
+      { icon: PillIcon, text: "Điều trị triệu chứng tại nhà (sử dụng thuốc giảm ho, hạ sốt khi sốt > 38.5°C)", color: "text-amber-500", bg: "bg-amber-500/10" },
+      { icon: ActivityIcon, text: "Theo dõi nhịp thở và thân nhiệt tại nhà (Tái khám ngay nếu sốt cao liên tục > 3 ngày hoặc khó thở)", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+      { icon: UserCheckIcon, text: "Nghỉ ngơi hợp lý, uống nhiều nước ấm và giữ ấm cơ thể tránh lạnh đột ngột", color: "text-blue-500", bg: "bg-blue-500/10" },
+    ];
+  }, [riskStatus]);
+
   const risk = RISK_CONFIG[riskStatus] || RISK_CONFIG["Thấp"];
 
   if (isLoading) {
@@ -402,10 +432,9 @@ export function ResultView({ resultId }: { resultId: string }) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-2">
-                <RecommendItem icon={UserCheck} text="Thăm khám bác sĩ chuyên khoa hô hấp" color="text-blue-500" bg="bg-blue-500/10" />
-                <RecommendItem icon={Pill} text="Sử dụng đơn thuốc theo chỉ định của bác sĩ" color="text-amber-500" bg="bg-amber-500/10" />
-                <RecommendItem icon={Activity} text="Theo dõi nhịp thở và SpO₂ tại nhà" color="text-emerald-500" bg="bg-emerald-500/10" />
-                <RecommendItem icon={Hospital} text="Nhập viện ngay nếu có dấu hiệu cấp tính" color="text-red-500" bg="bg-red-500/10" />
+                {dynamicRecommendations.map((item, idx) => (
+                  <RecommendItem key={idx} icon={item.icon} text={item.text} color={item.color} bg={item.bg} />
+                ))}
               </CardContent>
             </Card>
           </div>
