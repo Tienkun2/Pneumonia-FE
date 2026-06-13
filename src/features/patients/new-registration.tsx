@@ -17,19 +17,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { 
   Search, UserPlus, FileText, Stethoscope, Activity, Check, Loader2, 
-  X, Info, Calendar, MapPin, Phone, User, CheckCircle2, ChevronRight, HelpCircle
+  X, Info, Calendar, MapPin, Phone, User, CheckCircle2, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { MODAL_STYLES, FORM_STYLES, getBadgeClass } from "@/constants/styles";
+import { getBadgeClass } from "@/constants/styles";
 
 const SYMPTOM_ITEMS = [
   { key: "cough", label: "Ho" },
@@ -67,6 +65,7 @@ export function NewRegistration() {
   const [expectingNewPatient, setExpectingNewPatient] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdVisitId, setCreatedVisitId] = useState<string | null>(null);
 
   // Search Debounce logic
   useEffect(() => {
@@ -125,6 +124,7 @@ export function NewRegistration() {
     setCustomSymptoms("");
     setNote("");
     setSearchQuery("");
+    setCreatedVisitId(null);
   };
 
   const handleRegister = async () => {
@@ -148,7 +148,7 @@ export function NewRegistration() {
 
     try {
       setIsSubmitting(true);
-      await dispatch(
+      const newVisit = await dispatch(
         createVisitThunk({
           patientId: selectedPatient.id,
           symptoms: symptomsString,
@@ -156,6 +156,7 @@ export function NewRegistration() {
         })
       ).unwrap();
 
+      setCreatedVisitId(newVisit.id);
       toast.success("Đăng ký ca bệnh mới thành công!");
       setShowSuccessDialog(true);
     } catch (error: unknown) {
@@ -461,8 +462,13 @@ export function NewRegistration() {
                 onClick={() => {
                   setShowSuccessDialog(false);
                   const pId = selectedPatient?.id;
+                  const vId = createdVisitId;
                   handleResetForm();
-                  router.push(`/medical/ai-diagnosis/analysis?patientId=${pId}`);
+                  if (vId) {
+                    router.push(`/medical/ai-diagnosis/analysis?patientId=${pId}&visitId=${vId}`);
+                  } else {
+                    router.push(`/medical/ai-diagnosis/analysis?patientId=${pId}`);
+                  }
                 }}
                 className="w-full p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all text-left flex items-center justify-between group active:scale-[0.99] duration-150"
               >

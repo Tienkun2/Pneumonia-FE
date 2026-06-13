@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -46,34 +45,36 @@ export function PermissionDialogs({
         open={!!permissionToDelete}
         onOpenChange={(open) => !open && setPermissionToDelete(null)}
       >
-        <DialogContent className="max-w-sm rounded-2xl text-center p-8 border-none shadow-2xl">
-          <DialogHeader className="mb-4">
-            <div className="mx-auto w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-2 animate-pulse">
-              <AlertCircle className="h-7 w-7 text-destructive" />
+        <DialogContent className="max-w-sm rounded-[24px] overflow-hidden border-none shadow-2xl p-0">
+          <div className="p-8 text-center bg-background">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4 animate-pulse">
+              <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
-            <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
-            <DialogDescription className="text-center font-medium opacity-70">
-              Quyền <strong className="text-foreground">{permissionToDelete}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-col gap-2">
-            <Button
-              variant="destructive"
-              onClick={onConfirmDelete}
-              disabled={isSubmitting}
-              className="h-12 rounded-xl w-full font-black uppercase text-[12px] tracking-widest shadow-xl shadow-destructive/20 active:scale-[0.98]"
-            >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Tôi chắc chắn, hãy xóa ngay
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setPermissionToDelete(null)}
-              className="h-12 rounded-xl w-full font-black uppercase text-[12px] tracking-widest"
-            >
-              Quay lại
-            </Button>
-          </DialogFooter>
+            <DialogHeader className="p-0 mb-6">
+              <DialogTitle className="text-center font-black uppercase text-xl text-destructive tracking-tight">Cảnh báo xóa!</DialogTitle>
+              <DialogDescription className="text-center font-medium text-[13px] opacity-70 mt-2">
+                Quyền <strong className="text-foreground">{permissionToDelete}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống. Hành động này không thể hoàn tác.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="destructive"
+                className="h-12 rounded-xl w-full font-bold text-[13px] shadow-xl shadow-destructive/20 active:scale-[0.98] transition-all"
+                onClick={onConfirmDelete}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Tôi chắc chắn, hãy xóa ngay
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12 rounded-xl w-full font-bold text-[13px] border-border/50 active:scale-[0.98] transition-all"
+                onClick={() => setPermissionToDelete(null)}
+              >
+                Quay lại
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

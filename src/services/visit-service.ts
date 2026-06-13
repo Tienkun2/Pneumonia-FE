@@ -23,6 +23,7 @@ export const VisitService = {
     api.delete<boolean>(`/visits/${id}`),
 
   createMultimodalVisit: (payload: {
+    visitId?: string;
     patientId: string;
     symptoms: string;
     note?: string;

@@ -86,14 +86,14 @@ export function UserDevicesAdminView() {
 
       {!selectedUser ? (
         <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card/50 backdrop-blur-md rounded-[28px] border border-border/50 p-5 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card rounded-2xl border border-border/50 p-4 shadow-sm">
              <div className="relative flex-1 w-full max-w-sm">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <input 
                     value={globalFilter}
                     onChange={(e) => setGlobalFilter(e.target.value)}
                     placeholder="Tìm kiếm người dùng..."
-                    className="h-11 w-full rounded-[18px] border border-border/40 bg-background/50 pl-11 pr-4 text-[13px] font-bold placeholder:text-muted-foreground/40 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all"
+                    className="h-9 w-full rounded-xl border border-border/50 bg-card pl-9 pr-4 text-[13px] font-medium placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
                 />
              </div>
 

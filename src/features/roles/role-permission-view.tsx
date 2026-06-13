@@ -2,8 +2,6 @@
 
 import * as React from "react";
 import { useRolePermissions } from "@/hooks/use-role-permissions";
-import { cn } from "@/lib/utils";
-import { FORM_STYLES } from "@/constants/styles";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import {
@@ -12,8 +10,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { AddButton } from "@/components/ui/add-button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -68,55 +64,50 @@ export function RolePermissionView({ roleName }: RolePermissionViewProps) {
         <AddButton
           label="Chức năng"
           onClick={() => setShowAddDialog(true)}
-          className="bg-[#2563eb] hover:bg-[#1d4ed8] rounded-full h-9 px-5 shadow-md shadow-blue-500/10 text-white transition-all active:scale-95 text-[13px]"
         />
       </PageHeader>
 
-      <div className="bg-card/60 backdrop-blur-xl rounded-2xl shadow-xl shadow-primary/5 border border-border/40 p-6 space-y-6">
-        {/* Filters Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-2.5">
-            <Label className={FORM_STYLES.label}>Nhóm chức năng cấp 1</Label>
-            <Select value={selectedL1} onValueChange={setSelectedL1}>
-              <SelectTrigger className={cn(FORM_STYLES.input, "rounded-xl bg-background border-border/60 font-bold text-foreground transition-all hover:bg-muted/30 h-11")}>
-                <SelectValue placeholder="Chọn nhóm chức năng cấp 1" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/60 shadow-2xl">
-                {roots.map(n => (
-                  <SelectItem key={n.name} value={n.name} className="font-semibold">{n.description || n.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2.5">
-            <Label className={FORM_STYLES.label}>Nhóm chức năng cấp 2</Label>
-            <Select value={selectedL2} onValueChange={setSelectedL2}>
-              <SelectTrigger className={cn(FORM_STYLES.input, "rounded-xl bg-background border-border/60 font-bold text-foreground transition-all hover:bg-muted/30 h-11")}>
-                <SelectValue placeholder="Chọn nhóm chức năng cấp 2" />
-              </SelectTrigger>
-              <SelectContent className="rounded-2xl border-border/60 shadow-2xl">
-                {currentL2Options.map(n => (
-                  <SelectItem key={n.name} value={n.name} className="font-semibold">{n.description || n.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Search and Options Row */}
-        <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-border/20">
+      <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/40 pointer-events-none z-10" />
-            <Input
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <input
               value={globalFilter}
               onChange={e => setGlobalFilter(e.target.value)}
               placeholder="Tìm kiếm nhanh chức năng..."
-              className={cn(FORM_STYLES.input, "rounded-xl border-border/40 bg-muted/10 pl-9 pr-4 font-medium transition-all focus:ring-primary/10")}
+              className="h-9 w-full rounded-xl border border-border/50 bg-card pl-9 pr-4 text-[13px] font-medium placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
             />
           </div>
 
-          <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cấp 1</span>
+            <Select value={selectedL1} onValueChange={setSelectedL1}>
+              <SelectTrigger className="h-9 min-w-[160px] max-w-[220px] rounded-xl border-border/50 bg-card text-xs font-semibold shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                <SelectValue placeholder="Chọn nhóm cấp 1" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border/50 shadow-lg">
+                {roots.map(n => (
+                  <SelectItem key={n.name} value={n.name} className="text-xs">{n.description || n.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cấp 2</span>
+            <Select value={selectedL2} onValueChange={setSelectedL2}>
+              <SelectTrigger className="h-9 min-w-[160px] max-w-[220px] rounded-xl border-border/50 bg-card text-xs font-semibold shadow-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                <SelectValue placeholder="Chọn nhóm cấp 2" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border/50 shadow-lg">
+                {currentL2Options.map(n => (
+                  <SelectItem key={n.name} value={n.name} className="text-xs">{n.description || n.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
             <DataTableViewOptions
               table={table}
               columnLabels={{

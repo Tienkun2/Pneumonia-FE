@@ -75,9 +75,9 @@ export function useRoleTable({
       },
     },
     {
-      id: "userCount",
+      accessorKey: "userCount",
       header: "Số người dùng",
-      cell: () => <span className="font-bold opacity-60">5</span>
+      cell: ({ row }) => <span className="font-bold opacity-60">{row.original.userCount ?? 0}</span>
     },
     {
       accessorKey: "createdAt",

@@ -6,6 +6,7 @@ export interface Role {
   permissions: Permission[];
   status?: string;
   createdAt?: string;
+  userCount?: number;
 }
 
 export interface RoleState {

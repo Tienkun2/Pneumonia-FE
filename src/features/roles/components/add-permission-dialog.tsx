@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { PermissionTable } from "../role-table/permission-table";
 import { cn } from "@/lib/utils";
-import { FORM_STYLES } from "@/constants/styles";
+import { FORM_STYLES, MODAL_STYLES } from "@/constants/styles";
 import { useAddPermissionTable } from "@/hooks/use-add-permission-table";
 
 interface AddPermissionDialogProps {
@@ -63,42 +63,42 @@ export function AddPermissionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl rounded-[24px] p-0 overflow-hidden border border-border/40 shadow-2xl bg-background">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-lg font-black text-foreground">
+      <DialogContent className={cn(MODAL_STYLES.contentWide, "max-w-3xl")}>
+        <DialogHeader className={MODAL_STYLES.header}>
+          <DialogTitle className={MODAL_STYLES.title}>
             Thêm chức năng cho vai trò <span className="text-foreground">{roleName}</span>
           </DialogTitle>
-          <DialogDescription className="text-[12px] font-medium text-muted-foreground/60">
+          <DialogDescription className={MODAL_STYLES.description}>
             Chọn và cấu hình quyền cho các chức năng cần gán cho vai trò này
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-6 pt-2 space-y-2.5">
+        <div className={cn(MODAL_STYLES.body, "pt-2 gap-4")}>
           {/* Filters Row */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1 text-left">
-              <Label className={cn(FORM_STYLES.label, "font-bold text-foreground text-[11px]")}>Nhóm chức năng cấp 1</Label>
+            <div className="space-y-1.5 text-left">
+              <Label className={FORM_STYLES.label}>Nhóm chức năng cấp 1</Label>
               <Select value={selectedL1} onValueChange={setSelectedL1}>
-                <SelectTrigger className="h-8 rounded-lg border-border/60 bg-background font-medium text-[12px]">
+                <SelectTrigger className={FORM_STYLES.input}>
                   <SelectValue placeholder="Chọn module" />
                 </SelectTrigger>
-                <SelectContent className="rounded-lg">
+                <SelectContent className="rounded-xl">
                   {roots.map(n => (
-                    <SelectItem key={n.name} value={n.name} className="font-medium h-8 text-[12px]">{n.description || n.name}</SelectItem>
+                    <SelectItem key={n.name} value={n.name} className="text-sm">{n.description || n.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-1 text-left">
-              <Label className={cn(FORM_STYLES.label, "font-bold text-foreground text-[11px]")}>Nhóm chức năng cấp 2</Label>
+            <div className="space-y-1.5 text-left">
+              <Label className={FORM_STYLES.label}>Nhóm chức năng cấp 2</Label>
               <Select value={selectedL2} onValueChange={setSelectedL2}>
-                <SelectTrigger className="h-8 rounded-lg border-border/60 bg-background font-medium text-[12px]">
+                <SelectTrigger className={FORM_STYLES.input}>
                   <SelectValue placeholder="Chọn nhóm" />
                 </SelectTrigger>
-                <SelectContent className="rounded-lg">
+                <SelectContent className="rounded-xl">
                   {currentL2Options.map(n => (
-                    <SelectItem key={n.name} value={n.name} className="font-medium h-8 text-[12px]">{n.description || n.name}</SelectItem>
+                    <SelectItem key={n.name} value={n.name} className="text-sm">{n.description || n.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -107,12 +107,12 @@ export function AddPermissionDialog({
 
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/40 pointer-events-none" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               value={globalFilter}
               onChange={e => setGlobalFilter(e.target.value)}
               placeholder="Tìm kiếm theo tên chức năng..."
-              className="h-8 pl-8 rounded-lg border-border/40 bg-muted/5 placeholder:font-medium font-medium text-[12px]"
+              className={FORM_STYLES.input + " pl-9"}
             />
           </div>
 
@@ -128,22 +128,20 @@ export function AddPermissionDialog({
           </div>
         </div>
 
-        <DialogFooter className="p-4 pt-0 bg-background">
-          <div className="flex w-full items-center justify-end gap-2 px-4 pb-2">
-             <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                className="h-8 px-4 rounded-lg font-bold gap-1.5 text-foreground border-border/60 hover:bg-muted/50 text-[12px]"
-             >
-                <X className="h-3.5 w-3.5" /> Hủy
-             </Button>
-             <Button
-                onClick={onSave}
-                className="h-8 px-6 rounded-lg font-bold gap-1.5 bg-primary hover:bg-primary/90 shadow-md shadow-primary/10 text-primary-foreground text-[12px]"
-             >
-                <Save className="h-3.5 w-3.5" /> Lưu
-             </Button>
-          </div>
+        <DialogFooter className={MODAL_STYLES.footer}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className={FORM_STYLES.buttonSecondary}
+          >
+            <X className="h-4 w-4 mr-1.5" /> Hủy
+          </Button>
+          <Button
+            onClick={onSave}
+            className={FORM_STYLES.buttonPrimary}
+          >
+            <Save className="h-4 w-4 mr-1.5" /> Lưu
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

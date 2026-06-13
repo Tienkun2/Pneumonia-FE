@@ -56,7 +56,7 @@ export function PermissionList() {
         />
       </PageHeader>
 
-      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 border border-border/40 p-4 flex items-center justify-between">
+      <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
             <div 
               className="h-8 w-8 rounded-lg bg-muted/40 flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors"
@@ -90,15 +90,15 @@ export function PermissionList() {
         </div>
       </div>
 
-      <div className="rounded-[24px] bg-card/60 backdrop-blur-xl shadow-xl shadow-primary/5 border border-border/40 p-4">
+      <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none opacity-50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
               placeholder="Tìm kiếm chính xác chức năng..."
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="h-9 w-full rounded-xl border border-border/50 bg-card pl-9 pr-4 text-[13px] font-medium placeholder:text-muted-foreground/30 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-sm"
+              className="h-9 w-full rounded-xl border border-border/50 bg-card pl-9 pr-4 text-[13px] font-medium placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
             />
           </div>
 

@@ -21,6 +21,7 @@ export function useDiagnosis() {
   const diagnosisData = useAppSelector((state) => state.diagnosis);
   const searchParams = useSearchParams();
   const patientIdFromUrl = searchParams.get("patientId");
+  const visitIdFromUrl = searchParams.get("visitId");
 
   // Status state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -115,20 +116,43 @@ export function useDiagnosis() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 3. Patient Selection Logic
+  // 3. Patient Selection & Pre-registered Visit Loading Logic
   useEffect(() => {
-    if (patientIdFromUrl && !selectedPatient) {
-      const fetchInitialPatient = async () => {
-        try {
+    const fetchInitialData = async () => {
+      if (!patientIdFromUrl) return;
+
+      try {
+        if (!selectedPatient) {
           const patientData = await PatientService.getPatientById(patientIdFromUrl);
           setSelectedPatient(patientData);
-        } catch (error) {
-          console.error("Failed to auto-select patient:", error);
         }
-      };
-      fetchInitialPatient();
-    }
-  }, [patientIdFromUrl, selectedPatient]);
+
+        if (visitIdFromUrl) {
+          const visitData = await VisitService.getVisitById(visitIdFromUrl);
+          if (visitData) {
+            if (visitData.note) setNote(visitData.note);
+            if (visitData.symptoms) {
+              const symptomNames = visitData.symptoms.split(",").map(s => s.trim());
+              const symptomKeys: string[] = [];
+              symptomNames.forEach(name => {
+                const foundKey = Object.keys(SYMPTOM_LABELS).find(key => SYMPTOM_LABELS[key] === name);
+                if (foundKey) {
+                  symptomKeys.push(foundKey);
+                } else {
+                  symptomKeys.push(name);
+                }
+              });
+              setSelectedSymptoms(symptomKeys);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch initial URL data:", error);
+      }
+    };
+
+    fetchInitialData();
+  }, [patientIdFromUrl, visitIdFromUrl, selectedPatient]);
 
   useEffect(() => {
     if (selectedPatient) {
@@ -209,6 +233,7 @@ export function useDiagnosis() {
     try {
       setIsSaving(true)
       await VisitService.createMultimodalVisit({
+        visitId: visitIdFromUrl || undefined,
         patientId: selectedPatient.id,
         symptoms: selectedSymptoms.map(s => SYMPTOM_LABELS[s] || s).join(", "),
         note: note,

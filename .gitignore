@@ -49,3 +49,6 @@ Thumbs.db
 .eslintcache
 
 CLAUDE.md
+
+
+env.development
