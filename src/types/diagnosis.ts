@@ -96,15 +96,48 @@ export interface MultimodalPredictionResponse {
   clinical_probability: number;
   final_score: number;
   risk_level: "LOW" | "MEDIUM" | "HIGH";
-  heatmap: string; 
-  message?: string;
+  heatmap: string;
+  selected_symptoms: string[];
+  clinical_alerts: string[];
+  applied_vision_weight: number;
+  applied_clinical_weight: number;
+  curb65_score?: number;
+  gradcam_error?: string;
+  master_prompt?: string;
   llm_report?: string;
   llm_fallback?: boolean;
 }
 
+export interface DiagnoseResponse {
+  patient_id: string;
+  xray: {
+    p_img: number;
+    gradcam_overlay?: string;
+    lung_focus_ratio?: number;
+  };
+  symptom: {
+    p_sym: number;
+    active_symptoms: string[];
+  };
+  fusion: {
+    nudge_logodds: number;
+    p_fused: number;
+    threshold: number;
+    decision: "positive" | "negative";
+    decision_label: string;
+  };
+  model_versions: {
+    xray: string;
+    seg: string;
+    symptom: string;
+    fusion: string;
+  };
+  timestamp: string;
+}
+
 export interface AIHealthStatus {
   status: string;
-  models_loaded: boolean;
+  model_loaded: boolean;
   device: string;
 }
 

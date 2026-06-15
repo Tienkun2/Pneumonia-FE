@@ -6,6 +6,7 @@ import {
     FusionPredictionRequest,
     FusionPredictionResponse,
     MultimodalPredictionResponse,
+    DiagnoseResponse,
     AIHealthStatus
 } from "@/types/diagnosis";
 
@@ -74,11 +75,45 @@ export const AiService = {
     },
 
     /**
+     * Send X-ray and symptoms to the new multimodal diagnose API
+     * @param patientId Patient ID
+     * @param file The X-ray file
+     * @param symptoms Array of symptom string codes
+     * @returns Consolidated prediction details matching the API contract
+     */
+    async predictDiagnose(patientId: string, file: File, symptoms: string[]): Promise<DiagnoseResponse> {
+        const formData = new FormData();
+        formData.append("patient_id", patientId);
+        formData.append("xray_image", file);
+        symptoms.forEach(sym => {
+            formData.append("symptoms", sym);
+        });
+
+        const response = await aiApi.post<DiagnoseResponse>("/diagnose", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+            timeout: 60000,
+        });
+
+        return response.data;
+    },
+
+    /**
      * Get list of symptoms supported by the AI model
      * @returns Array of symptom strings
      */
     async getSymptoms(): Promise<string[]> {
         const response = await aiApi.get<string[]>("/symptoms");
+        return response.data;
+    },
+
+    /**
+     * Get normalised feature importance weights from the clinical LR model's coef_
+     * @returns Map of symptom code → weight (0-1, sum=1)
+     */
+    async getSymptomWeights(): Promise<Record<string, number>> {
+        const response = await aiApi.get<Record<string, number>>("/symptoms/weights");
         return response.data;
     },
 

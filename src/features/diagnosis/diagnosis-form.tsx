@@ -94,10 +94,18 @@ export function DiagnosisForm() {
     canSubmit,
     curb65Score,
     setCurb65Score,
+    symptomWeights,
   } = useDiagnosis();
 
-  const importantSymptoms = ["fast_heart_rate", "rusty_sputum", "chest_pain"];
-  const otherSymptoms = availableSymptoms.filter((s) => !importantSymptoms.includes(s));
+  const sortedByWeight = [...availableSymptoms].sort(
+    (a, b) => (symptomWeights[b] ?? 0) - (symptomWeights[a] ?? 0)
+  );
+  const IMPORTANT_COUNT = 3;
+  const importantThreshold = 0.10; // chỉ vào nhóm chính nếu weight >= 10%
+  const importantSymptoms = sortedByWeight
+    .slice(0, IMPORTANT_COUNT)
+    .filter((s) => (symptomWeights[s] ?? 0) >= importantThreshold);
+  const otherSymptoms = sortedByWeight.filter((s) => !importantSymptoms.includes(s));
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: handleDrop,
@@ -137,7 +145,7 @@ export function DiagnosisForm() {
         </div>
 
         {/* Patient Selector */}
-        <PatientSelector 
+        <PatientSelector
           selectedPatient={selectedPatient}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
@@ -168,7 +176,7 @@ export function DiagnosisForm() {
 
       {/* ── Patient History Panel ─────────────────────────────────────────── */}
       {showHistory && selectedPatient && (
-        <HistoryPanel 
+        <HistoryPanel
           selectedPatient={selectedPatient}
           isLoadingVisits={isLoadingVisits}
           patientVisits={patientVisits}
@@ -220,12 +228,15 @@ export function DiagnosisForm() {
                   {/* Triệu chứng chính */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Triệu chứng chính (Quyết định cao)
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Triệu chứng chính (tính quyết định cao)
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
                       {importantSymptoms.map((s) => {
                         const label = SYMPTOM_LABELS[s] || s;
-                        const weight = s === "fast_heart_rate" ? "30.4%" : s === "rusty_sputum" ? "28.3%" : "14.0%";
+                        const rawWeight = symptomWeights[s];
+                        const weightLabel = rawWeight != null
+                          ? `${(rawWeight * 100).toFixed(1)}%`
+                          : "—";
                         return (
                           <div key={s} className="flex items-start gap-2.5 p-1">
                             <Checkbox
@@ -242,7 +253,7 @@ export function DiagnosisForm() {
                                 {label}
                               </label>
                               <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
-                                Trọng số AI: {weight}
+                                Trọng số AI: {weightLabel}
                               </span>
                             </div>
                           </div>
@@ -283,8 +294,8 @@ export function DiagnosisForm() {
                 <div className="flex flex-wrap gap-2">
                   {selectedSymptoms.length > 0 ? (
                     selectedSymptoms.map((s) => (
-                      <Badge 
-                        key={s} 
+                      <Badge
+                        key={s}
                         className={cn(
                           "px-3 py-1 rounded-full text-xs font-semibold border",
                           importantSymptoms.includes(s)
@@ -456,7 +467,7 @@ export function DiagnosisForm() {
                         </p>
                       </div>
                     </div>
-                    
+
                     {/* PACS Mode Selectors */}
                     <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg border border-border/40">
                       {[
@@ -486,7 +497,7 @@ export function DiagnosisForm() {
                 </CardHeader>
                 <CardContent className="p-4 space-y-4">
                   {/* Dynamic Display area with brightness/contrast filtering */}
-                  <div 
+                  <div
                     className="relative w-full aspect-[16/10] bg-slate-950 rounded-xl overflow-hidden border border-border/30 group"
                     style={{ filter: `brightness(${brightness}%) contrast(${contrast}%)` }}
                   >
@@ -534,7 +545,7 @@ export function DiagnosisForm() {
                         )}
                       </>
                     )}
-                    
+
                     <div className="absolute top-3 right-3 z-20">
                       <Button
                         variant="secondary"
@@ -554,13 +565,13 @@ export function DiagnosisForm() {
                         <Search className="h-3 w-3 mr-1" /> Phóng to
                       </Button>
                     </div>
-                    
+
                     <div className="absolute bottom-3 left-3 z-20 bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider text-white flex items-center gap-1.5 pointer-events-none">
                       <Layers className="h-3 w-3 text-amber-400" />
                       Chế độ xem: {viewMode === "original" ? "Phim gốc" : viewMode === "heatmap" ? "Bản đồ nhiệt" : viewMode === "overlay" ? "Chồng ảnh" : "Thanh trượt"}
                     </div>
                   </div>
-                  
+
                   {/* Sliding adjustments for PACS Simulation */}
                   <div className="bg-muted/10 border border-border/40 rounded-xl p-3.5 space-y-4">
                     <div className="flex items-center justify-between text-xs font-black uppercase tracking-wider text-foreground">
@@ -637,7 +648,7 @@ export function DiagnosisForm() {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-start gap-2.5 p-3 bg-primary/5 border border-primary/15 rounded-lg">
                     <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                     <p className="text-xs text-primary leading-snug font-semibold">
@@ -683,7 +694,7 @@ export function DiagnosisForm() {
                           ID: DX-{selectedPatient?.id || "TEMP"}-{Date.now().toString().slice(-6)}
                         </div>
                       </div>
-                      
+
                       <div className="prose prose-slate dark:prose-invert max-w-none text-xs space-y-2 text-foreground leading-relaxed">
                         {diagnosisData.multimodalResult!.llm_report.split("\n").map((line, idx) => {
                           const trimmedLine = line.trim();
@@ -715,7 +726,7 @@ export function DiagnosisForm() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-between items-center gap-3 pt-1">
                       <Button
                         onClick={() => {
@@ -728,7 +739,7 @@ export function DiagnosisForm() {
                       >
                         <Check className="h-3.5 w-3.5" /> Áp dụng báo cáo AI vào ghi chú
                       </Button>
-                      
+
                       <Button
                         onClick={() => handleSubmit(curb65Score)}
                         disabled={isSubmitting}

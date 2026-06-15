@@ -33,6 +33,7 @@ export function useDiagnosis() {
   const [showOverlay, setShowOverlay] = useState(false);
   const [isSymptomEditing, setIsSymptomEditing] = useState(false);
   const [curb65Score, setCurb65Score] = useState<number>(0);
+  const [symptomWeights, setSymptomWeights] = useState<Record<string, number>>({});
 
   // Patient Selection State
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,15 +53,19 @@ export function useDiagnosis() {
 
   // 1. Initial Data Fetching
   useEffect(() => {
-    const fetchSymptoms = async () => {
+    const fetchSymptomData = async () => {
       try {
-        const symptoms = await AiService.getSymptoms();
+        const [symptoms, weights] = await Promise.all([
+          AiService.getSymptoms(),
+          AiService.getSymptomWeights(),
+        ]);
         setAvailableSymptoms(symptoms);
+        setSymptomWeights(weights);
       } catch {
         toast.error("Không thể tải danh sách triệu chứng từ AI", { id: "symptoms-error" });
       }
     };
-    fetchSymptoms();
+    fetchSymptomData();
   }, []);
 
   // 2. Patient Search & Infinite Scroll
@@ -239,7 +244,7 @@ export function useDiagnosis() {
         note: note,
         imageUrl: diagnosisData.multimodalResult.heatmap || "",
         imageType: "XRAY",
-        result: diagnosisData.multimodalResult.risk_level === "HIGH" ? "PNEUMONIA" : "NORMAL",
+        result: diagnosisData.multimodalResult.risk_level !== "LOW" ? "PNEUMONIA" : "NORMAL",
         confidenceScore: diagnosisData.multimodalResult.final_score,
         modelVersion: "v1.0"
       });
@@ -304,5 +309,6 @@ export function useDiagnosis() {
     toggleSymptom,
     handleSaveVisit,
     canSubmit: !!selectedFile && !isSubmitting,
+    symptomWeights,
   };
 }
