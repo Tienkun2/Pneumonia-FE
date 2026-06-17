@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { logoutThunk } from "@/store/slices/auth-slice";
 
@@ -26,13 +27,15 @@ import {
   PlusCircle,
   ArrowLeftRight,
   LogOut,
-  Moon
+  Moon,
+  Sun,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export function CommandPalette() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { theme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const { patients } = useAppSelector((state) => state.patient);
 
@@ -63,22 +66,22 @@ export function CommandPalette() {
           <CommandItem onSelect={() => runCommand(() => router.push("/dashboard"))}>
             <LayoutDashboard className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
-            <CommandShortcut>⌘D</CommandShortcut>
+            <CommandShortcut>Ctrl+D</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push("/patients"))}>
+          <CommandItem onSelect={() => runCommand(() => router.push("/medical/patient-mgmt/patient-list"))}>
             <Users className="mr-2 h-4 w-4" />
             <span>Quản lý Bệnh nhân</span>
-            <CommandShortcut>⌘P</CommandShortcut>
+            <CommandShortcut>Ctrl+P</CommandShortcut>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push("/diagnosis"))}>
+          <CommandItem onSelect={() => runCommand(() => router.push("/medical/ai-diagnosis"))}>
             <Stethoscope className="mr-2 h-4 w-4" />
             <span>Thực hiện Chẩn đoán</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push("/results"))}>
+          <CommandItem onSelect={() => runCommand(() => router.push("/medical/ai-diagnosis/history"))}>
             <FileText className="mr-2 h-4 w-4" />
             <span>Lịch sử Kết quả</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push("/comparison"))}>
+          <CommandItem onSelect={() => runCommand(() => router.push("/medical/ai-diagnosis/comparison"))}>
             <ArrowLeftRight className="mr-2 h-4 w-4" />
             <span>So sánh Tiến triển</span>
           </CommandItem>
@@ -94,7 +97,7 @@ export function CommandPalette() {
         {patients.length > 0 && (
            <CommandGroup heading="Bệnh nhân gần đây">
               {patients.slice(0, 5).map(p => (
-                 <CommandItem key={p.id} onSelect={() => runCommand(() => router.push(`/patients/${p.id}`))}>
+                 <CommandItem key={p.id} onSelect={() => runCommand(() => router.push(`/medical/patient-mgmt/patient-list/${p.id}`))}>
                     <User className="mr-2 h-4 w-4" />
                     <span>{p.fullName}</span>
                     <CommandShortcut className="text-[10px]">{p.code}</CommandShortcut>
@@ -111,21 +114,24 @@ export function CommandPalette() {
             <User className="mr-2 h-4 w-4" />
             <span>Hồ sơ cá nhân</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => router.push("/settings"))}>
+          <CommandItem onSelect={() => runCommand(() => router.push("/system/settings/config"))}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Cấu hình hệ thống</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => {
-             // Mock Add Patient - usually opens dialog
-             router.push("/patients");
-             toast.info("Vui lòng nhấn nút 'Thêm bệnh nhân' tại trang quản lý.");
+            router.push("/medical/patient-mgmt/patient-list");
+            toast.info("Vui lòng nhấn nút 'Thêm bệnh nhân' tại trang quản lý.");
           })}>
             <PlusCircle className="mr-2 h-4 w-4" />
             <span>Thêm bệnh nhân mới</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => toast.success("Đang chuyển sang giao diện tối..."))}>
-            <Moon className="mr-2 h-4 w-4" />
-            <span>Đổi sang Dark Mode</span>
+          <CommandItem onSelect={() => runCommand(() => {
+            const next = theme === "dark" ? "light" : "dark";
+            setTheme(next);
+            toast.success(next === "dark" ? "Đã chuyển sang Dark Mode" : "Đã chuyển sang Light Mode");
+          })}>
+            {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            <span>{theme === "dark" ? "Chuyển sang Light Mode" : "Chuyển sang Dark Mode"}</span>
           </CommandItem>
         </CommandGroup>
 

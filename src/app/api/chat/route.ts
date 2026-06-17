@@ -8,7 +8,7 @@ interface Message {
 }
 
 
-const SYSTEM_INSTRUCTION = `Bạn là Trợ lý Lâm sàng PlumoX, một trợ lý y tế chuyên khoa hô hấp chuyên nghiệp và tận tụy, hỗ trợ các bác sĩ chẩn đoán viêm phổi.
+const _SYSTEM_INSTRUCTION = `Bạn là Trợ lý Lâm sàng PlumoX, một trợ lý y tế chuyên khoa hô hấp chuyên nghiệp và tận tụy, hỗ trợ các bác sĩ chẩn đoán viêm phổi.
 Nhiệm vụ của bạn là hỗ trợ bác sĩ giải đáp các thắc mắc chuyên môn lâm sàng liên quan đến viêm phổi, các phác đồ kháng sinh của Bộ Y tế Việt Nam (CAP ngoại trú, nội trú thường, ICU), phân tích hình ảnh X-quang phổi và các hướng dẫn chăm sóc hỗ trợ.
 Quy tắc trả lời:
 1. Sử dụng ngôn ngữ tiếng Việt y khoa chuẩn xác, lịch sự và chuyên nghiệp.
@@ -151,10 +151,11 @@ Tôi nhận được câu hỏi về: *"${message}"*.
       return NextResponse.json({ text: matchedResponse, source: "mock-fallback" });
     }
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in AI Chat API route:", error);
+    const message = error instanceof Error ? error.message : "Internal server error";
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: message },
       { status: 500 }
     );
   }

@@ -90,20 +90,25 @@ export function Header({ isCollapsed, setIsCollapsed }: { isCollapsed?: boolean;
             <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           </div>
           <input
-          type="text"
-          placeholder="Search anything here..."
-          className="h-11 w-full rounded-full border border-border/50 bg-card pl-11 pr-4 text-sm focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium cursor-pointer placeholder:text-muted-foreground/50"
-          readOnly
-          onClick={() => {
-             const event = new KeyboardEvent('keydown', {
-               key: 'k',
-               ctrlKey: true,
-               bubbles: true
-             });
-             document.dispatchEvent(event);
-          }}
-        />
-      </div>
+            type="text"
+            placeholder="Tìm kiếm nhanh..."
+            className="h-11 w-full rounded-full border border-border/50 bg-card pl-11 pr-20 text-sm focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all shadow-sm font-medium cursor-pointer placeholder:text-muted-foreground/50"
+            readOnly
+            onClick={() => {
+              const event = new KeyboardEvent('keydown', {
+                key: 'k',
+                ctrlKey: true,
+                bubbles: true
+              });
+              document.dispatchEvent(event);
+            }}
+          />
+          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+            <kbd className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground bg-muted border border-border/60 rounded-md leading-none">
+              Ctrl K
+            </kbd>
+          </div>
+        </div>
       </div>
 
       {/* Actions (Right) */}

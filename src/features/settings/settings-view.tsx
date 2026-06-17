@@ -60,7 +60,7 @@ export default function SettingsView() {
 
   const handleSaveAll = async () => {
     try {
-      const savePromises: Promise<any>[] = [
+      const savePromises: Promise<unknown>[] = [
         localUser ? updateUserSettings(localUser) : Promise.resolve()
       ];
 

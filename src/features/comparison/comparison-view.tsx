@@ -169,7 +169,7 @@ export function ComparisonView() {
                  ].map((mode) => (
                    <button
                      key={mode.value}
-                     onClick={() => setDisplayMode(mode.value as any)}
+                     onClick={() => setDisplayMode(mode.value as "side-by-side" | "slider")}
                      className={cn(
                        "px-2.5 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer",
                        displayMode === mode.value

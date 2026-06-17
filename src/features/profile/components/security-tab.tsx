@@ -6,9 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { 
-  Loader2, CheckCircle2, AlertCircle, ShieldCheck, Key 
+import {
+  Loader2, AlertCircle, ShieldCheck, Key
 } from "lucide-react";
 import { toast } from "sonner";
 import { useDevices } from "@/hooks/use-devices";
@@ -17,7 +16,6 @@ import { DeviceManagementModal } from "./device-management-modal";
 export function SecurityTab() {
   const { devices } = useDevices();
   const [isChangingPass, setIsChangingPass] = useState(false);
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
 
   const [oldPassword, setOldPassword] = useState("");
@@ -122,7 +120,7 @@ export function SecurityTab() {
           </form>
         </div>
 
-        {/* Right Side: 2FA & Account Status */}
+        {/* Right Side: Account Status */}
         <div className="bg-muted/10 p-6 space-y-6">
           <div className="space-y-6">
             <div>
@@ -130,29 +128,6 @@ export function SecurityTab() {
                 <ShieldCheck className="h-4 w-4 text-primary" /> Bảo mật nâng cao
               </h3>
               <p className="text-xs text-muted-foreground mt-1">Các tùy chọn bảo vệ tài khoản bổ sung</p>
-            </div>
-
-            {/* 2FA Toggle */}
-            <div className="p-4 rounded-2xl border border-border bg-card shadow-sm space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-[13px] font-bold text-foreground">Xác thực 2 lớp (2FA)</p>
-                  <p className="text-[11px] text-muted-foreground leading-tight">Yêu cầu mã OTP khi đăng nhập từ trình duyệt mới</p>
-                </div>
-                <Switch 
-                  checked={is2FAEnabled} 
-                  onCheckedChange={(val) => {
-                    setIs2FAEnabled(val);
-                    toast.success(val ? "Đã bật yêu cầu xác thực 2 lớp" : "Đã tắt xác thực 2 lớp");
-                  }} 
-                />
-              </div>
-              
-              {is2FAEnabled && (
-                 <div className="pt-2 border-t border-border flex items-center gap-2 text-[11px] text-emerald-600 font-bold">
-                    <CheckCircle2 className="h-3 w-3" /> Tài khoản đang được bảo vệ
-                 </div>
-              )}
             </div>
 
             {/* Account Status Info */}
