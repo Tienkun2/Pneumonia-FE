@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -22,6 +22,19 @@ interface Message {
   sender: "bot" | "user";
   text: string;
   isMarkdown?: boolean;
+}
+
+function renderInline(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**"))
+      return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*"))
+      return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+    if (part.startsWith("`") && part.endsWith("`"))
+      return <code key={i} className="bg-muted/60 px-1 rounded font-mono text-[10px]">{part.slice(1, -1)}</code>;
+    return <Fragment key={i}>{part}</Fragment>;
+  });
 }
 
 const QUICK_PROMPTS = [
@@ -235,29 +248,35 @@ export function AiChatbot() {
                       <div className="prose prose-slate dark:prose-invert max-w-none text-xs space-y-2 text-inherit [&>h3]:font-bold [&>h3]:text-sm [&>h3]:mt-1 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>table]:w-full [&>table]:border-collapse [&>table]:my-2 [&>table_th]:border [&>table_th]:border-border [&>table_th]:p-1 [&>table_th]:bg-muted/50 [&>table_td]:border [&>table_td]:border-border [&>table_td]:p-1">
                         {/* Custom markdown parsing for structured text */}
                         {msg.text.split("\n").map((line, idx) => {
-                          if (line.startsWith("### ")) {
-                            return <h3 key={idx} className="font-bold text-sm mt-2">{line.replace("### ", "")}</h3>;
-                          }
-                          if (line.startsWith("- ") || line.startsWith("* ")) {
+                          if (line.startsWith("### "))
+                            return <h3 key={idx} className="font-bold text-sm mt-2 mb-1">{renderInline(line.slice(4))}</h3>;
+                          if (/^\d+\.\s/.test(line))
                             return (
-                              <ul key={idx} className="list-disc pl-4 my-1">
-                                <li>{line.replace(/^[-*]\s+/, "")}</li>
+                              <ol key={idx} className="list-decimal pl-4 my-0.5">
+                                <li>{renderInline(line.replace(/^\d+\.\s+/, ""))}</li>
+                              </ol>
+                            );
+                          if (line.startsWith("- ") || line.startsWith("* "))
+                            return (
+                              <ul key={idx} className="list-disc pl-4 my-0.5">
+                                <li>{renderInline(line.replace(/^[-*]\s+/, ""))}</li>
                               </ul>
                             );
-                          }
                           if (line.startsWith("|")) {
-                            // Simple table row detector
                             const cells = line.split("|").map(c => c.trim()).filter(Boolean);
-                            if (cells[0].includes("---")) return null; // Separator row
+                            if (cells[0].includes("---")) return null;
                             return (
-                              <div key={idx} className="grid grid-cols-3 gap-2 py-1 border-b border-border/30 font-semibold text-[10px]">
+                              <div key={idx} className="grid grid-cols-3 gap-2 py-1 border-b border-border/30 text-[10px]">
                                 {cells.map((cell, cidx) => (
-                                  <span key={cidx} className={cn(cidx === 0 && "text-muted-foreground")}>{cell}</span>
+                                  <span key={cidx} className={cn(cidx === 0 && "text-muted-foreground font-semibold")}>
+                                    {renderInline(cell)}
+                                  </span>
                                 ))}
                               </div>
                             );
                           }
-                          return <p key={idx} className="my-1">{line}</p>;
+                          if (!line.trim()) return null;
+                          return <p key={idx} className="my-0.5">{renderInline(line)}</p>;
                         })}
                       </div>
                     ) : (
