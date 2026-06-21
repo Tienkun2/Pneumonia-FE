@@ -45,7 +45,7 @@ export function useResultTable({
   }, [patients]);
 
   const getRiskStatus = useCallback((visit: Visit) => {
-    return visit.diagnosisResult || "Thấp";
+    return visit.diagnosisResult || "CHƯA_CHẨN_ĐOÁN";
   }, []);
 
 
@@ -86,6 +86,13 @@ export function useResultTable({
       header: ({ column }) => <DataTableColumnHeader column={column} title="Mức độ nguy cơ" />,
       cell: ({ row }) => {
         const risk = (row.getValue("riskLevel") as string).toUpperCase();
+        if (risk === "CHƯA_CHẨN_ĐOÁN") {
+          return (
+            <span className={getBadgeClass("secondary")}>
+              Chưa thực hiện
+            </span>
+          );
+        }
         const variant = risk === "NORMAL" || risk === "THẤP" ? "success" : risk === "TRUNG BÌNH" ? "warning" : "destructive";
         return (
           <span className={getBadgeClass(variant)}>
@@ -101,11 +108,14 @@ export function useResultTable({
     {
       id: "status",
       header: ({ column }) => <DataTableColumnHeader column={column} title="Trạng thái" />,
-      cell: () => (
-        <span className={getBadgeClass("info")}>
-          Đã chẩn đoán
-        </span>
-      ),
+      cell: ({ row }) => {
+        const hasDiagnosed = (row.getValue("riskLevel") as string) !== "CHƯA_CHẨN_ĐOÁN";
+        return (
+          <span className={getBadgeClass(hasDiagnosed ? "info" : "secondary")}>
+            {hasDiagnosed ? "Đã chẩn đoán" : "Chưa chẩn đoán"}
+          </span>
+        );
+      },
     },
     {
       id: "actions",

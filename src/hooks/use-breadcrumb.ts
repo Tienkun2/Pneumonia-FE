@@ -31,6 +31,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "comparison": "So sánh chẩn đoán",
   knowledge: "Thư viện y khoa",
   "library": "Thư viện y khoa",
+  "view": "Xem",
   "clinical-data": "Dữ liệu lâm sàng",
   "notifications": "Thông báo",
 };
@@ -52,14 +53,14 @@ export function useBreadcrumb(): BreadcrumbItem[] {
     ];
 
     if (pathSegments.length === 0) {
-        return breadcrumbArray;
+      return breadcrumbArray;
     }
 
     // Build the path up for each segment
     let currentLink = "";
     pathSegments.forEach((segment) => {
       if (segment === "dashboard") return;
-      
+
       currentLink += `/${segment}`;
 
       let label = ROUTE_LABELS[segment] || segment;

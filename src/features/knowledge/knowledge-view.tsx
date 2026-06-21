@@ -22,7 +22,8 @@ import {
   Pencil,
   Trash2,
   AlertCircle,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
@@ -128,8 +129,14 @@ export function KnowledgeView() {
     return (
        <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300">
           <div className="flex items-center justify-between mb-4">
-             <Button variant="ghost" onClick={() => setSelectedArticle(null)}>
-                 Quay lại danh sách
+             <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedArticle(null)}
+                className="gap-2 text-xs font-bold h-9 px-4 rounded-xl border-border/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all flex items-center shadow-sm"
+             >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Quay lại danh sách
              </Button>
              {isAuthorized && (
                 <div className="flex items-center gap-2">

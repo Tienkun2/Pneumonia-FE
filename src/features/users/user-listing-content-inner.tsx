@@ -3,7 +3,7 @@
 import { useUserListing } from "@/hooks/use-user-listing";
 import { UserDialogs } from "./components/user-dialogs";
 import { UserTable } from "./user-table/user-table";
-import { Search, Upload, Download, X, Users } from "lucide-react";
+import { Search, X, Users } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { DataTableDateRangePicker } from "@/components/ui/data-table-date-range-picker";
@@ -53,20 +53,6 @@ export function UserListingContentInner() {
         title="Quản lý tài khoản"
         icon={Users}
       >
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 border-border/50 bg-card shadow-sm text-[13px] font-semibold"
-        >
-          <Upload className="h-3.5 w-3.5" /> Xuất
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 border-border/50 bg-card shadow-sm text-[13px] font-semibold"
-        >
-          <Download className="h-3.5 w-3.5" /> Nhập
-        </Button>
         <AddButton
           label="tài khoản"
           onClick={() => {

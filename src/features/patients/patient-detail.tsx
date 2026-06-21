@@ -241,11 +241,18 @@ export function PatientDetail({ patientId }: { patientId: string }) {
                               </div>
                               
                               <div className="flex gap-2 items-center">
-                                {visit.diagnoses && visit.diagnoses.length > 0 && (
+                                {visit.diagnoses && visit.diagnoses.length > 0 ? (
                                   <Link href={`/medical/ai-diagnosis/history/${visit.id}?patientId=${patientId}`}>
                                     <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 rounded-xl gap-2 font-black shadow-lg shadow-primary/20">
                                       <FileCheck className="h-4 w-4" />
                                       Kết quả AI
+                                    </Button>
+                                  </Link>
+                                ) : (
+                                  <Link href={`/medical/ai-diagnosis/analysis?patientId=${patientId}&visitId=${visit.id}`}>
+                                    <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white h-9 px-4 rounded-xl gap-2 font-black shadow-lg shadow-teal-600/10">
+                                      <Activity className="h-4 w-4" />
+                                      Chẩn đoán AI
                                     </Button>
                                   </Link>
                                 )}

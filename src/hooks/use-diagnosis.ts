@@ -31,7 +31,6 @@ export function useDiagnosis() {
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [isSymptomEditing, setIsSymptomEditing] = useState(false);
   const [curb65Score, setCurb65Score] = useState<number>(0);
   const [symptomWeights, setSymptomWeights] = useState<Record<string, number>>({});
 
@@ -255,7 +254,6 @@ export function useDiagnosis() {
       setSelectedSymptoms([]);
       setSelectedFile(null);
       setShowHistory(false);
-      setIsSymptomEditing(false);
       dispatch(setImagePreview(undefined));
       dispatch(setMultimodalResult(null));
       dispatch(setPredictionResult(null));
@@ -282,8 +280,6 @@ export function useDiagnosis() {
     setCurb65Score,
     showOverlay,
     setShowOverlay,
-    isSymptomEditing,
-    setIsSymptomEditing,
     searchQuery,
     setSearchQuery,
     patients,

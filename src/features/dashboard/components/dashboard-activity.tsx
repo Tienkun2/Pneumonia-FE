@@ -77,9 +77,15 @@ export function DashboardActivity({ isLoading, recentVisits }: DashboardActivity
                         {new Date(visit.visitDate).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <span className={getBadgeClass(visit.diagnosisResult === "NORMAL" ? "success" : "destructive")}>
-                          {getDiagnosisTranslation(visit.diagnosisResult ?? "")}
-                        </span>
+                        {visit.diagnosisResult ? (
+                          <span className={getBadgeClass(visit.diagnosisResult === "NORMAL" ? "success" : "destructive")}>
+                            {getDiagnosisTranslation(visit.diagnosisResult)}
+                          </span>
+                        ) : (
+                          <span className={getBadgeClass("secondary")}>
+                            Chưa chẩn đoán
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link href={`/medical/ai-diagnosis/history/${visit.id}?patientId=${visit.patientId}`} prefetch={false}>

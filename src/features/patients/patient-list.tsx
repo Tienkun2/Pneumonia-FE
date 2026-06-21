@@ -10,7 +10,7 @@ import { usePatientTable } from "@/hooks/use-patient-table";
 import { PatientTable } from "./patient-table/patient-table";
 import { Button } from "@/components/ui/button";
 import {
-  Upload, Download, Users, X, Search
+  Users, X, Search
 } from "lucide-react";
 
 const PatientDialogs = dynamic(() => import("./components/patient-dialogs").then(mod => mod.PatientDialogs), {
@@ -124,20 +124,6 @@ export function PatientList() {
         icon={Users}
 
       >
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 border-border/50 bg-card shadow-sm text-[13px] font-semibold"
-        >
-          <Upload className="h-3.5 w-3.5" /> Xuất
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-9 rounded-xl gap-1.5 border-border/50 bg-card shadow-sm text-[13px] font-semibold"
-        >
-          <Download className="h-3.5 w-3.5" /> Nhập
-        </Button>
         <AddButton
           label="bệnh nhân"
           onClick={() => {

@@ -16,6 +16,8 @@ export const PrintReport = forwardRef<HTMLDivElement, PrintReportProps>(
   ({ visit, patient, totalWeightedScore, hospitalName }, ref) => {
     const imageUrl = visit.medicalImages?.[0]?.imageUrl || "";
     const symptoms = visit.symptoms?.split(",").map(s => s.trim()).filter(Boolean) || [];
+    const rawResult = visit.diagnosisResult || visit.diagnoses?.[0]?.result;
+    const translatedResult = rawResult === "PNEUMONIA" ? "Viêm phổi" : rawResult === "NORMAL" ? "Bình thường" : rawResult || "—";
 
     return (
       <div ref={ref} className="bg-white text-black p-6 w-[210mm] min-h-[297mm] mx-auto text-sm print-container">
@@ -87,7 +89,7 @@ export const PrintReport = forwardRef<HTMLDivElement, PrintReportProps>(
               <div className="space-y-3">
                  <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Kết quả phân tích AI:</p>
-                    <p className="text-xl font-black uppercase text-slate-900">{visit.diagnosisResult || visit.diagnoses?.[0]?.result || "—"}</p>
+                    <p className="text-xl font-black uppercase text-slate-900">{translatedResult}</p>
                  </div>
                  <div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Chỉ số tin cậy (Confidence Score):</p>

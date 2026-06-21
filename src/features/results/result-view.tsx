@@ -232,6 +232,8 @@ export function ResultView({ resultId }: { resultId: string }) {
   const symptoms = visit.symptoms?.split(",").map((s) => s.trim()).filter(Boolean) || [];
   const imageUrl = visit.medicalImages?.[0]?.imageUrl || "";
   const visitDate = new Date(visit.visitDate);
+  const rawResult = visit.diagnosisResult || visit.diagnoses?.[0]?.result;
+  const translatedResult = rawResult === "PNEUMONIA" ? "Viêm phổi" : rawResult === "NORMAL" ? "Bình thường" : rawResult || "—";
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 pb-20 animate-in fade-in duration-500">
@@ -257,7 +259,7 @@ export function ResultView({ resultId }: { resultId: string }) {
           <StatPill icon={User} label="Bệnh nhân" value={patient?.fullName || "—"} className="col-span-2 sm:col-span-1" />
           <StatPill icon={FileText} label="Mã BN" value={patient?.code || "—"} />
           <StatPill icon={Calendar} label="Ngày khám" value={visitDate.toLocaleDateString("vi-VN")} />
-          <StatPill icon={ShieldAlert} label="Kết quả AI" value={visit.diagnosisResult || visit.diagnoses?.[0]?.result || "—"} />
+          <StatPill icon={ShieldAlert} label="Kết quả AI" value={translatedResult} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -283,7 +285,7 @@ export function ResultView({ resultId }: { resultId: string }) {
                     <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-white text-xs font-bold">Nhấn để phóng to</div>
                   </div>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <p className="text-xs text-white/80 font-bold italic text-center">&quot;{visit.diagnosisResult || visit.diagnoses?.[0]?.result || "—"}&quot;</p>
+                    <p className="text-xs text-white/80 font-bold italic text-center">&quot;{translatedResult}&quot;</p>
                   </div>
                 </div>
 

@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Stethoscope, Check, AlertTriangle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Curb65CalculatorProps {
-  readonly onApply: (noteSummary: string) => void;
   readonly onScoreChange?: (score: number) => void;
+  readonly patientBirthDate?: string;
 }
 
 interface Criterion {
@@ -47,7 +46,7 @@ const CRITERIA: Criterion[] = [
   },
 ];
 
-export function Curb65Calculator({ onApply, onScoreChange }: Curb65CalculatorProps) {
+export function Curb65Calculator({ onScoreChange, patientBirthDate }: Curb65CalculatorProps) {
   const [selected, setSelected] = useState<Record<string, boolean>>({
     C: false,
     U: false,
@@ -55,6 +54,26 @@ export function Curb65Calculator({ onApply, onScoreChange }: Curb65CalculatorPro
     B: false,
     65: false,
   });
+
+  useEffect(() => {
+    if (!patientBirthDate) {
+      setSelected((prev) => (prev["65"] ? { ...prev, 65: false } : prev));
+      return;
+    }
+    try {
+      const birthDate = new Date(patientBirthDate);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      const isOver65 = age >= 65;
+      setSelected((prev) => (prev["65"] !== isOver65 ? { ...prev, 65: isOver65 } : prev));
+    } catch (e) {
+      console.error("Failed to parse patient birth date for CURB-65:", e);
+    }
+  }, [patientBirthDate]);
 
   const toggleCriterion = (id: string) => {
     setSelected((prev) => ({
@@ -98,16 +117,6 @@ export function Curb65Calculator({ onApply, onScoreChange }: Curb65CalculatorPro
   };
 
   const risk = getRiskDetails(score);
-
-  const handleApply = () => {
-    const activeCriteria = Object.keys(selected)
-      .filter((k) => selected[k])
-      .join(", ");
-    const summary = `\n[Đánh giá lâm sàng CURB-65]: ${score}/5 điểm (${risk.group} - Đề xuất: ${risk.recommendation}). ${
-      activeCriteria ? `Tiêu chí ghi nhận: ${activeCriteria}.` : "Không ghi nhận tiêu chí nào."
-    }`;
-    onApply(summary);
-  };
 
   return (
     <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60 backdrop-blur-sm">
@@ -176,15 +185,6 @@ export function Curb65Calculator({ onApply, onScoreChange }: Curb65CalculatorPro
             </p>
           </div>
         </div>
-
-        {/* Action Button */}
-        <Button
-          onClick={handleApply}
-          size="sm"
-          className="w-full rounded-xl text-xs font-bold gap-2 bg-muted/80 text-foreground hover:bg-muted border border-border/50"
-        >
-          <Check className="h-3.5 w-3.5 text-primary" /> Áp dụng vào ghi chú bác sĩ
-        </Button>
       </CardContent>
     </Card>
   );

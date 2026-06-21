@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import {
   MessageSquare,
   X,
@@ -13,7 +14,6 @@ import {
   User,
   ShieldCheck,
   PlusCircle,
-  Stethoscope,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -137,7 +137,7 @@ export function AiChatbot() {
       }
 
       const data = await response.json();
-      
+
       setMessages((prev) => [
         ...prev,
         {
@@ -149,7 +149,7 @@ export function AiChatbot() {
       ]);
     } catch (error) {
       console.error("AI Chatbot error:", error);
-      
+
       // Smart client-side fallback if the API fails entirely
       let responseText = "Xin lỗi bác sĩ, tôi gặp sự cố kết nối mạng. Hãy thử tra cứu thông tin y học thông qua các nút gợi ý câu hỏi nhanh bên dưới.";
       const lowerText = text.toLowerCase();
@@ -181,13 +181,19 @@ export function AiChatbot() {
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border border-indigo-500/20",
+          "fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 border",
           isOpen
-            ? "bg-rose-500 hover:bg-rose-600 text-white rotate-90"
-            : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30 shadow-lg"
+            ? "bg-rose-500 hover:bg-rose-600 text-white rotate-90 border-rose-500"
+            : "bg-white dark:bg-slate-900 border-indigo-500/20 text-indigo-600 shadow-indigo-600/10 shadow-lg p-3"
         )}
       >
-        {isOpen ? <X className="h-6 w-6" /> : <Stethoscope className="h-6 w-6" />}
+        {isOpen ? (
+          <X className="h-6 w-6" />
+        ) : (
+          <div className="relative w-full h-full">
+            <Image src="/images/PlumoX_Logo.png" alt="PlumoX" fill className="object-contain" unoptimized />
+          </div>
+        )}
       </button>
 
       {/* Chat Window Panel */}
@@ -196,15 +202,17 @@ export function AiChatbot() {
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 border-b border-border/50 px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600">
-                <Stethoscope className="h-4.5 w-4.5" />
+              <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 border border-indigo-500/10 flex items-center justify-center p-1.5 shadow-sm">
+                <div className="relative w-full h-full">
+                  <Image src="/images/PlumoX_Logo.png" alt="PlumoX" fill className="object-contain" unoptimized />
+                </div>
               </div>
               <div>
                 <h3 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5 leading-none">
                   Trợ lý Lâm sàng PlumoX
                 </h3>
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   <span className="text-[9px] font-bold text-muted-foreground uppercase">Trực tuyến • Hỗ trợ lâm sàng</span>
                 </div>
               </div>
@@ -230,10 +238,16 @@ export function AiChatbot() {
                       "w-7 h-7 rounded-full flex items-center justify-center shrink-0 border text-[10px] font-bold shadow-sm",
                       msg.sender === "user"
                         ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-600"
-                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-600"
+                        : "bg-white dark:bg-slate-900 border-emerald-500/20 p-1"
                     )}
                   >
-                    {msg.sender === "user" ? <User className="h-3.5 w-3.5" /> : <Stethoscope className="h-3.5 w-3.5" />}
+                    {msg.sender === "user" ? (
+                      <User className="h-3.5 w-3.5" />
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <Image src="/images/PlumoX_Logo.png" alt="PlumoX" fill className="object-contain" unoptimized />
+                      </div>
+                    )}
                   </div>
 
                   <div
@@ -248,22 +262,23 @@ export function AiChatbot() {
                       <div className="prose prose-slate dark:prose-invert max-w-none text-xs space-y-2 text-inherit [&>h3]:font-bold [&>h3]:text-sm [&>h3]:mt-1 [&>h3]:mb-2 [&>ul]:list-disc [&>ul]:pl-4 [&>ul]:space-y-1 [&>table]:w-full [&>table]:border-collapse [&>table]:my-2 [&>table_th]:border [&>table_th]:border-border [&>table_th]:p-1 [&>table_th]:bg-muted/50 [&>table_td]:border [&>table_td]:border-border [&>table_td]:p-1">
                         {/* Custom markdown parsing for structured text */}
                         {msg.text.split("\n").map((line, idx) => {
-                          if (line.startsWith("### "))
-                            return <h3 key={idx} className="font-bold text-sm mt-2 mb-1">{renderInline(line.slice(4))}</h3>;
-                          if (/^\d+\.\s/.test(line))
+                          const trimmedLine = line.trim();
+                          if (trimmedLine.startsWith("### "))
+                            return <h3 key={idx} className="font-bold text-sm mt-2 mb-1">{renderInline(trimmedLine.slice(4))}</h3>;
+                          if (/^\d+\.\s/.test(trimmedLine))
                             return (
                               <ol key={idx} className="list-decimal pl-4 my-0.5">
-                                <li>{renderInline(line.replace(/^\d+\.\s+/, ""))}</li>
+                                <li>{renderInline(trimmedLine.replace(/^\d+\.\s+/, ""))}</li>
                               </ol>
                             );
-                          if (line.startsWith("- ") || line.startsWith("* "))
+                          if (trimmedLine.startsWith("- ") || trimmedLine.startsWith("* "))
                             return (
                               <ul key={idx} className="list-disc pl-4 my-0.5">
-                                <li>{renderInline(line.replace(/^[-*]\s+/, ""))}</li>
+                                <li>{renderInline(trimmedLine.replace(/^[-*]\s+/, ""))}</li>
                               </ul>
                             );
-                          if (line.startsWith("|")) {
-                            const cells = line.split("|").map(c => c.trim()).filter(Boolean);
+                          if (trimmedLine.startsWith("|")) {
+                            const cells = trimmedLine.split("|").map(c => c.trim()).filter(Boolean);
                             if (cells[0].includes("---")) return null;
                             return (
                               <div key={idx} className="grid grid-cols-3 gap-2 py-1 border-b border-border/30 text-[10px]">
@@ -275,8 +290,8 @@ export function AiChatbot() {
                               </div>
                             );
                           }
-                          if (!line.trim()) return null;
-                          return <p key={idx} className="my-0.5">{renderInline(line)}</p>;
+                          if (!trimmedLine) return null;
+                          return <p key={idx} className="my-0.5">{renderInline(trimmedLine)}</p>;
                         })}
                       </div>
                     ) : (
@@ -288,8 +303,10 @@ export function AiChatbot() {
 
               {isTyping && (
                 <div className="flex gap-2.5 items-center max-w-[85%] self-start">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0">
-                    <Stethoscope className="h-3.5 w-3.5" />
+                  <div className="w-7 h-7 rounded-full bg-white dark:bg-slate-900 border border-emerald-500/20 flex items-center justify-center shrink-0 p-1">
+                    <div className="relative w-full h-full">
+                      <Image src="/images/PlumoX_Logo.png" alt="PlumoX" fill className="object-contain" unoptimized />
+                    </div>
                   </div>
                   <div className="bg-muted/40 border border-border/40 rounded-2xl rounded-tl-none px-4 py-2.5 flex gap-1 items-center">
                     <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />

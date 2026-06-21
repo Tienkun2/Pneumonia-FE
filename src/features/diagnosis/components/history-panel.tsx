@@ -61,7 +61,7 @@ export function HistoryPanel({
                     "text-[9px] font-black uppercase px-2 shadow-none border-none", 
                     visit.diagnoses[0].result === "PNEUMONIA" ? "bg-red-500/10 text-red-500" : "bg-emerald-500/10 text-emerald-500"
                   )}>
-                    {visit.diagnoses[0].result}
+                    {visit.diagnoses[0].result === "PNEUMONIA" ? "Viêm phổi" : "Bình thường"}
                   </Badge>
                 )}
               </div>
