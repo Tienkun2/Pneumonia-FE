@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Stethoscope, Check, AlertTriangle, ArrowRight } from "lucide-react";
+import { Stethoscope, AlertTriangle, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Curb65CalculatorProps {
