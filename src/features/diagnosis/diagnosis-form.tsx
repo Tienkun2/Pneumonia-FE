@@ -364,7 +364,7 @@ export function DiagnosisForm() {
 
       {/* ── Results Section (Bottom) ─────────────────────────────────────── */}
       {hasResult && diagnosisData.multimodalResult ? (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 border-t border-border/20 pt-5 mt-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 border-t border-border/20 pt-5 mt-5 animate-in fade-in slide-in-from-bottom-4 duration-500 items-start">
           
           {/* Left Column: PACS Viewer (7/12) */}
           <div className="xl:col-span-7">
@@ -576,17 +576,30 @@ export function DiagnosisForm() {
             </Card>
           </div>
 
-          {/* Right Column: Score, LLM, Notes (5/12) */}
+          {/* Right Column: Score, Indicators (5/12) */}
           <div className="xl:col-span-5 flex flex-col gap-4">
             
             {/* Score + Probability Card */}
-            <Card className={cn("border overflow-hidden shadow-none", RISKS_MAP[diagnosisData.multimodalResult!.risk_level]?.border ?? "border-border/40")}>
+            <Card className={cn(
+              "border overflow-hidden shadow-none",
+              (() => {
+                const res = diagnosisData.multimodalResult!;
+                const scoreVal = res.final_score;
+                const thr = res.threshold ?? 0.665;
+                const p = Math.round(scoreVal * 100);
+                const isPos = scoreVal >= thr;
+                const isNear = p >= 60 && p <= 66;
+                const key = isPos ? "HIGH" : (isNear ? "MEDIUM" : "LOW");
+                return RISKS_MAP[key]?.border ?? "border-border/40";
+              })()
+            )}>
               <CardContent className="p-5">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                   {/* Ring */}
                   <ScoreRing
                     value={diagnosisData.multimodalResult.final_score}
                     riskLevel={diagnosisData.multimodalResult.risk_level}
+                    threshold={diagnosisData.multimodalResult.threshold}
                   />
 
                   {/* Probability Bars */}
@@ -596,13 +609,13 @@ export function DiagnosisForm() {
                       <span className="text-xs font-black uppercase tracking-widest text-foreground">Xác suất chi tiết</span>
                     </div>
                     {[
-                      { label: "Hình ảnh X-quang", value: diagnosisData.multimodalResult.vision_probability, icon: "🫁" },
-                      { label: "Lâm sàng", value: diagnosisData.multimodalResult.clinical_probability, icon: "💉" },
+                      { label: "Hình ảnh X-quang", value: diagnosisData.multimodalResult.vision_probability },
+                      { label: "Lâm sàng", value: diagnosisData.multimodalResult.clinical_probability },
                     ].map((item) => (
                       <div key={item.label} className="space-y-1.5">
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                            <span>{item.icon}</span> {item.label}
+                            {item.label}
                           </span>
                           <span className={cn("text-sm font-black tabular-nums", getBarColor(item.value).replace("bg-", "text-"))}>
                             {(item.value * 100).toFixed(0)}%
@@ -621,9 +634,116 @@ export function DiagnosisForm() {
               </CardContent>
             </Card>
 
-            {/* AI Medical Board Report */}
-            {diagnosisData.multimodalResult?.llm_report && (
-              <Card className="border-border/60 overflow-hidden bg-card/60 backdrop-blur-sm animate-in fade-in duration-300">
+            {/* Grad-CAM Clinical Indicators Card */}
+            {diagnosisData.multimodalResult && (() => {
+              const res = diagnosisData.multimodalResult;
+              const thresholdVal = res.threshold ?? 0.665;
+              const finalScore = res.final_score;
+              const isPositive = finalScore >= thresholdVal;
+              const pImg = res.vision_probability;
+              const pImgLabel = pImg >= 0.665 ? "Cao" : pImg >= 0.4 ? "Trung bình" : "Thấp";
+              const pImgColor = pImg >= 0.665 ? "text-red-500" : pImg >= 0.4 ? "text-amber-500" : "text-emerald-500";
+              const hotAreaPct = res.hot_area_pct || 0;
+
+              const isNearThreshold = finalScore * 100 >= 60 && finalScore * 100 <= 66;
+
+              const cleanLocation = (() => {
+                const loc = res.location_label;
+                if (!loc || loc === "Không khu trú rõ" || loc === "Không xác định") return "—";
+                return loc
+                  .replace(/đỉnh\/trên/gi, "Thùy trên")
+                  .replace(/giữa/gi, "Thùy giữa")
+                  .replace(/đáy\/dưới/gi, "Thùy dưới");
+              })();
+
+              const cleanPattern = (() => {
+                const char = res.characteristic_label;
+                if (!char || char === "Không khu trú rõ" || char === "Không xác định") return "—";
+                if (char.includes("Đa ổ")) return "Nhiều vùng rải rác";
+                return char;
+              })();
+
+
+
+              return (
+                <Card className="border-border/60 overflow-hidden bg-card/60 backdrop-blur-sm shadow-none animate-in fade-in duration-300">
+                  <CardHeader className="py-3 px-5 border-b border-border/40 bg-muted/30">
+                    <CardTitle className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-tight">
+                      <Activity className="h-3.5 w-3.5 text-primary" /> Kết quả phân tích X-quang
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-5 space-y-4">
+                    <div className="space-y-1">
+                      {/* Kết luận */}
+                      <div className="flex items-start justify-between gap-4 py-2 border-b border-border/30">
+                        <span className="text-xs font-semibold text-muted-foreground shrink-0">Kết luận</span>
+                        <span className={cn("text-xs font-bold text-right", isPositive ? "text-red-500" : "text-emerald-500")}>
+                          {isPositive ? "⚠️ Nghi ngờ viêm phổi — Cần đánh giá thêm" : "Không phát hiện bất thường"}
+                        </span>
+                      </div>
+
+                      {/* Mức độ nghi ngờ */}
+                      <div className="flex items-start justify-between gap-4 py-2 border-b border-border/30">
+                        <span className="text-xs font-semibold text-muted-foreground shrink-0">Mức độ nghi ngờ viêm phổi</span>
+                        <span className={cn("text-xs font-bold text-right", pImgColor)}>
+                          {pImgLabel} ({(pImg * 100).toFixed(0)}%)
+                        </span>
+                      </div>
+
+                      {/* Vùng bất thường */}
+                      <div className="flex items-start justify-between gap-4 py-2 border-b border-border/30">
+                        <span className="text-xs font-semibold text-muted-foreground shrink-0">Vùng phổi bất thường</span>
+                        <span className="text-xs font-bold text-foreground text-right">
+                          {hotAreaPct > 0 ? `${hotAreaPct.toFixed(1)}% diện tích` : "Không phát hiện"}
+                        </span>
+                      </div>
+
+                      {/* Vị trí nghi ngờ */}
+                      <div className="flex items-start justify-between gap-4 py-2 border-b border-border/30">
+                        <span className="text-xs font-semibold text-muted-foreground shrink-0">Vị trí nghi ngờ</span>
+                        <span className="text-xs font-bold text-foreground text-right">
+                          {cleanLocation}
+                        </span>
+                      </div>
+
+                      {/* Dạng tổn thương */}
+                      <div className="flex items-start justify-between gap-4 py-2 border-b border-border/30">
+                        <span className="text-xs font-semibold text-muted-foreground shrink-0">Dạng tổn thương</span>
+                        <span className="text-xs font-bold text-foreground text-right">
+                          {cleanPattern}
+                        </span>
+                      </div>
+
+
+
+                      {/* Lưu ý */}
+                      {isNearThreshold && (
+                        <div className="flex items-start justify-between gap-4 py-2 border-b border-border/30">
+                          <span className="text-xs font-semibold text-muted-foreground shrink-0">Lưu ý</span>
+                          <span className="text-xs font-bold text-amber-600 dark:text-amber-500 text-right">
+                            Kết quả sát ngưỡng, nên kết hợp triệu chứng lâm sàng
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Detailed Description */}
+                    {res.description && (
+                      <div className="pt-3 border-t border-border/40 mt-1">
+                        <p className="text-[10px] text-muted-foreground leading-relaxed italic">
+                          {res.description}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
+          </div>
+
+          {/* AI Medical Board Report */}
+          {diagnosisData.multimodalResult?.llm_report && (
+            <Card className="xl:col-span-7 border-border/60 overflow-hidden bg-card/60 backdrop-blur-sm animate-in fade-in duration-300">
                 <CardHeader className="py-3 px-5 border-b border-border/40 bg-muted/30">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-tight">
@@ -649,7 +769,7 @@ export function DiagnosisForm() {
                       </div>
                     </div>
 
-                    <div className="prose prose-slate dark:prose-invert max-w-none text-xs space-y-2 text-foreground leading-relaxed max-h-[160px] overflow-y-auto">
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-xs space-y-2 text-foreground leading-relaxed max-h-[650px] overflow-y-auto">
                       {diagnosisData.multimodalResult!.llm_report.split("\n").map((line, idx) => {
                         const trimmedLine = line.trim();
                         if (trimmedLine.startsWith("## ") || trimmedLine.startsWith("### ")) {
@@ -709,8 +829,8 @@ export function DiagnosisForm() {
               </Card>
             )}
 
-            {/* Doctor Notes + Save */}
-            <Card className="border-border/60 overflow-hidden bg-card/60">
+          {/* Doctor Notes + Save */}
+          <Card className="xl:col-span-5 border-border/60 overflow-hidden bg-card/60">
               <CardHeader className="py-3 px-5 border-b border-border/40 bg-muted/30">
                 <CardTitle className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-tight">
                   <FileText className="h-3.5 w-3.5 text-primary" /> Kết luận bác sĩ
@@ -741,8 +861,7 @@ export function DiagnosisForm() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
-          </div>
+          </Card>
         </div>
       ) : (
         /* Empty State */

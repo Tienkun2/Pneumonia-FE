@@ -7,11 +7,11 @@ import { RISKS_MAP } from "@/constants/diagnosis";
 interface ScoreRingProps {
   value: number;
   riskLevel: string;
+  threshold?: number;
 }
 
-export function ScoreRing({ value, riskLevel }: ScoreRingProps) {
+export function ScoreRing({ value, riskLevel, threshold }: ScoreRingProps) {
   const [displayed, setDisplayed] = useState(0);
-  const risk = RISKS_MAP[riskLevel] ?? RISKS_MAP["Unknown"];
   const pct = Math.round(value * 100);
 
   useEffect(() => {
@@ -29,12 +29,26 @@ export function ScoreRing({ value, riskLevel }: ScoreRingProps) {
   const circ = 2 * Math.PI * radius;
   const dash = (displayed / 100) * circ;
 
+  const thresholdVal = threshold ?? 0.665;
+  const isPositive = value >= thresholdVal;
+  const isNearThreshold = pct >= 60 && pct <= 66;
+
+  const colorKey = isPositive ? "HIGH" : (isNearThreshold ? "MEDIUM" : "LOW");
+  const risk = RISKS_MAP[colorKey] ?? RISKS_MAP["Unknown"];
+
   const strokeColor =
-    riskLevel === "HIGH"
+    colorKey === "HIGH"
       ? "#ef4444"
-      : riskLevel === "MEDIUM"
+      : colorKey === "MEDIUM"
       ? "#f59e0b"
       : "#10b981";
+
+  const displayedColor =
+    colorKey === "HIGH"
+      ? "text-red-500"
+      : colorKey === "MEDIUM"
+      ? "text-amber-500"
+      : "text-emerald-500";
 
   return (
     <div className="flex flex-col items-center justify-center gap-3">
@@ -62,20 +76,29 @@ export function ScoreRing({ value, riskLevel }: ScoreRingProps) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={cn("text-3xl font-black tabular-nums leading-none", risk.color)}>
+          <span className={cn("text-3xl font-black tabular-nums leading-none tracking-tight", displayedColor)}>
             {displayed}%
           </span>
-          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-            Nguy cơ
+          <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mt-1.5">
+            tin cậy AI
+          </span>
+          <span className="text-[9px] font-extrabold text-slate-400 dark:text-slate-500 mt-0.5">
+            (Ngưỡng: {(thresholdVal * 100).toFixed(1)}%)
           </span>
         </div>
       </div>
-      <div className={cn("flex items-center gap-2 px-4 py-1.5 rounded-full border", risk.border, risk.bg)}>
+      <div className={cn("flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm", risk.border, risk.bg)}>
         <div className={cn("w-2 h-2 rounded-full animate-pulse", risk.dot)} />
         <span className={cn("text-xs font-black uppercase tracking-wider", risk.color)}>
-          {risk.label}
+          {isPositive ? "Nghi ngờ viêm phổi" : "Chưa phát hiện"}
         </span>
       </div>
+      {isNearThreshold && (
+        <div className="flex items-center justify-center gap-1 text-[11px] font-black text-amber-600 dark:text-amber-500 mt-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span>Sát ngưỡng → Cân nhắc lâm sàng</span>
+        </div>
+      )}
     </div>
   );
 }

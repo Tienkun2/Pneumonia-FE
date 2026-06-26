@@ -106,6 +106,15 @@ export interface MultimodalPredictionResponse {
   master_prompt?: string;
   llm_report?: string;
   llm_fallback?: boolean;
+  location_label?: string;
+  distribution_label?: string;
+  characteristic_label?: string;
+  attention_in_lung_pct?: number;
+  hot_area_pct?: number;
+  description?: string;
+  decision?: "positive" | "negative";
+  decision_label?: string;
+  threshold?: number;
 }
 
 export interface DiagnoseResponse {
@@ -114,6 +123,12 @@ export interface DiagnoseResponse {
     p_img: number;
     gradcam_overlay?: string;
     lung_focus_ratio?: number;
+    location_label?: string;
+    distribution_label?: string;
+    characteristic_label?: string;
+    attention_in_lung_pct?: number;
+    hot_area_pct?: number;
+    description?: string;
   };
   symptom: {
     p_sym: number;

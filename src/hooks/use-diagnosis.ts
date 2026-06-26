@@ -3,10 +3,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { 
-  setImagePreview, 
-  setMultimodalResult, 
-  setPredictionResult 
+import {
+  setImagePreview,
+  setMultimodalResult,
+  setPredictionResult
 } from "@/store/slices/diagnosis-slice";
 import { AiService } from "@/services/ai-service";
 import { PatientService } from "@/services/patient-service";
@@ -41,7 +41,7 @@ export function useDiagnosis() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patientVisits, setPatientVisits] = useState<Visit[]>([]);
   const [isLoadingVisits, setIsLoadingVisits] = useState(false);
-  const [showHistory, setShowHistory] = useState(false); 
+  const [showHistory, setShowHistory] = useState(false);
 
   // Infinite Scroll & Dropdown State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -293,11 +293,11 @@ export function useDiagnosis() {
     isDropdownOpen,
     setIsDropdownOpen,
     hasMore,
-    
+
     // Refs
     dropdownRef,
     lastPatientElementRef,
-    
+
     // Actions
     handleDrop,
     handleSubmit,
