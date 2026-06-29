@@ -278,6 +278,7 @@ export function DiagnosisForm() {
         <Curb65Calculator
           onScoreChange={setCurb65Score}
           patientBirthDate={selectedPatient?.dateOfBirth}
+          patientId={selectedPatient?.id}
         />
 
         {/* Bản phim X-quang */}

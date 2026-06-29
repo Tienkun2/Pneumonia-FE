@@ -144,11 +144,13 @@ export function ResultView({ resultId }: { resultId: string }) {
   });
 
   const { totalWeightedScore } = useMemo(() => {
-    const backendScore = visit?.confidenceScore ? visit.confidenceScore * 100 : null;
-    const vision = visit?.diagnoses?.[0]?.confidenceScore ? visit.diagnoses[0].confidenceScore * 100 : 0;
+    const savedScore = visit?.confidenceScore ?? visit?.diagnoses?.[0]?.confidenceScore;
+    if (savedScore !== undefined && savedScore !== null) {
+      return { totalWeightedScore: savedScore * 100 };
+    }
     const symptomsList = visit?.symptoms?.split(",").filter(Boolean) || [];
     const clinicalBase = symptomsList.length > 3 ? 85 : symptomsList.length > 0 ? 60 : 30;
-    return { totalWeightedScore: backendScore ?? vision * 0.7 + clinicalBase * 0.3 };
+    return { totalWeightedScore: clinicalBase };
   }, [visit]);
 
   const riskStatus = useMemo(() => {
@@ -368,16 +370,6 @@ export function ResultView({ resultId }: { resultId: string }) {
               </CardContent>
             </Card>
 
-            {visit.note && (
-              <Card className="border-border/60 shadow-sm bg-card/60">
-                <CardContent className="p-4">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5" /> Ghi chú bác sĩ / Báo cáo AI
-                  </p>
-                  {renderDoctorNote(visit.note)}
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           <div className="lg:col-span-7 flex flex-col gap-4">
@@ -407,14 +399,14 @@ export function ResultView({ resultId }: { resultId: string }) {
               </CardContent>
             </Card>
 
-            <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60">
+            <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60 flex-1 flex flex-col">
               <CardHeader className="px-4 py-3 border-b border-border/40 bg-muted/30">
                 <CardTitle className="text-xs font-black uppercase tracking-tight flex items-center gap-2 text-foreground">
                   <Stethoscope className="h-3.5 w-3.5 text-teal-500" /> Triệu chứng lâm sàng
                   {symptoms.length > 0 && <Badge className="ml-auto bg-teal-500/10 text-teal-600 dark:text-teal-400 border-none text-[10px] font-bold">{symptoms.length} dấu hiệu</Badge>}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
+              <CardContent className="p-4 flex-1">
                 {symptoms.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {symptoms.map((s, idx) => (
@@ -427,19 +419,21 @@ export function ResultView({ resultId }: { resultId: string }) {
               </CardContent>
             </Card>
 
-            <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60">
-              <CardHeader className="px-4 py-3 border-b border-border/40 bg-muted/30">
-                <CardTitle className="text-xs font-black uppercase tracking-tight flex items-center gap-2 text-foreground">
-                  <Activity className="h-3.5 w-3.5 text-primary" /> Khuyến nghị y tế
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 space-y-2">
-                {dynamicRecommendations.map((item, idx) => (
-                  <RecommendItem key={idx} icon={item.icon} text={item.text} color={item.color} bg={item.bg} />
-                ))}
-              </CardContent>
-            </Card>
           </div>
+
+          {/* Full Width Bottom: Doctor Notes & AI Report (12/12) */}
+          {visit.note && (
+            <div className="lg:col-span-12">
+              <Card className="border-border/60 shadow-sm bg-card/60">
+                <CardContent className="p-5">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3 flex items-center gap-1.5 border-b border-border/40 pb-2">
+                    <FileText className="h-3.5 w-3.5 text-primary" /> Ghi chú bác sĩ / Báo cáo AI chuyên gia
+                  </p>
+                  {renderDoctorNote(visit.note)}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
 

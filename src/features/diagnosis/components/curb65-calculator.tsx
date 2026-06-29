@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 interface Curb65CalculatorProps {
   readonly onScoreChange?: (score: number) => void;
   readonly patientBirthDate?: string;
+  readonly patientId?: string;
 }
 
 interface Criterion {
@@ -46,7 +47,7 @@ const CRITERIA: Criterion[] = [
   },
 ];
 
-export function Curb65Calculator({ onScoreChange, patientBirthDate }: Curb65CalculatorProps) {
+export function Curb65Calculator({ onScoreChange, patientBirthDate, patientId }: Curb65CalculatorProps) {
   const [selected, setSelected] = useState<Record<string, boolean>>({
     C: false,
     U: false,
@@ -56,24 +57,31 @@ export function Curb65Calculator({ onScoreChange, patientBirthDate }: Curb65Calc
   });
 
   useEffect(() => {
-    if (!patientBirthDate) {
-      setSelected((prev) => (prev["65"] ? { ...prev, 65: false } : prev));
-      return;
-    }
-    try {
-      const birthDate = new Date(patientBirthDate);
-      const today = new Date();
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const m = today.getMonth() - birthDate.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
+    const isOver65 = (() => {
+      if (!patientBirthDate) return false;
+      try {
+        const birthDate = new Date(patientBirthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        return age >= 65;
+      } catch (e) {
+        console.error("Failed to parse patient birth date for CURB-65:", e);
+        return false;
       }
-      const isOver65 = age >= 65;
-      setSelected((prev) => (prev["65"] !== isOver65 ? { ...prev, 65: isOver65 } : prev));
-    } catch (e) {
-      console.error("Failed to parse patient birth date for CURB-65:", e);
-    }
-  }, [patientBirthDate]);
+    })();
+
+    setSelected({
+      C: false,
+      U: false,
+      R: false,
+      B: false,
+      65: isOver65,
+    });
+  }, [patientId, patientBirthDate]);
 
   const toggleCriterion = (id: string) => {
     setSelected((prev) => ({
