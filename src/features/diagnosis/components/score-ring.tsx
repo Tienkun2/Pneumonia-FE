@@ -33,22 +33,22 @@ export function ScoreRing({ value, riskLevel, threshold }: ScoreRingProps) {
   const isPositive = value >= thresholdVal;
   const isNearThreshold = pct >= 60 && pct <= 66;
 
-  const colorKey = isPositive ? "HIGH" : (isNearThreshold ? "MEDIUM" : "LOW");
+  const colorKey = riskLevel || (isPositive ? "HIGH" : (isNearThreshold ? "MEDIUM" : "LOW"));
   const risk = RISKS_MAP[colorKey] ?? RISKS_MAP["Unknown"];
 
   const strokeColor =
     colorKey === "HIGH"
       ? "#ef4444"
       : colorKey === "MEDIUM"
-      ? "#f59e0b"
-      : "#10b981";
+        ? "#f59e0b"
+        : "#10b981";
 
   const displayedColor =
     colorKey === "HIGH"
       ? "text-red-500"
       : colorKey === "MEDIUM"
-      ? "text-amber-500"
-      : "text-emerald-500";
+        ? "text-amber-500"
+        : "text-emerald-500";
 
   return (
     <div className="flex flex-col items-center justify-center gap-3">
@@ -87,14 +87,14 @@ export function ScoreRing({ value, riskLevel, threshold }: ScoreRingProps) {
           </span>
         </div>
       </div>
-      <div className={cn("flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm", risk.border, risk.bg)}>
+      <div className={cn("flex items-center gap-2 px-4 py-1.5 rounded-full border shadow-sm shrink-0 whitespace-nowrap", risk.border, risk.bg)}>
         <div className={cn("w-2 h-2 rounded-full animate-pulse", risk.dot)} />
-        <span className={cn("text-xs font-black uppercase tracking-wider", risk.color)}>
-          {isPositive ? "Nghi ngờ viêm phổi" : "Chưa phát hiện"}
+        <span className={cn("text-xs font-black uppercase tracking-wider whitespace-nowrap", risk.color)}>
+          {isPositive ? "Nghi ngờ viêm phổi" : "Chưa phát hiện"} • {risk.label}
         </span>
       </div>
       {isNearThreshold && (
-        <div className="flex items-center justify-center gap-1 text-[11px] font-black text-amber-600 dark:text-amber-500 mt-0.5">
+        <div className="flex items-center justify-center gap-1 text-[11px] font-black text-amber-600 dark:text-amber-500 mt-0.5 whitespace-nowrap">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
           <span>Sát ngưỡng → Cân nhắc lâm sàng</span>
         </div>

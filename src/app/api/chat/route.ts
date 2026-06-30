@@ -14,22 +14,27 @@ Quy tắc trả lời:
 1. Sử dụng ngôn ngữ tiếng Việt y khoa chuẩn xác, lịch sự và chuyên nghiệp.
 2. Trình bày bằng định dạng Markdown rõ ràng, sử dụng bảng, danh sách gạch đầu dòng để thông tin dễ đọc.
 3. Khi trả lời về chẩn đoán hoặc điều trị, luôn đưa ra khuyến cáo mang tính tham khảo y khoa và nhắc nhở bác sĩ đối chiếu với tình trạng thực tế của bệnh nhân.
-4. Trả lời ngắn gọn, trực quan, tập trung vào câu hỏi của bác sĩ.`;
+4. LƯU Ý QUAN TRỌNG: Tuyệt đối không tự ý kê đơn, không đưa ra tên thuốc hay liều lượng điều trị cụ thể (không ghi các liều thuốc cụ thể như Amoxicillin 1g, Ceftriaxone, v.v.). Hãy định hướng xử trí chung theo phân loại CURB-65 và khuyến cáo của Bộ Y tế Việt Nam, đề xuất bác sĩ tham khảo phác đồ chi tiết tại Quyết định số 4815/QĐ-BYT.
+5. Trả lời ngắn gọn, trực quan, tập trung vào câu hỏi của bác sĩ.`;
 
 const FALLBACK_KNOWLEDGE: { keywords: string[]; response: string }[] = [
   {
     keywords: ["phác đồ", "cap", "cộng đồng"],
-    response: `### Phác đồ điều trị Viêm phổi mắc phải cộng đồng (CAP) - Bộ Y tế:
+    response: `### Hướng xử trí Viêm phổi mắc phải cộng đồng (CAP) - Theo khuyến cáo Bộ Y tế:
 
 Phân loại mức độ nặng theo thang điểm **CURB-65**:
 - **CURB-65 = 0-1 (Nhẹ):** Điều trị ngoại trú.
-  * *Lựa chọn 1:* Amoxicillin (1g x 3 lần/ngày) hoặc Doxycycline (100mg x 2 lần/ngày).
-  * *Lựa chọn 2 (Nếu nghi ngờ vi khuẩn không điển hình):* Macrolide (Clarithromycin 500mg x 2 lần/ngày hoặc Azithromycin 500mg/ngày).
-- **CURB-65 = 2 (Trung bình):** Điều trị nội trú ngắn hạn.
-  * *Phối hợp:* Beta-lactam tiêm truyền (Ceftriaxone 1-2g/ngày hoặc Cefotaxime 1-2g mỗi 8 giờ) **KẾT HỢP** Macrolide uống/tiêm truyền.
-  * *Hoặc:* Levofloxacin (750mg/ngày) đơn trị liệu.
-- **CURB-65 ≥ 3 (Nặng):** Nhập viện điều trị tích cực (ICU nếu CURB-65 ≥ 4).
-  * *Phối hợp:* Beta-lactam tiêm truyền kháng Pseudomonal (Cefepime hoặc Piperacillin/Tazobactam) **KẾT HỢP** Fluoroquinolone hô hấp (Levofloxacin/Moxifloxacin).`
+  * *Định hướng xử trí:* Bệnh nhân có thể điều trị tại nhà dưới sự theo dõi chặt chẽ của y tế cơ sở.
+  * *Lựa chọn kháng sinh ban đầu:* Ưu tiên sử dụng kháng sinh đường uống đơn trị liệu (nhóm Beta-lactam hoặc Tetracycline). Nếu nghi ngờ có tác nhân vi khuẩn không điển hình, cân nhắc bổ sung hoặc thay thế bằng nhóm Macrolide đường uống.
+  * *Lưu ý:* Bác sĩ vui lòng tham khảo chi tiết phác đồ lựa chọn thuốc và liều lượng cụ thể tại Mục 4.1 của Hướng dẫn ban hành kèm theo **Quyết định số 4815/QĐ-BYT**.
+- **CURB-65 = 2 (Trung bình):** Điều trị nội trú ngắn hạn tại khoa thường.
+  * *Định hướng xử trí:* Nhập viện điều trị hoặc theo dõi sát tại đơn vị lưu bệnh trú ngắn ngày.
+  * *Lựa chọn kháng sinh ban đầu:* Khuyến cáo phối hợp kháng sinh Beta-lactam tiêm truyền kết hợp với Macrolide đường uống/tiêm truyền, hoặc đơn trị liệu bằng Fluoroquinolone hô hấp đường tiêm/uống.
+  * *Lưu ý:* Chi tiết nhóm thuốc và liều dùng cụ thể phải tuân thủ Mục 4.2 của Hướng dẫn ban hành kèm theo **Quyết định số 4815/QĐ-BYT**.
+- **CURB-65 ≥ 3 (Nặng):** Nhập viện điều trị nội trú tích cực (Cấp cứu/ICU nếu CURB-65 ≥ 4).
+  * *Định hướng xử trí:* Nhập viện khẩn cấp, điều trị tại khoa Hồi sức tích cực (ICU) hoặc phòng cấp cứu chuyên khoa.
+  * *Lựa chọn kháng sinh ban đầu:* Phác đồ phối hợp kháng sinh Beta-lactam tiêm truyền phổ rộng (ưu tiên nhóm kháng Pseudomonal nếu có yếu tố nguy cơ) kết hợp với Fluoroquinolone hô hấp tiêm truyền hoặc Macrolide tiêm truyền.
+  * *Lưu ý:* Liều lượng và cách phối hợp thuốc chi tiết được quy định tại Mục 4.3 của Hướng dẫn ban hành kèm theo **Quyết định số 4815/QĐ-BYT**.`
   },
   {
     keywords: ["phân biệt", "điển hình", "không điển hình", "x-quang"],
@@ -43,16 +48,16 @@ Phân loại mức độ nặng theo thang điểm **CURB-65**:
   },
   {
     keywords: ["kháng sinh", "liều dùng", "thuốc"],
-    response: `### Khuyến cáo kháng sinh ban đầu cho Người lớn (CAP trung bình - CURB-65 = 2):
+    response: `### Hướng dẫn sử dụng Kháng sinh ban đầu cho Người lớn (CAP trung bình - CURB-65 = 2):
 
-1. **Phác đồ phối hợp (Ưu tiên lựa chọn):**
-   - **Beta-lactam:** Ceftriaxone (1 - 2g tiêm tĩnh mạch/ngày) hoặc Cefotaxime (1 - 2g tiêm tĩnh mạch mỗi 8 giờ).
-   - **Macrolide phối hợp:** Azithromycin (500mg uống/ngày) hoặc Clarithromycin (500mg uống 2 lần/ngày).
-2. **Phác đồ đơn trị liệu (Fluoroquinolone hô hấp):**
-   - Levofloxacin (750mg tiêm tĩnh mạch hoặc uống/ngày).
-   - Moxifloxacin (400mg tiêm tĩnh mạch hoặc uống/ngày).
+Theo khuyến cáo của Bộ Y tế Việt Nam cho bệnh nhân viêm phổi mắc phải cộng đồng mức độ trung bình điều trị tại khoa thường:
+1. **Nguyên tắc lựa chọn kháng sinh:**
+   - **Phác đồ phối hợp (Ưu tiên):** Kết hợp một kháng sinh nhóm Beta-lactam đường tiêm truyền (ví dụ: Cephalosporin thế hệ 3) với một kháng sinh nhóm Macrolide (đường uống hoặc tiêm truyền) để bao phủ cả vi khuẩn điển hình và không điển hình.
+   - **Phác đồ đơn trị liệu:** Sử dụng một kháng sinh nhóm Fluoroquinolone hô hấp (đường uống hoặc tiêm truyền) cho hiệu quả diệt khuẩn rộng.
+2. **Thời gian điều trị:**
+   - Thường kéo dài từ 5 - 7 ngày đối với viêm phổi không biến chứng. Bệnh nhân cần đạt tiêu chuẩn ổn định lâm sàng và hết sốt ít nhất 48 - 72 giờ trước khi xem xét dừng kháng sinh.
    
-*Lưu ý: Thời gian điều trị tiêu chuẩn thường từ 5 - 7 ngày và bệnh nhân phải hết sốt ít nhất 48 - 72 giờ trước khi ngưng kháng sinh.*`
+*LƯU Ý LÂM SÀNG: AI không tự ra quyết định phác đồ, không kê đơn hay chỉ định liều lượng cụ thể. Bác sĩ vui lòng tham khảo chi tiết danh mục thuốc, liều dùng và hướng dẫn phối hợp tại Hướng dẫn chẩn đoán và điều trị viêm phổi mắc phải cộng đồng ở người lớn ban hành theo **Quyết định số 4815/QĐ-BYT**.*`
   },
   {
     keywords: ["curb65", "curb-65", "thang điểm"],

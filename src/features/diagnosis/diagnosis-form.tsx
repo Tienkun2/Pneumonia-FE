@@ -248,7 +248,7 @@ export function DiagnosisForm() {
                 <div className="text-xs font-black uppercase tracking-wider text-muted-foreground/80 pl-1">
                   Triệu chứng đi kèm
                 </div>
-                <div className="grid grid-cols-1 gap-2.5 border border-border/40 rounded-xl p-3 bg-background/40 max-h-[160px] overflow-y-auto">
+                <div className="grid grid-cols-1 gap-2.5 border border-border/40 rounded-xl p-3 bg-background/40 max-h-[240px] overflow-y-auto">
                   {otherSymptoms.map((s) => {
                     const label = SYMPTOM_LABELS[s] || s;
                     return (
@@ -273,13 +273,6 @@ export function DiagnosisForm() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Curb65 Calculator */}
-        <Curb65Calculator
-          onScoreChange={setCurb65Score}
-          patientBirthDate={selectedPatient?.dateOfBirth}
-          patientId={selectedPatient?.id}
-        />
 
         {/* Bản phim X-quang */}
         <Card className="border-border/60 overflow-hidden bg-card/60 backdrop-blur-sm">
@@ -342,6 +335,13 @@ export function DiagnosisForm() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Curb65 Calculator */}
+        <Curb65Calculator
+          onScoreChange={setCurb65Score}
+          patientBirthDate={selectedPatient?.dateOfBirth}
+          patientId={selectedPatient?.id}
+        />
       </div>
 
       {/* Analyse Button */}
@@ -590,12 +590,12 @@ export function DiagnosisForm() {
                 const p = Math.round(scoreVal * 100);
                 const isPos = scoreVal >= thr;
                 const isNear = p >= 60 && p <= 66;
-                const key = isPos ? "HIGH" : (isNear ? "MEDIUM" : "LOW");
+                const key = res.risk_level || (isPos ? "HIGH" : (isNear ? "MEDIUM" : "LOW"));
                 return RISKS_MAP[key]?.border ?? "border-border/40";
               })()
             )}>
               <CardContent className="p-5">
-                <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="flex flex-col sm:flex-row lg:flex-col items-center gap-5 sm:gap-6 lg:gap-5">
                   {/* Ring */}
                   <ScoreRing
                     value={diagnosisData.multimodalResult.final_score}
@@ -606,8 +606,8 @@ export function DiagnosisForm() {
                   {/* Probability Bars */}
                   <div className="flex-1 w-full space-y-4">
                     <div className="flex items-center gap-2 mb-1">
-                      <Activity className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-black uppercase tracking-widest text-foreground">Xác suất chi tiết</span>
+                      <Activity className="h-4 w-4 text-primary shrink-0" />
+                      <span className="text-xs font-black uppercase tracking-widest text-foreground whitespace-nowrap">Xác suất chi tiết</span>
                     </div>
                     {[
                       { label: "Hình ảnh X-quang", value: diagnosisData.multimodalResult.vision_probability },
@@ -615,7 +615,7 @@ export function DiagnosisForm() {
                     ].map((item) => (
                       <div key={item.label} className="space-y-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 whitespace-nowrap">
                             {item.label}
                           </span>
                           <span className={cn("text-sm font-black tabular-nums", getBarColor(item.value).replace("bg-", "text-"))}>
@@ -634,6 +634,41 @@ export function DiagnosisForm() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Clinical Alerts */}
+            {diagnosisData.multimodalResult?.clinical_alerts && diagnosisData.multimodalResult.clinical_alerts.length > 0 && (
+              <div className="space-y-2">
+                {diagnosisData.multimodalResult.clinical_alerts.map((alert: string, idx: number) => {
+                  const isCritical = alert.includes("CRITICAL") || alert.includes("Nguy hiểm");
+                  const isWarning = alert.includes("WARNING") || alert.includes("Cảnh báo");
+                  return (
+                    <div
+                      key={idx}
+                      className={cn(
+                        "p-3 rounded-xl border text-xs font-semibold flex items-start gap-2.5 shadow-sm leading-relaxed",
+                        isCritical
+                          ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
+                          : isWarning
+                          ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-500"
+                          : "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400"
+                      )}
+                    >
+                      <span className="text-sm shrink-0 mt-0.5">
+                        {isCritical ? "🚨" : isWarning ? "⚠️" : "ℹ️"}
+                      </span>
+                      <span>
+                        {alert
+                          .replace("CRITICAL:", "")
+                          .replace("WARNING:", "")
+                          .replace("Nguy hiểm:", "")
+                          .replace("Cảnh báo:", "")
+                          .trim()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Grad-CAM Clinical Indicators Card */}
             {diagnosisData.multimodalResult && (() => {

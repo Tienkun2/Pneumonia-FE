@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Stethoscope, AlertTriangle, ArrowRight } from "lucide-react";
+import { Stethoscope, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Curb65CalculatorProps {
@@ -129,9 +129,14 @@ export function Curb65Calculator({ onScoreChange, patientBirthDate, patientId }:
   return (
     <Card className="border-border/60 shadow-sm overflow-hidden bg-card/60 backdrop-blur-sm">
       <CardHeader className="py-3 px-5 border-b border-border/40 bg-muted/30">
-        <CardTitle className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-tight">
-          <Stethoscope className="h-3.5 w-3.5 text-primary" /> Thang điểm lâm sàng CURB-65
-        </CardTitle>
+        <div>
+          <CardTitle className="text-xs font-black text-foreground flex items-center gap-2 uppercase tracking-tight">
+            <Stethoscope className="h-3.5 w-3.5 text-primary" /> Thang điểm lâm sàng CURB-65
+          </CardTitle>
+          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1.5 bg-amber-500/10 dark:bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/15 inline-block">
+          Dùng để cảnh báo an toàn và phân cấp rủi ro, không cộng vào xác suất chẩn đoán
+          </p>
+        </div>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
         {/* Checklist */}
@@ -183,10 +188,6 @@ export function Curb65Calculator({ onScoreChange, patientBirthDate, patientId }:
           </div>
 
           <div className="space-y-1 mt-0.5">
-            <p className="text-xs font-bold leading-normal flex items-start gap-1.5">
-              <ArrowRight className="h-3.5 w-3.5 shrink-0 mt-0.5 opacity-70" />
-              Đề xuất: {risk.recommendation}
-            </p>
             <p className="text-[10px] font-bold opacity-80 flex items-center gap-1.5">
               <AlertTriangle className="h-3 w-3 shrink-0" />
               {risk.mortality}
